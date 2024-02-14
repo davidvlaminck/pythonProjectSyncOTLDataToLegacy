@@ -6,7 +6,7 @@ from Enums import Environment, AuthType
 
 class RequesterFactory:
     first_part_url_dict = {
-        Environment.PRD: 'https://services.apps.mow.vlaanderen.be/',
+        Environment.PRD: 'https://apps.mow.vlaanderen.be/',
         Environment.TEI: 'https://services.apps-tei.mow.vlaanderen.be/',
         Environment.DEV: 'https://services.apps-dev.mow.vlaanderen.be/',
         Environment.AIM: 'https://services-aim.apps-dev.mow.vlaanderen.be/'

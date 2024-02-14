@@ -2,14 +2,15 @@ import functools
 import json
 import time
 
+from AbstractRequester import AbstractRequester
 from EMInfraDomain import FeedPage, ListUpdateDTOKenmerkEigenschapValueUpdateDTO, KenmerkEigenschapValueDTOList, \
     EigenschapDTOList, EigenschapDTO, EventContextDTO
 
 
 class EMInfraRestClient:
-    def __init__(self, request_handler):
-        self.request_handler = request_handler
-        self.request_handler.requester.first_part_url += 'eminfra/'
+    def __init__(self, requester: AbstractRequester):
+        self.requester = requester
+        self.requester.first_part_url += 'eminfra/'
         self.pagingcursor = ''
 
     @functools.lru_cache(maxsize=None)
@@ -32,8 +33,8 @@ class EMInfraRestClient:
             }
         }
 
-        response = self.request_handler.perform_post_request(
-            url=f'core/api/eigenschappen/search',
+        response = self.requester.post(
+            url='core/api/eigenschappen/search',
             data=json.dumps(payload))
         if response.status_code != 200:
             print(response)
@@ -48,7 +49,7 @@ class EMInfraRestClient:
         if ns == 'installatie':
             ns_uri = 'installaties'
         json_data = update_dto.json().replace('{"type":', '{"_type":')
-        response = self.request_handler.perform_patch_request(
+        response = self.requester.patch(
             url=f'core/api/{ns_uri}/{uuid}/eigenschapwaarden', data=json_data)
         if response.status_code != 202:
             print(response)
@@ -59,7 +60,7 @@ class EMInfraRestClient:
         ns_uri = 'onderdelen'
         if ns == 'installatie':
             ns_uri = 'installaties'
-        response = self.request_handler.perform_get_request(
+        response = self.requester.get(
             url=f'core/api/{ns_uri}/{uuid}/eigenschapwaarden')
         if response.status_code != 200:
             print(response)
@@ -72,7 +73,7 @@ class EMInfraRestClient:
         return eigenschap_waarden
 
     def get_feedpage(self, page: str) -> FeedPage:
-        response = self.request_handler.perform_get_request(
+        response = self.requester.get(
             url=f'core/api/feed/{page}/100')
         if response.status_code != 200:
             print(response)
@@ -83,7 +84,7 @@ class EMInfraRestClient:
         return feed_page
 
     def get_current_feedpage(self) -> FeedPage:
-        response = self.request_handler.perform_get_request(
+        response = self.requester.get(
             url='core/api/feed')
         if response.status_code != 200:
             print(response)
@@ -116,7 +117,7 @@ class EMInfraRestClient:
             body += '}'
             json_data = json.loads(body)
 
-            response = self.request_handler.perform_post_request(url=url, json_data=json_data)
+            response = self.requester.post(url=url, json_data=json_data)
 
             decoded_string = response.content.decode("utf-8")
             dict_obj = json.loads(decoded_string)
@@ -128,7 +129,7 @@ class EMInfraRestClient:
                 break
 
     def get_event_contexts(self, context_id: str) -> EventContextDTO:
-        response = self.request_handler.perform_get_request(
+        response = self.requester.get(
             url=f'core/api/eventcontexts/{context_id}')
         if response.status_code != 200:
             print(response)
