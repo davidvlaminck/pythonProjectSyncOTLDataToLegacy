@@ -1,6 +1,4 @@
-﻿from unittest.mock import Mock
-
-import pytest
+﻿import pytest
 
 from AssetCollection import AssetCollection
 
@@ -20,7 +18,7 @@ def test_add_node_and_get_object_by_uuid():
 def test_add_relation_and_get_object_by_uuid():
     collection = AssetCollection()
     m1 = {'uuid': '0001',
-          'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast' }
+          'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
     m2 = {'uuid': '0002',
           'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
     r = {
@@ -40,7 +38,7 @@ def test_add_relation_and_get_object_by_uuid():
 def test_get_nodes():
     collection = AssetCollection()
     m1 = {'uuid': '0001',
-          'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast' }
+          'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
     m2 = {'uuid': '0002',
           'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
     r = {
@@ -60,7 +58,7 @@ def test_get_nodes():
 def test_get_relations():
     collection = AssetCollection()
     m1 = {'uuid': '0001',
-          'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast' }
+          'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
     m2 = {'uuid': '0002',
           'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
     r = {
@@ -80,7 +78,7 @@ def test_get_relations():
 def test_add_invalid_relation_missing_node():
     collection = AssetCollection()
     m1 = {'uuid': '0001',
-          'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast' }
+          'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
     r = {
         'uuid': '0001-0002',
         'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Bevestiging',
@@ -90,5 +88,3 @@ def test_add_invalid_relation_missing_node():
     collection.add_node(m1)
     with pytest.raises(ValueError):
         collection.add_relation(r)
-
-
