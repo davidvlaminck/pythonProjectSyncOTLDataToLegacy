@@ -2,6 +2,7 @@ from collections import Counter
 from typing import Generator
 
 from Enums import Direction
+from Exceptions.AssetsMissingError import AssetsMissingError
 from InfoObject import InfoObject, NodeInfoObject, RelationInfoObject, full_uri_to_short_type, is_directional_relation
 
 
@@ -20,17 +21,23 @@ class AssetCollection:
         self.object_dict[d['uuid']] = info_object
         self.short_uri_counter.update([short_uri])
 
-
     def add_relation(self, d) -> None:
         uuid = d['uuid']
         self.check_if_exists(uuid)
 
-        bron_object = self.get_node_object_by_uuid(d['bron'])
+        asset_missing_error = AssetsMissingError(msg='')
+        bron_object = self.object_dict.get(d['bron'])
         if bron_object is None:
-            raise ValueError(f"Bron object with uuid {d['bron']} does not exist in collection.")
-        doel_object = self.get_node_object_by_uuid(d['doel'])
+            asset_missing_error.uuids.append(d['bron'])
+            asset_missing_error.msg += f"Bron object with uuid {d['bron']} does not exist in collection.\n"
+
+        doel_object = self.object_dict.get(d['doel'])
         if doel_object is None:
-            raise ValueError(f"Doel object with uuid {d['doel']} does not exist in collection.")
+            asset_missing_error.uuids.append(d['doel'])
+            asset_missing_error.msg += f"Doel object with uuid {d['doel']} does not exist in collection.\n"
+
+        if asset_missing_error.uuids:
+            raise asset_missing_error
 
         short_type_relation = full_uri_to_short_type(d['typeURI'])
         relation_name = short_type_relation.split('#')[-1]
@@ -66,13 +73,13 @@ class AssetCollection:
     def get_object_by_uuid(self, uuid: str) -> InfoObject:
         o = self.object_dict.get(uuid)
         if o is None:
-            raise ValueError(f"Object with uuid {uuid} does not exist within the collection.")
+            raise AssetsMissingError(f"Object with uuid {uuid} does not exist within the collection.")
         return o
 
     def get_node_object_by_uuid(self, uuid: str) -> NodeInfoObject:
         o = self.object_dict.get(uuid)
         if o is None:
-            raise ValueError(f"Object with uuid {uuid} does not exist within the collection.")
+            raise AssetsMissingError(f"Object with uuid {uuid} does not exist within the collection.")
         if o.is_relation:
             raise ValueError(f"Object with uuid {uuid} is a relation, not a node.")
         return o
@@ -80,7 +87,7 @@ class AssetCollection:
     def get_relation_object_by_uuid(self, uuid: str) -> RelationInfoObject:
         o = self.object_dict.get(uuid)
         if o is None:
-            raise ValueError(f"Object with uuid {uuid} does not exist within the collection.")
+            raise AssetsMissingError(f"Object with uuid {uuid} does not exist within the collection.")
         if not o.is_relation:
             raise ValueError(f"Object with uuid {uuid} is a node, not a relation.")
         return o
@@ -129,6 +136,3 @@ class AssetCollection:
                         yield target_uuid
                     else:
                         yield relation_info['node_object']
-            
-        
-        

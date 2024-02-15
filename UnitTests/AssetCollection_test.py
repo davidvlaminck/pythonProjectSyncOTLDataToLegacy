@@ -4,6 +4,22 @@ import pytest
 
 from AssetCollection import AssetCollection
 from Enums import Direction
+from Exceptions.AssetsMissingError import AssetsMissingError
+
+
+def test_full_uri_to_short_typed():
+    collection = AssetCollection()
+    a1 = {'uuid': '0001',
+         'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
+    a2 = {'uuid': '0002',
+         'typeURI': 'https://lgc.data.wegenenverkeer.be/ns/installatie#Kast'}
+    collection.add_node(a1)
+    collection.add_node(a2)
+
+    node1 = collection.get_object_by_uuid('0001')
+    assert node1.short_type == 'onderdeel#WVLichtmast'
+    node2 = collection.get_object_by_uuid('0002')
+    assert node2.short_type == 'lgc:installatie#Kast'
 
 
 def test_add_node_and_get_object_by_uuid():
@@ -151,7 +167,7 @@ def test_add_invalid_relation_missing_node():
         'doel': '0002'
     }
     collection.add_node(m1)
-    with pytest.raises(ValueError):
+    with pytest.raises(AssetsMissingError):
         collection.add_relation(r)
 
 
@@ -307,7 +323,7 @@ def test_traverse_graph():
                                           filtered_node_types=['onderdeel#WVLichtmast'])
     assert not list(results_3)
 
-    # finds 0 results: wrong nodetype
+    # finds 0 results: wrong node_type
     results_4 = collection.traverse_graph(start_uuid='0001', relation_types=['Bevestiging'],
                                           allowed_directions=[Direction.NONE],
                                           filtered_node_types=['onderdeel#Stroomkring'])

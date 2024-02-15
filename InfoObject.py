@@ -19,14 +19,14 @@ directional_relations = {
     "onderdeel#IsSWOnderdeelVan",
     "onderdeel#IsSWGehostOp",
 }
-nondirectional_relations = {
+non_directional_relations = {
     "onderdeel#Bevestiging",
     "onderdeel#Sturing"
 }
 
 
 def is_relation(short_type: str) -> bool:
-    return short_type in directional_relations or short_type in nondirectional_relations
+    return short_type in directional_relations or short_type in non_directional_relations
 
 
 def is_directional_relation(short_type: str) -> bool:
@@ -34,7 +34,8 @@ def is_directional_relation(short_type: str) -> bool:
 
 
 def full_uri_to_short_type(uri: str) -> str:
-    return uri.split('/ns/')[-1]
+    short_uri = uri.split('/')[-1]
+    return f'lgc:{short_uri}' if uri.startswith('https://lgc') else short_uri
 
 
 class InfoObject(abc.ABC):
@@ -61,6 +62,6 @@ class RelationInfoObject(InfoObject):
                  active: bool = True):
         super().__init__(uuid, short_type, attr_dict, active)
         self.is_relation: bool = True
-        self.is_directional_relation: bool = (self.is_relation and short_type not in nondirectional_relations)
+        self.is_directional_relation: bool = (self.is_relation and short_type not in non_directional_relations)
         self.bron: NodeInfoObject = bron
         self.doel: NodeInfoObject = doel
