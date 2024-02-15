@@ -63,21 +63,24 @@ class AssetCollection:
         self.object_dict[d['uuid']] = relation_info_object
         self.short_uri_counter.update([short_type_relation])
 
-    def get_object_by_uuid(self, uuid: str) -> InfoObject | None:
-        return self.object_dict.get(uuid)
-
-    def get_node_object_by_uuid(self, uuid: str) -> NodeInfoObject | None:
+    def get_object_by_uuid(self, uuid: str) -> InfoObject:
         o = self.object_dict.get(uuid)
         if o is None:
-            return None
+            raise ValueError(f"Object with uuid {uuid} does not exist within the collection.")
+        return o
+
+    def get_node_object_by_uuid(self, uuid: str) -> NodeInfoObject:
+        o = self.object_dict.get(uuid)
+        if o is None:
+            raise ValueError(f"Object with uuid {uuid} does not exist within the collection.")
         if o.is_relation:
             raise ValueError(f"Object with uuid {uuid} is a relation, not a node.")
         return o
 
-    def get_relation_object_by_uuid(self, uuid: str) -> RelationInfoObject | None:
+    def get_relation_object_by_uuid(self, uuid: str) -> RelationInfoObject:
         o = self.object_dict.get(uuid)
         if o is None:
-            return None
+            raise ValueError(f"Object with uuid {uuid} does not exist within the collection.")
         if not o.is_relation:
             raise ValueError(f"Object with uuid {uuid} is a node, not a relation.")
         return o
