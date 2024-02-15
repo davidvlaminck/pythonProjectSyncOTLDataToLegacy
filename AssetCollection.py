@@ -1,23 +1,18 @@
-import json
-from pathlib import Path
 from typing import Generator
 
-from AbstractRequester import AbstractRequester
-from EMInfraImporter import EMInfraImporter
-from EMsonImporter import EMsonImporter
-from Enums import AuthType, Environment
-from RequesterFactory import RequesterFactory
+from InfoObject import InfoObject, NodeInfoObject, RelationInfoObject
 
 
 class AssetCollection:
     def __init__(self):
-        self.object_dict = {}
+        self.object_dict: dict[str: InfoObject] = {}
 
     def add_node(self, d) -> None:
         uuid = d['uuid']
         self.check_if_exists(uuid)
 
-        self.object_dict[d['uuid']] = dict(d)
+        info_object = NodeInfoObject(uuid=uuid, short_type=d['typeURI'], attr_dict=d)
+        self.object_dict[d['uuid']] = info_object
 
     def add_relation(self, d) -> None:
         uuid = d['uuid']
@@ -29,16 +24,22 @@ class AssetCollection:
         doel_object = self.get_object_by_uuid(d['doel'])
         if doel_object is None:
             raise ValueError(f"Doel object with uuid {d['doel']} does not exist in collection.")
-        self.object_dict[d['uuid']] = dict(d)
 
-    def get_object_by_uuid(self, uuid: str) -> dict:
+        info_object = RelationInfoObject(uuid=uuid, short_type=d['typeURI'], attr_dict=d)
+        self.object_dict[d['uuid']] = info_object
+
+    def get_object_by_uuid(self, uuid: str) -> InfoObject | None:
         return self.object_dict.get(uuid)
 
-    def get_nodes(self) -> Generator[dict, None, None]:
-        yield from [node for node in self.object_dict.values() if 'bron' not in node]
+    def get_attribute_dict_by_uuid(self, uuid: str) -> dict | None:
+        o = self.get_object_by_uuid(uuid)
+        return None if o is None else o.attr_dict
 
-    def get_relations(self) -> Generator[dict, None, None]:
-        yield from [node for node in self.object_dict.values() if 'bron' in node]
+    def get_node_objects(self) -> Generator[NodeInfoObject, None, None]:
+        yield from [node for node in self.object_dict.values() if not node.is_relation]
+
+    def get_relation_objects(self) -> Generator[RelationInfoObject, None, None]:
+        yield from [node for node in self.object_dict.values() if node.is_relation]
 
     def check_if_exists(self, uuid: str):
         existing = self.object_dict.get(uuid)

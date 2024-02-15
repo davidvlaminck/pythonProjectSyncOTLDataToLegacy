@@ -12,7 +12,7 @@ def test_add_node_and_get_object_by_uuid():
     collection.add_node(d)
 
     node = collection.get_object_by_uuid('0001')
-    assert node == d
+    assert node.attr_dict == d
 
 
 def test_add_relation_and_get_object_by_uuid():
@@ -32,7 +32,7 @@ def test_add_relation_and_get_object_by_uuid():
     collection.add_relation(r)
 
     node = collection.get_object_by_uuid('0001-0002')
-    assert node == r
+    assert node.attr_dict == r
 
 
 def test_get_nodes():
@@ -51,7 +51,7 @@ def test_get_nodes():
     collection.add_node(m2)
     collection.add_relation(r)
 
-    node_list = list(collection.get_nodes())
+    node_list = [o.attr_dict for o in collection.get_node_objects()]
     assert node_list == [m1, m2]
 
 
@@ -71,7 +71,7 @@ def test_get_relations():
     collection.add_node(m2)
     collection.add_relation(r)
 
-    node_list = list(collection.get_relations())
+    node_list = [o.attr_dict for o in collection.get_relation_objects()]
     assert node_list == [r]
 
 
