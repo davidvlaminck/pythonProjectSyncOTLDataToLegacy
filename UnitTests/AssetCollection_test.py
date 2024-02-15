@@ -6,10 +6,8 @@ from Enums import Direction
 
 def test_add_node_and_get_object_by_uuid():
     collection = AssetCollection()
-    d = {
-        'uuid': '0001',
-        'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'
-    }
+    d = {'uuid': '0001',
+         'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
     collection.add_node(d)
 
     node = collection.get_object_by_uuid('0001')
@@ -21,10 +19,8 @@ def test_add_node_and_get_object_by_uuid():
 
 def test_get_node_object_by_uuid():
     collection = AssetCollection()
-    d = {
-        'uuid': '0001',
-        'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'
-    }
+    d = {'uuid': '0001',
+         'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
     collection.add_node(d)
 
     node = collection.get_node_object_by_uuid('0001')
@@ -320,6 +316,4 @@ def test_traverse_graph_invalid_start():
           'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
     collection.add_node(a1)
     with pytest.raises(ValueError):
-        collection.traverse_graph(start_uuid='0002', relation_types=['Bevestiging'],
-                                  allowed_directions=[Direction.NONE],
-                                  filtered_node_types=['onderdeel#WVLichtmast'])
+        collection.traverse_graph(start_uuid='0002')

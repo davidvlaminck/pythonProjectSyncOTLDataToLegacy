@@ -98,7 +98,8 @@ class AssetCollection:
             raise ValueError(f"Node with uuid {uuid} already exists in collection.")
 
     def traverse_graph(self, start_uuid: str, relation_types: [str] = None, allowed_directions: [Direction] = None,
-                       filtered_node_types: [str] = None, return_type: str = 'uuid'):
+                       filtered_node_types: [str] = None, return_type: str = 'uuid'
+                       ) -> Generator[str | InfoObject, None, None]:
         starting_object = self.get_node_object_by_uuid(start_uuid)
         if starting_object is None:
             raise ValueError(f"Node with uuid {start_uuid} does not exist in collection.")
