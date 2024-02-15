@@ -1,32 +1,40 @@
 import abc
 
 directional_relations = {
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#HeeftAanvullendeGeometrie",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VoedtAangestuurd",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#HeeftBeheer",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#IsInspectieVan",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#SluitAanOp",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Voedt",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#HeeftNetwerkProtectie",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#HoortBij",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Omhult",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#IsNetwerkECC",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#IsAdmOnderdeelVan",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#HeeftBetrokkene",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#HeeftNetwerktoegang",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#HeeftToegangsprocedure",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#LigtOp",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#IsSWOnderdeelVan",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#IsSWGehostOp",
+    "onderdeel#HeeftAanvullendeGeometrie",
+    "onderdeel#VoedtAangestuurd",
+    "onderdeel#HeeftBeheer",
+    "onderdeel#IsInspectieVan",
+    "onderdeel#SluitAanOp",
+    "onderdeel#Voedt",
+    "onderdeel#HeeftNetwerkProtectie",
+    "onderdeel#HoortBij",
+    "onderdeel#Omhult",
+    "onderdeel#IsNetwerkECC",
+    "onderdeel#IsAdmOnderdeelVan",
+    "onderdeel#HeeftBetrokkene",
+    "onderdeel#HeeftNetwerktoegang",
+    "onderdeel#HeeftToegangsprocedure",
+    "onderdeel#LigtOp",
+    "onderdeel#IsSWOnderdeelVan",
+    "onderdeel#IsSWGehostOp",
 }
-nondiretional_relations = {
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Bevestiging",
-    "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Sturing"
+nondirectional_relations = {
+    "onderdeel#Bevestiging",
+    "onderdeel#Sturing"
 }
 
 
 def is_relation(short_type: str) -> bool:
-    return short_type in directional_relations or short_type in nondiretional_relations
+    return short_type in directional_relations or short_type in nondirectional_relations
+
+
+def is_directional_relation(short_type: str) -> bool:
+    return short_type in directional_relations
+
+
+def full_uri_to_short_type(uri: str) -> str:
+    return uri.split('/ns/')[-1]
 
 
 class InfoObject(abc.ABC):
@@ -43,12 +51,16 @@ class InfoObject(abc.ABC):
 class NodeInfoObject(InfoObject):
     def __init__(self, uuid: str, short_type: str, attr_dict: dict, active: bool = True):
         super().__init__(uuid, short_type, attr_dict, active)
+        self.relations: dict = {}
         self.is_relation: bool = False
         self.is_directional_relation: bool = False
 
 
 class RelationInfoObject(InfoObject):
-    def __init__(self, uuid: str, short_type: str, attr_dict: dict, active: bool = True):
+    def __init__(self, uuid: str, short_type: str, attr_dict: dict, bron: NodeInfoObject, doel: NodeInfoObject,
+                 active: bool = True):
         super().__init__(uuid, short_type, attr_dict, active)
         self.is_relation: bool = True
-        self.is_directional_relation: bool = (self.is_relation and short_type not in nondiretional_relations)
+        self.is_directional_relation: bool = (self.is_relation and short_type not in nondirectional_relations)
+        self.bron: NodeInfoObject = bron
+        self.doel: NodeInfoObject = doel

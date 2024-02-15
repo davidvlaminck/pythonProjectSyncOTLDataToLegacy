@@ -11,3 +11,9 @@ class Environment(Enum):
 class AuthType(Enum):
     JWT = 'JWT',
     CERT = 'cert'
+
+
+class Direction(Enum):
+    NONE = 'None',
+    WITH = 'With',
+    REVERSED = 'Reversed'
