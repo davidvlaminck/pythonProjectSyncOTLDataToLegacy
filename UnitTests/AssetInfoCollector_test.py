@@ -1,6 +1,8 @@
-﻿from unittest.mock import Mock
+﻿import logging
+from unittest.mock import Mock
 
-import pytest
+import pandas
+from pandas import DataFrame
 
 from AbstractRequester import AbstractRequester
 from AssetInfoCollector import AssetInfoCollector
@@ -116,7 +118,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
 
     relatie_10 = {
         "@type": "https://grp.data.wegenenverkeer.be/ns/onderdeel#Bevestiging",
-        "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000002------------000000000004-",
+        "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000002-Bevestigin-000000000004-",
         "RelatieObject.bron": {
             "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
             "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000002-"
@@ -128,7 +130,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
     }
     relatie_11 = {
         "@type": "https://grp.data.wegenenverkeer.be/ns/onderdeel#Bevestiging",
-        "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000006------------000000000002-",
+        "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000006-Bevestigin-000000000002-",
         "RelatieObject.bron": {
             "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller",
             "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000006-"
@@ -140,7 +142,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
     }
     relatie_12 = {
         "@type": "https://grp.data.wegenenverkeer.be/ns/onderdeel#Bevestiging",
-        "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000005------------000000000003-",
+        "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000005-Bevestigin-000000000003-",
         "RelatieObject.bron": {
             "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVConsole",
             "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000005-"
@@ -152,7 +154,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
     }
     relatie_13 = {
         "@type": "https://grp.data.wegenenverkeer.be/ns/onderdeel#Bevestiging",
-        "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000003------------000000000007-",
+        "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000003-Bevestigin-000000000007-",
         "RelatieObject.bron": {
             "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
             "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000003-"
@@ -164,7 +166,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
     }
     relatie_14 = {
         "@type": "https://grp.data.wegenenverkeer.be/ns/onderdeel#HoortBij",
-        "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000004------------000000000008-",
+        "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000004--HoortBij--000000000008-",
         "RelatieObject.bron": {
             "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast",
             "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000004-"
@@ -176,7 +178,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
     }
     relatie_15 = {
         "@type": "https://grp.data.wegenenverkeer.be/ns/onderdeel#HoortBij",
-        "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000005------------000000000009-",
+        "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000005--HoortBij--000000000009-",
         "RelatieObject.bron": {
             "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVConsole",
             "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000005-"
@@ -187,13 +189,19 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         }
     }
 
+    logging.debug(f'API Call made to get objects from oslo search endpoint using iterator, resource: {resource}')
+
     if resource == 'assets':
         yield from iter([a for a in [asset_1, asset_2, asset_3, asset_4, asset_5, asset_6, asset_7, asset_8, asset_9,
                                      asset_inactief]
                          if a['@id'][39:75] in filter_dict['uuid']])
     elif resource == 'assetrelaties':
-        if 'asset' in filter_dict:
-            yield from iter([r for r in [relatie_10, relatie_11, relatie_12, relatie_13, relatie_14, relatie_15]
+        assetrelaties = [relatie_10, relatie_11, relatie_12, relatie_13, relatie_14, relatie_15]
+        if 'uuid' in filter_dict:
+            yield from iter([r for r in assetrelaties
+                             if r['@id'][46:82] in filter_dict['uuid']])
+        elif 'asset' in filter_dict:
+            yield from iter([r for r in assetrelaties
                              if r['RelatieObject.bron']['@id'][39:75] in filter_dict['asset'] or
                              r['RelatieObject.doel']['@id'][39:75] in filter_dict['asset']])
 
@@ -246,10 +254,49 @@ def test_start_collecting_from_starting_uuids():
                                          '00000000-0000-0000-0000-000000000007'},
         'lgc:installatie#VPLMast': {'00000000-0000-0000-0000-000000000008'},
         'lgc:installatie#VPConsole': {'00000000-0000-0000-0000-000000000009'},
-        'onderdeel#Bevestiging': {'000000000002------------000000000004',
-                                  '000000000006------------000000000002',
-                                  '000000000005------------000000000003',
-                                  '000000000003------------000000000007'},
-        'onderdeel#HoortBij': {'000000000004------------000000000008',
-                               '000000000005------------000000000009'}
+        'onderdeel#Bevestiging': {'000000000002-Bevestigin-000000000004',
+                                  '000000000006-Bevestigin-000000000002',
+                                  '000000000005-Bevestigin-000000000003',
+                                  '000000000003-Bevestigin-000000000007'},
+        'onderdeel#HoortBij': {'000000000004--HoortBij--000000000008',
+                               '000000000005--HoortBij--000000000009'}
     }
+
+
+def test_start_creating_report():
+    fake_requester = Mock(spec=AbstractRequester)
+    fake_requester.first_part_url = ''
+    AssetInfoCollector.create_requester_with_settings = Mock(return_value=fake_requester)
+    collector = AssetInfoCollector(auth_type=Mock(), env=Mock(), settings_path=Mock())
+    collector.em_infra_importer = fake_em_infra_importer
+
+    collector.collect_asset_info(
+        uuids=['00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003',
+               '00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000005',
+               '00000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000007',
+               '00000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000009'])
+    collector.collect_relation_info(
+        uuids=['000000000002-Bevestigin-000000000004', '000000000006-Bevestigin-000000000002',
+               '000000000005-Bevestigin-000000000003', '000000000003-Bevestigin-000000000007',
+               '000000000004--HoortBij--000000000008', '000000000005--HoortBij--000000000009'])
+
+    expected_report = {
+        'columns': [
+            'aanlevering_id', 'aanlevering_naam', 'LED_toestel_uuid', 'LED_toestel_naam',
+            'relatie_naar_armatuur_controller_aanwezig', 'armatuur_controller_uuid', 'armatuur_controller_naam',
+            'relatie_naar_drager_aanwezig', 'drager_uuid', 'drager_type', 'drager_naam',
+            'relatie_naar_legacy_drager_aanwezig', 'legacy_drager_uuid', 'legacy_drager_type', 'legacy_drager_naampad'],
+        'index': [0, 0],
+        'data': [
+            ['01', 'DA-01', '00000000-0000-0000-0000-000000000002', '',
+             True, '00000000-0000-0000-0000-000000000006', '',
+             True, '00000000-0000-0000-0000-000000000004', 'WVLichtmast', '',
+             True, '00000000-0000-0000-0000-000000000008', 'VPLMast', ''],
+            ['01', 'DA-01', '00000000-0000-0000-0000-000000000003', '',
+             True, '00000000-0000-0000-0000-000000000007', '',
+             True, '00000000-0000-0000-0000-000000000005', 'WVConsole', '',
+             True, '00000000-0000-0000-0000-000000000009', 'VPConsole', '']]}
+
+    report = collector.start_creating_report('01', 'DA-01')
+
+    assert report.to_dict('split') == expected_report

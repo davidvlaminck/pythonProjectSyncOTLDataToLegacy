@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 from typing import Generator
 
@@ -6,10 +7,11 @@ from AbstractRequester import AbstractRequester
 from AssetCollection import AssetCollection
 from EMInfraImporter import EMInfraImporter
 from EMsonImporter import EMsonImporter
-from Enums import AuthType, Environment
+from Enums import AuthType, Environment, Direction
 from Exceptions.AssetsMissingError import AssetsMissingError
 from Exceptions.ObjectAlreadyExistsError import ObjectAlreadyExistsError
 from RequesterFactory import RequesterFactory
+from pandas import DataFrame, concat
 
 
 class AssetInfoCollector:
@@ -46,6 +48,14 @@ class AssetInfoCollector:
             asset['typeURI'] = asset.pop('@type')
             self.collection.add_node(asset)
 
+    def collect_relation_info(self, uuids: [str]) -> None:
+        for asset in self.get_assetrelaties_by_uuids(uuids=uuids):
+            asset['uuid'] = asset.pop('@id')[46:82]
+            asset['typeURI'] = asset.pop('@type')
+            asset['bron'] = asset['RelatieObject.bron']['@id'][39:75]
+            asset['doel'] = asset['RelatieObject.doel']['@id'][39:75]
+            self.collection.add_relation(asset)
+
     def collect_relation_info_by_sources_or_targets(self, uuids: [str], ignore_duplicates: bool = False) -> None:
         asset_missing_error = AssetsMissingError(msg='')
         for asset in self.get_assetrelaties_by_source_or_target_uuids(uuids=uuids):
@@ -64,7 +74,7 @@ class AssetInfoCollector:
         if asset_missing_error.uuids:
             raise asset_missing_error
 
-    def start_collecting_from_starting_uuids(self, starting_uuids):
+    def start_collecting_from_starting_uuids(self, starting_uuids: [str]) -> None:
         self.collect_asset_info(uuids=starting_uuids)
 
         # hardcoded pattern
@@ -80,7 +90,8 @@ class AssetInfoCollector:
             self.collect_asset_info(uuids=e.uuids)
             self.collect_relation_info_by_sources_or_targets(uuids=toestel_uuids, ignore_duplicates=True)
 
-        dragers = self.collection.get_node_objects_by_types(['onderdeel#WVLichtmast', 'onderdeel#WVConsole'])
+        dragers = self.collection.get_node_objects_by_types(['onderdeel#WVLichtmast', 'onderdeel#WVConsole',
+                                                             'onderdeel#PunctueleVerlichtingsmast'])
         drager_uuids = [drager.uuid for drager in dragers]
         try:
             self.collect_relation_info_by_sources_or_targets(uuids=drager_uuids, ignore_duplicates=True)
@@ -88,3 +99,77 @@ class AssetInfoCollector:
             self.collect_asset_info(uuids=e.uuids)
             self.collect_relation_info_by_sources_or_targets(uuids=drager_uuids, ignore_duplicates=True)
 
+    def start_creating_report(self, aanlevering_id: str, aanlevering_naam: str) -> DataFrame:
+        df = DataFrame()
+
+        # get all verlichtingstoestelLED
+        toestellen = self.collection.get_node_objects_by_types(['onderdeel#VerlichtingstoestelLED'])
+
+        # get mast/console
+        for toestel in toestellen:
+            toestel_uuid = toestel.uuid
+            toestel_name = toestel.attr_dict.get('AIMNaamObject.naam', '')
+            current_toestel_dict = {'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
+                                    'LED_toestel_uuid': [toestel_uuid], 'LED_toestel_naam': [toestel_name]}
+
+            if toestel_name is None:
+                toestel_name = toestel_uuid
+
+            controllers = list(self.collection.traverse_graph(
+                start_uuid=toestel_uuid, relation_types=['Bevestiging'], allowed_directions=[Direction.NONE],
+                return_type='info_object', filtered_node_types=['onderdeel#Armatuurcontroller']))
+
+            if not controllers:
+                logging.info(f"toestel {toestel_name} heeft geen relatie naar een armatuur controller")
+                current_toestel_dict['relatie_naar_armatuur_controller_aanwezig'] = [False]
+                current_toestel_dict['armatuur_controller_uuid'] = ['']
+                current_toestel_dict['armatuur_controller_naam'] = ['']
+            else:
+                controller = controllers[0]
+                current_toestel_dict['relatie_naar_armatuur_controller_aanwezig'] = [True]
+                current_toestel_dict['armatuur_controller_uuid'] = [controller.uuid]
+                current_toestel_dict['armatuur_controller_naam'] = [controller.attr_dict.get('AIMNaamObject.naam', '')]
+
+            dragers = list(self.collection.traverse_graph(
+                start_uuid=toestel_uuid, relation_types=['Bevestiging'], allowed_directions=[Direction.NONE],
+                return_type='info_object', filtered_node_types=['onderdeel#WVLichtmast', 'onderdeel#WVConsole',
+                                                                'onderdeel#PunctueleVerlichtingsmast']))
+
+            if not dragers:
+                logging.info(f"toestel {toestel_name} heeft geen relatie naar een drager")
+                current_toestel_dict['relatie_naar_drager aanwezig'] = [False]
+                df_current = DataFrame(current_toestel_dict)
+                df = concat([df, df_current])
+                continue
+
+            drager = dragers[0]
+            drager_uuid = drager.uuid
+            current_toestel_dict['relatie_naar_drager_aanwezig'] = [True]
+            current_toestel_dict['drager_uuid'] = [drager.uuid]
+            current_toestel_dict['drager_type'] = [drager.short_type.split('#')[-1]]
+            current_toestel_dict['drager_naam'] = [drager.attr_dict.get('AIMNaamObject.naam', '')]
+
+            legacy_drager = next(self.collection.traverse_graph(
+                start_uuid=drager_uuid, relation_types=['HoortBij'], allowed_directions=[Direction.WITH],
+                return_type='info_object', filtered_node_types=['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole',
+                                                                'lgc:installatie#VVOP']))
+
+            if legacy_drager is None:
+                logging.info(f"drager {drager_uuid} heeft geen relatie naar een legacy equivalent")
+                current_toestel_dict['hoortbij_drager_naar_lgc_aanwezig'] = [False]
+                df_current = DataFrame(current_toestel_dict)
+                df = concat([df, df_current])
+                continue
+
+            legacy_drager_uuid = legacy_drager.uuid
+            current_toestel_dict['relatie_naar_legacy_drager_aanwezig'] = [True]
+            current_toestel_dict['legacy_drager_uuid'] = [legacy_drager.uuid]
+            current_toestel_dict['legacy_drager_type'] = [legacy_drager.short_type.split('#')[-1]]
+            current_toestel_dict['legacy_drager_naampad'] = [legacy_drager.attr_dict.get('NaampadObject.naampad', '')]
+
+            df_current = DataFrame(current_toestel_dict)
+            df = concat([df, df_current])
+
+        # TODO check for missing columns and add them
+
+        return df.sort_values('LED_toestel_uuid')
