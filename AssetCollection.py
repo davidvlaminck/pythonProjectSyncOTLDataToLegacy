@@ -3,6 +3,7 @@ from typing import Generator
 
 from Enums import Direction
 from Exceptions.AssetsMissingError import AssetsMissingError
+from Exceptions.ObjectAlreadyExistsError import ObjectAlreadyExistsError
 from InfoObject import InfoObject, NodeInfoObject, RelationInfoObject, full_uri_to_short_type, is_directional_relation
 
 
@@ -114,13 +115,23 @@ class AssetCollection:
     def get_node_objects(self) -> Generator[NodeInfoObject, None, None]:
         yield from [node for node in self.object_dict.values() if not node.is_relation]
 
+    def get_node_objects_by_types(self, list_of_short_types: [str]) -> Generator[NodeInfoObject, None, None]:
+        for short_type in list_of_short_types:
+            for uuid in self.short_uri_dict.get(short_type, set()):
+                yield self.get_node_object_by_uuid(uuid)
+
     def get_relation_objects(self) -> Generator[RelationInfoObject, None, None]:
         yield from [node for node in self.object_dict.values() if node.is_relation]
+
+    def get_relation_objects_by_types(self, list_of_short_types: [str]) -> Generator[RelationInfoObject, None, None]:
+        for short_type in list_of_short_types:
+            for uuid in self.short_uri_dict.get(short_type, set()):
+                yield self.get_relation_object_by_uuid(uuid)
 
     def check_if_exists(self, uuid: str):
         existing = self.object_dict.get(uuid)
         if existing is not None:
-            raise ValueError(f"Node with uuid {uuid} already exists in collection.")
+            raise ObjectAlreadyExistsError(f"Node with uuid {uuid} already exists in collection.")
 
     def traverse_graph(self, start_uuid: str, relation_types: [str] = None, allowed_directions: [Direction] = None,
                        filtered_node_types: [str] = None, return_type: str = 'uuid'

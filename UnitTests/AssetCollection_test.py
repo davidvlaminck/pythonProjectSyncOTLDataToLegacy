@@ -5,6 +5,7 @@ import pytest
 from AssetCollection import AssetCollection
 from Enums import Direction
 from Exceptions.AssetsMissingError import AssetsMissingError
+from Exceptions.ObjectAlreadyExistsError import ObjectAlreadyExistsError
 
 
 def test_full_uri_to_short_typed():
@@ -36,6 +37,16 @@ def test_add_node_and_get_object_by_uuid():
 
     with pytest.raises(ValueError):
         collection.get_object_by_uuid('0002')
+
+
+def test_add_node_and_add_again():
+    collection = AssetCollection()
+    d = {'uuid': '0001',
+         'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
+    collection.add_node(d)
+
+    with pytest.raises(ObjectAlreadyExistsError):
+        collection.add_node(d)
 
 
 def test_get_node_object_by_uuid():
@@ -338,6 +349,41 @@ def test_traverse_graph():
                                           allowed_directions=[Direction.NONE],
                                           filtered_node_types=['onderdeel#Stroomkring'])
     assert not list(results_4)
+
+
+def test_get_objects_by_type():
+    collection = AssetCollection()
+    a1 = {'uuid': '0001',
+          'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
+    a2 = {'uuid': '0002',
+          'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
+    a3 = {'uuid': '0003',
+          'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Stroomkring'}
+    r1 = {
+        'uuid': '0001-0002',
+        'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Bevestiging',
+        'bron': '0001',
+        'doel': '0002'
+    }
+    r2 = {
+        'uuid': '0001-0003',
+        'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Voedt',
+        'bron': '0001',
+        'doel': '0003'
+    }
+    collection.add_node(a1)
+    collection.add_node(a2)
+    collection.add_node(a3)
+    collection.add_relation(r1)
+    collection.add_relation(r2)
+
+    stroomkringen = list(collection.get_node_objects_by_types(['onderdeel#Stroomkring']))
+    assert len(stroomkringen) == 1
+    assert stroomkringen[0].uuid == '0003'
+
+    voedt_relaties = list(collection.get_relation_objects_by_types(['onderdeel#Voedt']))
+    assert len(voedt_relaties) == 1
+    assert voedt_relaties[0].uuid == '0001-0003'
 
 
 @unittest.skip('fails to raise error')
