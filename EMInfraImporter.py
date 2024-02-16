@@ -16,7 +16,7 @@ class EMInfraImporter:
             self, resource: str,
             cursor: str | None = None,
             size: int = 100,
-            filter_dict: dict = None) -> Generator[Iterator[dict], None, None]:
+            filter_dict: dict = None) -> Generator[dict, None, None]:
         while True:
             response = self.get_objects_from_oslo_search_endpoint(
                 resource=resource, cursor=cursor, size=size, filter_dict=filter_dict)
@@ -25,7 +25,7 @@ class EMInfraImporter:
             graph = json.loads(decoded_string)
             headers = dict(response.headers)
             
-            yield graph['@graph']
+            yield from graph['@graph']
             if 'em-paging-next-cursor' not in headers:
                 break
             cursor = headers['em-paging-next-cursor']

@@ -28,9 +28,14 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
       "AIMNaamObject.naam": "KAST",
       "loc:Locatie.omschrijving": "omschrijving",
     }
+    asset_inactief = {
+        "@type": "https://lgc.data.wegenenverkeer.be/ns/installatie#Kast",
+        "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000010-bGdjOmluc3RhbGxhdGllI0thc3Q",
+        "AIMDBStatus.isActief": False
+    }
     if resource == 'assets':
-        yield from iter([a for a in [asset_1]
-                         if a['AIMObject.assetId']['DtcIdentificator.identificator'][:36] in filter_dict['uuid']])
+        yield from iter([a for a in [asset_1, asset_inactief]
+                         if a['@id'][39:75] in filter_dict['uuid']])
 
 
 fake_em_infra_importer = Mock(spec=EMInfraImporter)
@@ -49,3 +54,14 @@ def test_asset_info_collector():
     assert asset_node.uuid == '00000000-0000-0000-0000-000000000001'
 
 
+def test_asset_info_collector_inactive():
+    fake_requester = Mock(spec=AbstractRequester)
+    fake_requester.first_part_url = ''
+    AssetInfoCollector.create_requester_with_settings = Mock(return_value=fake_requester)
+    collector = AssetInfoCollector(auth_type=Mock(), env=Mock(), settings_path=Mock())
+    collector.em_infra_importer = fake_em_infra_importer
+
+    collector.collect_asset_info(uuids=['00000000-0000-0000-0000-000000000010'])
+    asset_node = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000010')
+    assert asset_node.uuid == '00000000-0000-0000-0000-000000000010'
+    assert asset_node.active is False

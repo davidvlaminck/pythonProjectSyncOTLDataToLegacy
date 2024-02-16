@@ -1,3 +1,7 @@
 /.venv
 /.idea
 /voobeeldcode/
+/UnitTests/.coverage
+/UnitTests/.pytest_cache
+/UnitTests/__pycache__
+/UnitTests/htmlcov

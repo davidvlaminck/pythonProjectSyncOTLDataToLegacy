@@ -170,6 +170,15 @@ def test_add_invalid_relation_missing_node():
     with pytest.raises(AssetsMissingError):
         collection.add_relation(r)
 
+    r2 = {
+        'uuid': '0001-0002',
+        'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Bevestiging',
+        'bron': '0002',
+        'doel': '0001'
+    }
+    with pytest.raises(AssetsMissingError):
+        collection.add_relation(r2)
+
 
 def test_check_attributes_after_adding_relation():
     collection = AssetCollection()

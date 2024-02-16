@@ -11,17 +11,22 @@ class AssetCollection:
         self.object_dict: dict[str: InfoObject] = {}
         self.short_uri_counter = Counter()
 
-    def add_node(self, d) -> None:
+    def add_node(self, d: dict) -> None:
         uuid = d['uuid']
         self.check_if_exists(uuid)
 
         short_uri = full_uri_to_short_type(d['typeURI'])
 
         info_object = NodeInfoObject(uuid=uuid, short_type=short_uri, attr_dict=d)
+        actief = d.get("AIMDBStatus.isActief")
+        if actief is not None:
+            info_object.active = actief
+
         self.object_dict[d['uuid']] = info_object
+
         self.short_uri_counter.update([short_uri])
 
-    def add_relation(self, d) -> None:
+    def add_relation(self, d: dict) -> None:
         uuid = d['uuid']
         self.check_if_exists(uuid)
 
@@ -66,6 +71,10 @@ class AssetCollection:
             'relation_object': relation_info_object,
             'node_object': bron_object
         }
+
+        actief = d.get("AIMDBStatus.isActief")
+        if actief is not None:
+            relation_info_object.active = actief
 
         self.object_dict[d['uuid']] = relation_info_object
         self.short_uri_counter.update([short_type_relation])
