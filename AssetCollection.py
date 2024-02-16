@@ -9,7 +9,13 @@ from InfoObject import InfoObject, NodeInfoObject, RelationInfoObject, full_uri_
 class AssetCollection:
     def __init__(self):
         self.object_dict: dict[str: InfoObject] = {}
-        self.short_uri_counter = Counter()
+        self.short_uri_dict = {}
+
+    def _update_short_uri_dict(self, short_uri: str, uuid: str) -> None:
+        if short_uri not in self.short_uri_dict:
+            self.short_uri_dict[short_uri] = {uuid}
+        else:
+            self.short_uri_dict[short_uri].add(uuid)
 
     def add_node(self, d: dict) -> None:
         uuid = d['uuid']
@@ -24,7 +30,7 @@ class AssetCollection:
 
         self.object_dict[d['uuid']] = info_object
 
-        self.short_uri_counter.update([short_uri])
+        self._update_short_uri_dict(short_uri=short_uri, uuid=uuid)
 
     def add_relation(self, d: dict) -> None:
         uuid = d['uuid']
@@ -77,7 +83,7 @@ class AssetCollection:
             relation_info_object.active = actief
 
         self.object_dict[d['uuid']] = relation_info_object
-        self.short_uri_counter.update([short_type_relation])
+        self._update_short_uri_dict(short_uri=short_type_relation, uuid=uuid)
 
     def get_object_by_uuid(self, uuid: str) -> InfoObject:
         o = self.object_dict.get(uuid)
@@ -130,7 +136,7 @@ class AssetCollection:
             allowed_directions = [Direction.WITH, Direction.REVERSED, Direction.NONE]
 
         if filtered_node_types is None or len(filtered_node_types) == 0:
-            filtered_node_types = list(self.short_uri_counter.keys())
+            filtered_node_types = list(self.short_uri_dict.keys())
 
         if return_type not in ['uuid', 'info_object']:
             raise ValueError(f"return_type {return_type} is not supported.")

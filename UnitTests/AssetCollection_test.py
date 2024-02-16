@@ -117,7 +117,7 @@ def test_get_nodes():
     assert node_list == [m1, m2]
 
 
-def test_short_uri_counter():
+def test_short_uri_dict():
     collection = AssetCollection()
     m1 = {'uuid': '0001',
           'typeURI': 'https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast'}
@@ -133,7 +133,8 @@ def test_short_uri_counter():
     collection.add_node(m2)
     collection.add_relation(r)
 
-    assert collection.short_uri_counter == {'onderdeel#WVLichtmast': 2, 'onderdeel#Bevestiging': 1}
+    assert collection.short_uri_dict == {'onderdeel#WVLichtmast': {'0001', '0002'},
+                                         'onderdeel#Bevestiging': {'0001-0002'}}
 
 
 def test_get_relations():
