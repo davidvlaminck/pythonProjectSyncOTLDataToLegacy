@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 from pathlib import Path
 from typing import Generator
 
@@ -101,6 +102,13 @@ class AssetInfoCollector:
 
     def start_creating_report(self, aanlevering_id: str, aanlevering_naam: str) -> DataFrame:
         df = DataFrame()
+        all_column_names = [
+            'aanlevering_id', 'aanlevering_naam', 'LED_toestel_uuid', 'LED_toestel_naam',
+            'relatie_naar_armatuur_controller_aanwezig', 'armatuur_controller_uuid', 'armatuur_controller_naam',
+            'relatie_naar_drager_aanwezig', 'drager_uuid', 'drager_type', 'drager_naam',
+            'relatie_naar_legacy_drager_aanwezig', 'legacy_drager_uuid', 'legacy_drager_type', 'legacy_drager_naampad']
+        for missing_column_name in all_column_names:
+            df[missing_column_name] = None
 
         # get all verlichtingstoestelLED
         toestellen = self.collection.get_node_objects_by_types(['onderdeel#VerlichtingstoestelLED'])
@@ -122,8 +130,6 @@ class AssetInfoCollector:
             if not controllers:
                 logging.info(f"toestel {toestel_name} heeft geen relatie naar een armatuur controller")
                 current_toestel_dict['relatie_naar_armatuur_controller_aanwezig'] = [False]
-                current_toestel_dict['armatuur_controller_uuid'] = ['']
-                current_toestel_dict['armatuur_controller_naam'] = ['']
             else:
                 controller = controllers[0]
                 current_toestel_dict['relatie_naar_armatuur_controller_aanwezig'] = [True]
@@ -169,7 +175,5 @@ class AssetInfoCollector:
 
             df_current = DataFrame(current_toestel_dict)
             df = concat([df, df_current])
-
-        # TODO check for missing columns and add them
 
         return df.sort_values('LED_toestel_uuid')
