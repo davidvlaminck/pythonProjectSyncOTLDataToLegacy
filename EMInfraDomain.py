@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, Sequence, Union, List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Link(BaseModel):
@@ -26,15 +26,12 @@ class AggregateIdObject(BaseModel):
 
 
 class AtomValueObject(BaseModel):
-    type: str
-    typeVersion: str
+    type: str = Field(alias='_type')
+    typeVersion: str = Field(alias='_typeVersion')
     contextId: Optional[str] = None
-    from_: Optional[object] = None
+    from_: Optional[object] = Field(alias='from')
     to: Optional[object] = None
     aggregateId: Optional[AggregateIdObject] = None
-
-    class Config:
-        fields = {'type': '_type', 'typeVersion': '_typeVersion', 'from_': 'from'}
 
 
 class ContentObject(BaseModel):
@@ -49,6 +46,36 @@ class EntryObject(BaseModel):
     updated: Optional[datetime] = None
 
 
+class FeedProxyContentValue(BaseModel):
+    event_type: Optional[str] = Field(alias='event-type')
+    asset_type: Optional[str] = Field(alias='asset-type')
+    event_id: Optional[str] = Field(alias='event-id')
+    context_id: Optional[str] = Field(alias='context-id', default=None)
+
+    uuids: Optional[Sequence[str]] = None
+    aim_ids: Optional[Sequence[str]] = Field(alias='aim-ids')
+
+
+class FeedProxyContent(BaseModel):
+    value: FeedProxyContentValue
+
+
+class ProxyEntryObject(BaseModel):
+    id: str
+    type: Optional[str] = Field(alias='_type')
+    updated: datetime
+    content: Optional[FeedProxyContent] = None
+
+
+class FeedProxyPage(BaseModel):
+    id: str
+    base: Optional[str] = None
+    title: Optional[str] = None
+    updated: Optional[datetime] = None
+    links: Optional[Sequence[Link]] = None
+    entries: Optional[Sequence[ProxyEntryObject]] = None
+
+
 class FeedPage(BaseModel):
     id: str
     base: Optional[str] = None
@@ -59,11 +86,8 @@ class FeedPage(BaseModel):
 
 
 class EigenschapTypedValueDTO(BaseModel):
-    type: Optional[str] = None
+    type: Optional[str] = Field(alias='_type')
     value: Optional[Union[object, Sequence[object]]] = None
-
-    class Config:
-        fields = {'type': '_type'}
 
 
 class KenmerkEigenschapValueUpdateDTO(BaseModel):
@@ -73,10 +97,9 @@ class KenmerkEigenschapValueUpdateDTO(BaseModel):
 
 
 class DatatypeTypeDTO(BaseModel):
-    type: Optional[str] = None
+    type: Optional[str] = Field(alias='_type')
 
-    class Config:
-        fields = {'type': '_type'}
+
 
 class EigenschapTypeDTO(BaseModel):
     actief: Optional[bool] = None
@@ -93,10 +116,8 @@ class EigenschapTypeDTO(BaseModel):
 
 class EigenschapTypeDTOType(BaseModel):
     datatype: Optional[EigenschapTypeDTO] = None
-    type: Optional[str] = None
+    type: Optional[str] = Field(alias='_type')
 
-    class Config:
-        fields = {'type': '_type'}
 
 
 class EigenschapDTO(BaseModel):

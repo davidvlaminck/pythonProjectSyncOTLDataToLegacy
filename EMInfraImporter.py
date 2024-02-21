@@ -4,6 +4,7 @@ from typing import Iterator, Generator
 from requests import Response
 
 from AbstractRequester import AbstractRequester
+from EMInfraDomain import FeedPage, FeedProxyPage
 from ZoekParameterOTL import ZoekParameterOTL
 
 
@@ -43,3 +44,15 @@ class EMInfraImporter:
         json_data = otl_zoekparameter.to_dict()
 
         return self.requester.post(url=url, json=json_data)
+
+    def print_feed_page(self) -> FeedProxyPage:
+        response = self.requester.get(
+            url='feedproxy/feed/assets')
+        if response.status_code != 200:
+            print(response)
+            raise ProcessLookupError(response.content.decode("utf-8"))
+
+        response_string = response.content.decode("utf-8")
+        feed_page = FeedProxyPage.parse_raw(response_string)
+        print(feed_page)
+        return feed_page
