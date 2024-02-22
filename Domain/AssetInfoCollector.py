@@ -1,24 +1,23 @@
 import json
 import logging
-import math
 import re
 from pathlib import Path
 from typing import Generator
 
-from AbstractRequester import AbstractRequester
-from AssetCollection import AssetCollection
-from EMInfraImporter import EMInfraImporter
-from EMsonImporter import EMsonImporter
-from Enums import AuthType, Environment, Direction
+from API.AbstractRequester import AbstractRequester
+from Domain.AssetCollection import AssetCollection
+from API.EMInfraRestClient import EMInfraRestClient
+from API.EMsonImporter import EMsonImporter
+from Domain.Enums import AuthType, Environment, Direction
 from Exceptions.AssetsMissingError import AssetsMissingError
 from Exceptions.ObjectAlreadyExistsError import ObjectAlreadyExistsError
-from RequesterFactory import RequesterFactory
+from API.RequesterFactory import RequesterFactory
 from pandas import DataFrame, concat
 
 
 class AssetInfoCollector:
     def __init__(self, settings_path: Path, auth_type: AuthType, env: Environment):
-        self.em_infra_importer = EMInfraImporter(self.create_requester_with_settings(
+        self.em_infra_importer = EMInfraRestClient(self.create_requester_with_settings(
             settings_path=settings_path, auth_type=auth_type, env=env))
         self.emson_importer = EMsonImporter(self.create_requester_with_settings(
             settings_path=settings_path, auth_type=auth_type, env=env))
@@ -244,4 +243,7 @@ class AssetInfoCollector:
         parts_0 = parts[2].replace('>', '<')[::-1]
 
         return relation_pattern[2], f'{parts_0}[{parts[1]}]{parts_2}', relation_pattern[0]
+
+    def print_feed_page(self):
+        self.em_infra_importer.print_feed_page()
 

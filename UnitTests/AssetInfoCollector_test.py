@@ -1,12 +1,9 @@
 ﻿import logging
 from unittest.mock import Mock
 
-import pandas
-from pandas import DataFrame
-
-from AbstractRequester import AbstractRequester
-from AssetInfoCollector import AssetInfoCollector
-from EMInfraImporter import EMInfraImporter
+from API.AbstractRequester import AbstractRequester
+from Domain.AssetInfoCollector import AssetInfoCollector
+from API.EMInfraRestClient import EMInfraRestClient
 
 
 def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cursor: str | None = None,
@@ -206,7 +203,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
                              r['RelatieObject.doel']['@id'][39:75] in filter_dict['asset']])
 
 
-fake_em_infra_importer = Mock(spec=EMInfraImporter)
+fake_em_infra_importer = Mock(spec=EMInfraRestClient)
 fake_em_infra_importer.get_objects_from_oslo_search_endpoint_using_iterator = fake_get_objects_from_oslo_search_endpoint_using_iterator
 
 

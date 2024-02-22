@@ -27,4 +27,3 @@ class AbstractRequester(Session, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def delete(self, url: str = '', **kwargs) -> Response:
         return super().delete(url=self.first_part_url + url, **kwargs)
-

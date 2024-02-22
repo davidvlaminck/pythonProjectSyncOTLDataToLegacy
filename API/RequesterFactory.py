@@ -1,7 +1,7 @@
-from AbstractRequester import AbstractRequester
-from CertRequester import CertRequester
-from JWTRequester import JWTRequester
-from Enums import Environment, AuthType
+from API.AbstractRequester import AbstractRequester
+from API.CertRequester import CertRequester
+from API.JWTRequester import JWTRequester
+from Domain.Enums import Environment, AuthType
 
 
 class RequesterFactory:

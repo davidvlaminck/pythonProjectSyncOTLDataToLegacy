@@ -3,7 +3,7 @@ from pathlib import Path
 
 from requests import Response
 
-from AbstractRequester import AbstractRequester
+from API.AbstractRequester import AbstractRequester
 
 
 class CertRequester(AbstractRequester):

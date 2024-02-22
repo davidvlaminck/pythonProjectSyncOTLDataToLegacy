@@ -1,10 +1,8 @@
 ﻿import json
 from typing import Iterator, Generator
 
-from requests import Response
-
-from AbstractRequester import AbstractRequester
-from ZoekParameterOTL import ZoekParameterOTL
+from API.AbstractRequester import AbstractRequester
+from Domain.ZoekParameterOTL import ZoekParameterOTL
 
 
 class EMsonImporter:

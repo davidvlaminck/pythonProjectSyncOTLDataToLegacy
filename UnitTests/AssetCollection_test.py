@@ -2,8 +2,8 @@
 
 import pytest
 
-from AssetCollection import AssetCollection
-from Enums import Direction
+from Domain.AssetCollection import AssetCollection
+from Domain.Enums import Direction
 from Exceptions.AssetsMissingError import AssetsMissingError
 from Exceptions.ObjectAlreadyExistsError import ObjectAlreadyExistsError
 

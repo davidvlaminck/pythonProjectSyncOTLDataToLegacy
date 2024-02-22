@@ -1,14 +1,14 @@
 ﻿import json
-from typing import Iterator, Generator
+from typing import Generator
 
 from requests import Response
 
-from AbstractRequester import AbstractRequester
-from EMInfraDomain import FeedPage, FeedProxyPage
-from ZoekParameterOTL import ZoekParameterOTL
+from API.AbstractRequester import AbstractRequester
+from Domain.EMInfraDomain import FeedProxyPage
+from Domain.ZoekParameterOTL import ZoekParameterOTL
 
 
-class EMInfraImporter:
+class EMInfraRestClient:
     def __init__(self, requester: AbstractRequester):
         self.requester = requester
         self.requester.first_part_url += 'eminfra/'
@@ -50,9 +50,9 @@ class EMInfraImporter:
             url='feedproxy/feed/assets')
         if response.status_code != 200:
             print(response)
-            raise ProcessLookupError(response.content.decode("utf-8"))
+            raise ProcessLookupError(response.content.decode())
 
-        response_string = response.content.decode("utf-8")
+        response_string = response.content.decode()
         feed_page = FeedProxyPage.parse_raw(response_string)
         print(feed_page)
         return feed_page

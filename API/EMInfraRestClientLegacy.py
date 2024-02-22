@@ -2,8 +2,8 @@ import functools
 import json
 import time
 
-from AbstractRequester import AbstractRequester
-from EMInfraDomain import FeedPage, ListUpdateDTOKenmerkEigenschapValueUpdateDTO, KenmerkEigenschapValueDTOList, \
+from API.AbstractRequester import AbstractRequester
+from Domain.EMInfraDomain import FeedPage, ListUpdateDTOKenmerkEigenschapValueUpdateDTO, KenmerkEigenschapValueDTOList, \
     EigenschapDTOList, EigenschapDTO, EventContextDTO
 
 
