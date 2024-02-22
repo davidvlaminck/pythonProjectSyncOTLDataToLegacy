@@ -100,7 +100,6 @@ class DatatypeTypeDTO(BaseModel):
     type: Optional[str] = Field(alias='_type')
 
 
-
 class EigenschapTypeDTO(BaseModel):
     actief: Optional[bool] = None
     links: Optional[Sequence[Link]] = None
@@ -113,11 +112,9 @@ class EigenschapTypeDTO(BaseModel):
     type: Optional[DatatypeTypeDTO] = None
 
 
-
 class EigenschapTypeDTOType(BaseModel):
     datatype: Optional[EigenschapTypeDTO] = None
     type: Optional[str] = Field(alias='_type')
-
 
 
 class EigenschapDTO(BaseModel):

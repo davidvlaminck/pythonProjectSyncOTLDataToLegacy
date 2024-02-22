@@ -461,5 +461,3 @@ def test_start_creating_report():
     report = collector.start_creating_report('01', 'DA-01')
 
     assert report.to_dict('split') == expected_report
-
-

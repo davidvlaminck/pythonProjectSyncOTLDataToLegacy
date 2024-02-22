@@ -49,17 +49,10 @@ class AssetInfoCollector:
             asset['typeURI'] = asset.pop('@type')
             self.collection.add_node(asset)
 
-    def collect_relation_info(self, uuids: [str]) -> None:
-        for asset in self.get_assetrelaties_by_uuids(uuids=uuids):
-            asset['uuid'] = asset.pop('@id')[46:82]
-            asset['typeURI'] = asset.pop('@type')
-            asset['bron'] = asset['RelatieObject.bron']['@id'][39:75]
-            asset['doel'] = asset['RelatieObject.doel']['@id'][39:75]
-            self.collection.add_relation(asset)
-
-    def collect_relation_info_by_sources_or_targets(self, uuids: [str], ignore_duplicates: bool = False) -> None:
+    def _common_collect_relation_info(self, assetrelaties_generator: Generator[dict, None, None],
+                                      ignore_duplicates: bool = False) -> None:
         asset_missing_error = AssetsMissingError(msg='')
-        for asset in self.get_assetrelaties_by_source_or_target_uuids(uuids=uuids):
+        for asset in assetrelaties_generator:
             asset['uuid'] = asset.pop('@id')[46:82]
             asset['typeURI'] = asset.pop('@type')
             asset['bron'] = asset['RelatieObject.bron']['@id'][39:75]
@@ -75,13 +68,21 @@ class AssetInfoCollector:
         if asset_missing_error.uuids:
             raise asset_missing_error
 
+    def collect_relation_info(self, uuids: [str], ignore_duplicates: bool = False) -> None:
+        self._common_collect_relation_info(self.get_assetrelaties_by_uuids(uuids=uuids),
+                                           ignore_duplicates=ignore_duplicates)
+
+    def collect_relation_info_by_sources_or_targets(self, uuids: [str], ignore_duplicates: bool = False) -> None:
+        self._common_collect_relation_info(self.get_assetrelaties_by_source_or_target_uuids(uuids=uuids),
+                                           ignore_duplicates=ignore_duplicates)
+
     def start_collecting_from_starting_uuids(self, starting_uuids: [str]) -> None:
         self.collect_asset_info(uuids=starting_uuids)
 
         # hardcoded pattern
         # bevestiging verlichtingstoestelLED > console, mast, armatuur
         # console + mast
-        # hoortbij > legacy mast/console
+        # hoort_bij > legacy mast/console
 
         toestellen = self.collection.get_node_objects_by_types(['onderdeel#VerlichtingstoestelLED'])
         toestel_uuids = [toestel.uuid for toestel in toestellen]
@@ -209,14 +210,14 @@ class AssetInfoCollector:
 
             if legacy_drager is None:
                 logging.info(f"drager {drager_uuid} heeft geen relatie naar een legacy equivalent")
-                current_toestel_dict['hoortbij_drager_naar_lgc_aanwezig'] = [False]
+                current_toestel_dict['relatie_naar_legacy_drager_aanwezig'] = [False]
                 df_current = DataFrame(current_toestel_dict)
                 df = concat([df, df_current])
                 continue
 
             legacy_drager_uuid = legacy_drager.uuid
             current_toestel_dict['relatie_naar_legacy_drager_aanwezig'] = [True]
-            current_toestel_dict['legacy_drager_uuid'] = [legacy_drager.uuid]
+            current_toestel_dict['legacy_drager_uuid'] = [legacy_drager_uuid]
             current_toestel_dict['legacy_drager_type'] = [legacy_drager.short_type.split('#')[-1]]
             current_toestel_dict['legacy_drager_naampad'] = [legacy_drager.attr_dict.get('NaampadObject.naampad', '')]
 
@@ -246,4 +247,3 @@ class AssetInfoCollector:
 
     def print_feed_page(self):
         self.em_infra_importer.print_feed_page()
-
