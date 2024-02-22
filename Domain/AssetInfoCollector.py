@@ -52,13 +52,13 @@ class AssetInfoCollector:
     def _common_collect_relation_info(self, assetrelaties_generator: Generator[dict, None, None],
                                       ignore_duplicates: bool = False) -> None:
         asset_missing_error = AssetsMissingError(msg='')
-        for asset in assetrelaties_generator:
-            asset['uuid'] = asset.pop('@id')[46:82]
-            asset['typeURI'] = asset.pop('@type')
-            asset['bron'] = asset['RelatieObject.bron']['@id'][39:75]
-            asset['doel'] = asset['RelatieObject.doel']['@id'][39:75]
+        for relation in assetrelaties_generator:
+            relation['uuid'] = relation.pop('@id')[46:82]
+            relation['typeURI'] = relation.pop('@type')
+            relation['bron'] = relation['RelatieObject.bron']['@id'][39:75]
+            relation['doel'] = relation['RelatieObject.doel']['@id'][39:75]
             try:
-                self.collection.add_relation(asset)
+                self.collection.add_relation(relation)
             except AssetsMissingError as e:
                 asset_missing_error.uuids.extend(e.uuids)
                 asset_missing_error.msg += e.msg
