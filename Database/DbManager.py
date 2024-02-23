@@ -1,40 +1,47 @@
-import sqlite3
+import sqlalchemy
 from pathlib import Path
+
+from sqlalchemy import MetaData, Table, Column, Integer, String, select, insert, update
 
 
 class DbManager:
     def __init__(self, state_db_path: Path):
+        self.state_table: Table | None = None
         self.state_db_path = state_db_path
-        self.connection = sqlite3.connect(self.state_db_path, check_same_thread=False)
-        self.cursor = self.connection.cursor()
-        self.connection.execute('pragma journal_mode=wal')
+        self.db_engine = sqlalchemy.create_engine(f'sqlite:///{state_db_path}')
 
         self.create_tables_if_not_exist()
 
-    def execute_write_query(self, query: str):
-        return self.cursor.execute(query)
-
-    def execute_read_query_fetchall(self, query: str) -> list:
-        self.cursor.execute(query)
-        return self.cursor.fetchall()
-
-    def execute_read_query_fetchone(self, query: str) -> object:
-        self.cursor.execute(query)
-        return self.cursor.fetchone()
-
     def set_state_variable(self, variable_name: str, value: str):
         if self.get_state_variable(variable_name) is None:
-            return self.execute_write_query(f'INSERT INTO state (param, value) VALUES ("{variable_name}", "{value}");')
+            stmt = insert(self.state_table).values(param=variable_name, value=value)
         else:
-            return self.execute_write_query(f'UPDATE state SET value = "{value}" WHERE param = "{variable_name}";')
+            stmt = (
+                update(self.state_table)
+                .where(self.state_table.c.param == variable_name)
+                .values(value=value))
+        with self.db_engine.connect() as connection:
+            connection.execute(stmt)
+            connection.commit()
 
     def get_state_variable(self, variable_name: str) -> object:
-        result = self.execute_read_query_fetchone(f'SELECT value FROM state WHERE param = "{variable_name}";')
-        if result is None:
-            return None
-        return result[0]
+        stmt = (select(self.state_table.c.value).
+                where(self.state_table.c.param == variable_name))
+
+        with self.db_engine.connect() as connection:
+            result = connection.execute(stmt).fetchone()
+            connection.commit()
+
+        return None if result is None else result[0]
 
     def create_tables_if_not_exist(self):
-        tables = self.execute_read_query_fetchall("SELECT name FROM sqlite_master WHERE type='table';")
-        if ('state',) not in tables:
-            self.execute_write_query('CREATE TABLE state (param TEXT PRIMARY KEY, value TEXT);')
+        metadata = MetaData()
+
+        self.state_table = Table(
+            'state',
+            metadata,
+            Column('param', String, primary_key=True, nullable=False),
+            Column('value', String, nullable=False))
+
+        # Create the table if it doesn't exist
+        metadata.create_all(bind=self.db_engine)

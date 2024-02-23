@@ -25,7 +25,7 @@ class EMInfraRestClient:
             decoded_string = response.content.decode()
             graph = json.loads(decoded_string)
             headers = dict(response.headers)
-            
+
             yield from graph['@graph']
             if 'em-paging-next-cursor' not in headers:
                 break
@@ -45,14 +45,22 @@ class EMInfraRestClient:
 
         return self.requester.post(url=url, json=json_data)
 
-    def print_feed_page(self) -> FeedProxyPage:
+    def get_current_feed_page(self) -> FeedProxyPage:
         response = self.requester.get(
             url='feedproxy/feed/assets')
         if response.status_code != 200:
             print(response)
-            raise ProcessLookupError(response.content.decode())
+            raise RuntimeError(response.content.decode())
 
         response_string = response.content.decode()
-        feed_page = FeedProxyPage.parse_raw(response_string)
-        print(feed_page)
-        return feed_page
+        return FeedProxyPage.parse_raw(response_string)
+
+    def get_feed_page_by_number(self, page_number: str) -> FeedProxyPage:
+        response = self.requester.get(
+            url=f'feedproxy/feed/assets/{page_number}/100')
+        if response.status_code != 200:
+            print(response)
+            raise RuntimeError(response.content.decode())
+
+        response_string = response.content.decode()
+        return FeedProxyPage.parse_raw(response_string)

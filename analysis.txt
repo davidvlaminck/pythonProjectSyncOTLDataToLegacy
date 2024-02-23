@@ -1,8 +1,8 @@
 1) collecting assets to check
-    - [ ] use state db to check position in feedproxy
-    - [ ] read feedproxy and capture events
-    - [ ] only capture events that are applicable to the correct assettypes (use base64 encoded short_uri)
-    - [ ] only capture events that have a context-id
+    - [X] use state db to check position in feedproxy
+    - [X] read feedproxy and capture events
+    - [X] only capture events that are applicable to the correct assettypes (use base64 encoded short_uri)
+    - [X] only capture events that have a context-id
 2) check the context-id
     - [ ] check to see if aanlevering is already being tracked
     - [ ] use /eventcontexts/{uuid} to get the description
@@ -11,7 +11,7 @@
     - [ ] save the aanlevering uuid and poll often to check for status 'Goedgekeurd'
 3) use validated aanlevering
     - [ ] find all assets that were changed in that aanlevering (wait for EM-3200 or using emson endpoint)
-    - [x] collect all related asset information using the asset info collector algorithm
+    - [X] collect all related asset information using the asset info collector algorithm
     - [/] generate a report to update legacy data with
     - [ ] save the report in the state db
 4) update legacy data

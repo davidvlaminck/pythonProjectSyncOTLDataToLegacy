@@ -2,18 +2,22 @@ import json
 from pathlib import Path
 
 from API.AbstractRequester import AbstractRequester
+from API.DavieRestClient import DavieRestClient
 from API.EMInfraRestClient import EMInfraRestClient
 from API.EMsonImporter import EMsonImporter
 from API.RequesterFactory import RequesterFactory
 from Database.DbManager import DbManager
+from Domain.DeliveryFinder import DeliveryFinder
 from Domain.Enums import AuthType, Environment
 
 
 class DataLegacySyncer:
     def __init__(self, settings_path: Path, auth_type: AuthType, env: Environment, state_db_path: Path):
-        self.em_infra_importer = EMInfraRestClient(self.create_requester_with_settings(
+        self.em_infra_client = EMInfraRestClient(self.create_requester_with_settings(
             settings_path=settings_path, auth_type=auth_type, env=env))
         self.emson_importer = EMsonImporter(self.create_requester_with_settings(
+            settings_path=settings_path, auth_type=auth_type, env=env))
+        self.davie_client = DavieRestClient(self.create_requester_with_settings(
             settings_path=settings_path, auth_type=auth_type, env=env))
         self.db_manager = DbManager(state_db_path=state_db_path)
 
@@ -25,21 +29,14 @@ class DataLegacySyncer:
         return RequesterFactory.create_requester(settings=settings, auth_type=auth_type, env=env)
 
     def run(self):
-        pass
+        self.find_deliveries_to_sync()
 
-    def find_aanleveringen_to_sync(self):
-        feedproxy_page = self.db_manager.get_state_variable('feedproxy_page')
-# 1) collecting assets to check
-#     - [ ] use state db to check position in feedproxy
-#     - [ ] read feedproxy and capture events
-#     - [ ] only capture events that are applicable to the correct assettypes (use base64 encoded short_uri)
-#     - [ ] only capture events that have a context-id
-# 2) check the context-id
-#     - [ ] check to see if aanlevering is already being tracked
-#     - [ ] use /eventcontexts/{uuid} to get the description
-#     - [ ] use the description to search in the DAVIE API using field "vrijeZoekterm"
-#     - [ ] filter using "aanleveringnummer" and "dossierNummer" ("VWT-CEW-2020-009-5", ...)
-#     - [ ] save the aanlevering uuid
+    def find_deliveries_to_sync(self):
+        delivery_finder = DeliveryFinder(em_infra_client=self.em_infra_client, davie_client=self.davie_client,
+                                         db_manager=self.db_manager)
+
+        delivery_finder.find_deliveries_to_sync()
+
 
     def poll_aanleveringen(self):
         pass
