@@ -32,7 +32,7 @@ def test_get_page_number_and_event_from_api():
     assert last_event_id == '2'
 
 
-def test_get_page_number_and_event_from_api():
+def test_is_last_event_in_feedproxy():
     page = fake_get_current_feed_page()
     assert DeliveryFinder.is_last_event_in_feedproxy(page, '2')
     assert not DeliveryFinder.is_last_event_in_feedproxy(page, '1')
