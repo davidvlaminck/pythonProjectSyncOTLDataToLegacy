@@ -4,7 +4,7 @@ from typing import Generator
 from requests import Response
 
 from API.AbstractRequester import AbstractRequester
-from Domain.EMInfraDomain import FeedProxyPage
+from Domain.EMInfraDomain import FeedProxyPage, EventContextDTO
 from Domain.ZoekParameterOTL import ZoekParameterOTL
 
 
@@ -64,3 +64,13 @@ class EMInfraRestClient:
 
         response_string = response.content.decode()
         return FeedProxyPage.parse_raw(response_string)
+
+    def get_event_context_by_uuid(self, uuid: str) -> EventContextDTO:
+        response = self.requester.get(
+            url=f'core/api/eventcontexts/{uuid}')
+        if response.status_code != 200:
+            print(response)
+            raise RuntimeError(response.content.decode())
+
+        response_string = response.content.decode()
+        return EventContextDTO.parse_raw(response_string)

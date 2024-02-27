@@ -2,10 +2,12 @@ import logging
 import time
 import traceback
 from typing import Tuple, List
+from uuid import UUID
 
 from API.DavieRestClient import DavieRestClient
 from API.EMInfraRestClient import EMInfraRestClient
 from Database.DbManager import DbManager
+from Domain.DavieDomain import ZoekTerm
 from Domain.EMInfraDomain import FeedProxyPage, ProxyEntryObject
 
 
@@ -75,8 +77,27 @@ class DeliveryFinder:
     #     - [ ] save the aanlevering uuid
 
     def get_additional_attributes_of_deliveries(self) -> Tuple[str, str]:
-        # find aanlevering in db without davie_uuid or referentie
-        pass
+        # find aanlevering in db without davie_uuid or referentie, get them and store them in db
+        while True:
+            em_infra_uuid = self.db_manager.get_a_delivery_uuid_without_reference()
+            if em_infra_uuid is None:
+                logging.info('No more deliveries found without reference, continue with getting DAVIE uuid.')
+                break
+            event_context = self.em_infra_client.get_event_context_by_uuid(uuid=str(em_infra_uuid))
+            self.db_manager.update_delivery_description(em_infra_uuid=em_infra_uuid, description=event_context.omschrijving)
+
+        while True:
+            delivery_db = self.db_manager.get_a_delivery_without_davie_uuid()
+            if delivery_db is None:
+                logging.info('No more deliveries found without davie_uuid, continue with getting DAVIE uuid.')
+                break
+            delivery = self.davie_client.find_delivery_by_search_parameters(
+                search_parameters=ZoekTerm(vrijeZoekterm=delivery_db.referentie))
+            if delivery.dossierNummer in {'VWT-CEW-2020-009-5'}:
+                self.db_manager.update_delivery_davie_uuid(em_infra_uuid=delivery_db.uuid_em_infra,
+                                                           davie_uuid=delivery.id)
+            else:
+                self.db_manager.delete_delivery_by_uuid(delivery_db.uuid_em_infra)
 
     @classmethod
     def sleep(cls, seconds: int):
