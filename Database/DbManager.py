@@ -72,5 +72,10 @@ class DbManager:
             session.execute(query)
             session.commit()
 
+    def add_delivery(self, em_infra_uuid: str):
+        with self.session_maker.begin() as session:
+            session.add(Delivery(uuid_em_infra=UUID(em_infra_uuid)))
+            session.commit()
+
 
 

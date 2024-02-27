@@ -77,17 +77,8 @@ def test_get_additional_attributes_of_deliveries():
     delivery_finder = DeliveryFinder(em_infra_client=fake_em_infra_importer, davie_client=fake_davie_importer,
                                      db_manager=db_manager)
 
-    with db_manager.session_maker.begin() as session:
-        d = Delivery()
-        d.uuid_em_infra = UUID('00000001-0000-0000-0000-000000000000')
-        session.add(d)
-        session.commit()
-
-    with db_manager.session_maker.begin() as session:
-        d = Delivery()
-        d.uuid_em_infra = UUID('00000002-0000-0000-0000-000000000000')
-        session.add(d)
-        session.commit()
+    db_manager.add_delivery('00000001-0000-0000-0000-000000000000')
+    db_manager.add_delivery('00000002-0000-0000-0000-000000000000')
 
     delivery_finder.get_additional_attributes_of_deliveries()
 

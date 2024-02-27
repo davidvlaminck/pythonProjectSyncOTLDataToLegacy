@@ -1,8 +1,7 @@
 import logging
 import time
 import traceback
-from typing import Tuple, List
-from uuid import UUID
+from typing import Tuple
 
 from API.DavieRestClient import DavieRestClient
 from API.EMInfraRestClient import EMInfraRestClient
@@ -17,6 +16,14 @@ class DeliveryFinder:
         self.davie_client = davie_client
         self.db_manager = db_manager
         self.allowed_dossiers = {'VWT-CEW-2020-009-5'}
+        self.filtered_asset_types = {
+            'b25kZXJkZWVsI1dWTGljaHRtYXN0',  # 'WVLichtmast'
+            'b25kZXJkZWVsI1ZlcmxpY2h0aW5nc3RvZXN0ZWxMRUQ',  # onderdeel#VerlichtingstoestelLED
+            'b25kZXJkZWVsI1dWQ29uc29sZQ',  # onderdeel#WVConsole
+            'b25kZXJkZWVsI0FybWF0dXVyY29udHJvbGxlcg',  # onderdeel#Armatuurcontroller
+            'bGdjOmluc3RhbGxhdGllI1ZQTE1hc3Q',  # lgc:installatie#VPLMast
+            'bGdjOmluc3RhbGxhdGllI1ZQQ29uc29sZQ'  # lgc:installatie#VPConsole
+        }
 
     def get_current_feedproxy_page_and_event(self) -> tuple[str, str]:
         feedproxy_page_number = self.db_manager.get_state_variable('feedproxy_page')
@@ -118,14 +125,6 @@ class DeliveryFinder:
                                  proxy_feed_page: FeedProxyPage, batch_page_size: int = 5
                                  ) -> tuple[list[ProxyEntryObject], str, str]:
         collected_events = []
-        filtered_asset_types = {
-            'b25kZXJkZWVsI1dWTGljaHRtYXN0',  # 'WVLichtmast'
-            'b25kZXJkZWVsI1ZlcmxpY2h0aW5nc3RvZXN0ZWxMRUQ',  # onderdeel#VerlichtingstoestelLED
-            'b25kZXJkZWVsI1dWQ29uc29sZQ',  # onderdeel#WVConsole
-            'b25kZXJkZWVsI0FybWF0dXVyY29udHJvbGxlcg',  # onderdeel#Armatuurcontroller
-            'bGdjOmluc3RhbGxhdGllI1ZQTE1hc3Q',  # lgc:installatie#VPLMast
-            'bGdjOmluc3RhbGxhdGllI1ZQQ29uc29sZQ'  # lgc:installatie#VPConsole
-        }
         page_count = 0
         while True:
             if proxy_feed_page is None:
@@ -141,7 +140,7 @@ class DeliveryFinder:
                 if entry.content.value.context_id is None:
                     continue
                 asset_types = [t[37:] for t in entry.content.value.aim_ids]
-                if any(t in filtered_asset_types for t in asset_types):
+                if any(t in self.filtered_asset_types for t in asset_types):
                     collected_events.append(entry)
 
             current_feedproxy_event = proxy_feed_page.entries[0].id
@@ -160,7 +159,13 @@ class DeliveryFinder:
         return collected_events, current_feedproxy_page, current_feedproxy_event
 
     def get_events_ready_to_process(self, events: list[ProxyEntryObject]):
-        pass
+        # may be used to also add asset uuid and save those to the db as well
+        return events
 
-    def save_events_to_process_to_db(self, events_to_process, feed_page_number, event_id):
-        pass
+    def save_events_to_process_to_db(self, events_to_process: list[ProxyEntryObject], feed_page_number: str,
+                                     event_id: str):
+        for event in events_to_process:
+            self.db_manager.add_delivery(event.content.value.context_id)
+
+        self.db_manager.set_state_variable('feedproxy_page', feed_page_number)
+        self.db_manager.set_state_variable('feedproxy_event_id', event_id)
