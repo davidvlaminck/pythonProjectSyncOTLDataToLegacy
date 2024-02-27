@@ -2,6 +2,9 @@ import sqlalchemy
 from pathlib import Path
 
 from sqlalchemy import MetaData, Table, Column, Integer, String, select, insert, update
+from sqlalchemy.orm import sessionmaker
+
+from Database.DatabaseModel import Base, State
 
 
 class DbManager:
@@ -11,37 +14,24 @@ class DbManager:
         self.db_engine = sqlalchemy.create_engine(f'sqlite:///{state_db_path}')
 
         self.create_tables_if_not_exist()
+        self.session_maker = sessionmaker(bind=self.db_engine)
 
     def set_state_variable(self, variable_name: str, value: str):
-        if self.get_state_variable(variable_name) is None:
-            stmt = insert(self.state_table).values(param=variable_name, value=value)
-        else:
-            stmt = (
-                update(self.state_table)
-                .where(self.state_table.c.param == variable_name)
-                .values(value=value))
-        with self.db_engine.connect() as connection:
-            connection.execute(stmt)
-            connection.commit()
+        with self.session_maker.begin() as session:
+            result = session.scalar(select(State).filter_by(param=variable_name))
+
+            if result is None:
+                state = State(param=variable_name, value=value)
+                session.add(state)
+            else:
+                result.value = value
+
+            session.commit()
 
     def get_state_variable(self, variable_name: str) -> object:
-        stmt = (select(self.state_table.c.value).
-                where(self.state_table.c.param == variable_name))
-
-        with self.db_engine.connect() as connection:
-            result = connection.execute(stmt).fetchone()
-            connection.commit()
-
-        return None if result is None else result[0]
+        with self.session_maker.begin() as session:
+            query = session.query(State.value).filter(State.param == variable_name)
+            return query.scalar()
 
     def create_tables_if_not_exist(self):
-        metadata = MetaData()
-
-        self.state_table = Table(
-            'state',
-            metadata,
-            Column('param', String, primary_key=True, nullable=False),
-            Column('value', String, nullable=False))
-
-        # Create the table if it doesn't exist
-        metadata.create_all(bind=self.db_engine)
+        Base.metadata.create_all(self.db_engine)

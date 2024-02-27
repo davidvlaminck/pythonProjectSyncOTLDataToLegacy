@@ -74,6 +74,10 @@ class DeliveryFinder:
     #     - [ ] filter using "aanleveringnummer" and "dossierNummer" ("VWT-CEW-2020-009-5", ...)
     #     - [ ] save the aanlevering uuid
 
+    def get_additional_attributes_of_deliveries(self) -> Tuple[str, str]:
+        # find aanlevering in db without davie_uuid or referentie
+        pass
+
     @classmethod
     def sleep(cls, seconds: int):
         time.sleep(seconds)
