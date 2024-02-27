@@ -25,6 +25,7 @@ class Delivery(Base):
     uuid_em_infra: Mapped[UUID] = mapped_column(primary_key=True, index=True)
     uuid_davie: Mapped[Optional[UUID]] = mapped_column(index=True)
     referentie: Mapped[Optional[str]] = mapped_column(index=True)
+    status: Mapped[Optional[str]]
 
 #
 # class DeliveryAsset(Base):

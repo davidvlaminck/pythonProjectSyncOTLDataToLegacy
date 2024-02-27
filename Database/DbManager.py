@@ -6,6 +6,7 @@ from sqlalchemy import Table, select, update, delete
 from sqlalchemy.orm import sessionmaker
 
 from Database.DatabaseModel import Base, State, Delivery
+from Domain.Enums import AanleveringStatus
 
 
 class DbManager:
@@ -62,6 +63,12 @@ class DbManager:
     def delete_delivery_by_uuid(self, em_infra_uuid: str):
         with self.session_maker.begin() as session:
             query = delete(Delivery).where(Delivery.uuid_em_infra == em_infra_uuid)
+            session.execute(query)
+            session.commit()
+
+    def update_delivery_status(self, davie_uuid: str, status: AanleveringStatus):
+        with self.session_maker.begin() as session:
+            query = update(Delivery).where(Delivery.uuid_davie == UUID(davie_uuid)).values(status=status.value)
             session.execute(query)
             session.commit()
 

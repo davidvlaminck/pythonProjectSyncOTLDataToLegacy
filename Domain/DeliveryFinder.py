@@ -16,6 +16,7 @@ class DeliveryFinder:
         self.em_infra_client = em_infra_client
         self.davie_client = davie_client
         self.db_manager = db_manager
+        self.allowed_dossiers = {'VWT-CEW-2020-009-5'}
 
     def get_current_feedproxy_page_and_event(self) -> tuple[str, str]:
         feedproxy_page_number = self.db_manager.get_state_variable('feedproxy_page')
@@ -93,9 +94,11 @@ class DeliveryFinder:
                 break
             delivery = self.davie_client.find_delivery_by_search_parameters(
                 search_parameters=ZoekTerm(vrijeZoekterm=delivery_db.referentie))
-            if delivery.dossierNummer in {'VWT-CEW-2020-009-5'}:
+            if delivery.dossierNummer in self.allowed_dossiers:
                 self.db_manager.update_delivery_davie_uuid(em_infra_uuid=delivery_db.uuid_em_infra,
                                                            davie_uuid=delivery.id)
+                self.db_manager.update_delivery_status(davie_uuid=delivery.id, status=delivery.status)
+                logging.info(f'Fetched all attributes of delivery {delivery_db.referentie}.')
             else:
                 self.db_manager.delete_delivery_by_uuid(delivery_db.uuid_em_infra)
 
@@ -156,7 +159,7 @@ class DeliveryFinder:
 
         return collected_events, current_feedproxy_page, current_feedproxy_event
 
-    def get_events_ready_to_process(self, events):
+    def get_events_ready_to_process(self, events: list[ProxyEntryObject]):
         pass
 
     def save_events_to_process_to_db(self, events_to_process, feed_page_number, event_id):

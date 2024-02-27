@@ -59,11 +59,11 @@ def test_get_additional_attributes_of_deliveries():
     def fake_find_delivery_by_search_parameters(search_parameters: ZoekTerm) -> Aanlevering | None:
         aanlevering_dict = {
             'DA-2024-00001': Aanlevering(id='00000000-0001-0000-0000-000000000000', referentie='DA-2024-00001',
-                                            status='IN_OPMAAK', dossierNummer='VWT-CEW-2020-009-5'),
+                                         status='IN_OPMAAK', dossierNummer='VWT-CEW-2020-009-5'),
             'DA-2024-00002': Aanlevering(id='00000000-0002-0000-0000-000000000000', referentie='DA-2024-00002',
-                                            status='IN_OPMAAK', dossierNummer='other')
+                                         status='IN_OPMAAK', dossierNummer='other')
         }
-        
+
         return aanlevering_dict.get(search_parameters.vrijeZoekterm)
 
     fake_davie_importer = Mock(spec=DavieRestClient)
@@ -95,7 +95,8 @@ def test_get_additional_attributes_of_deliveries():
         d = session.query(Delivery).filter(Delivery.uuid_em_infra == UUID('00000001-0000-0000-0000-000000000000')).one()
         assert d.referentie == 'DA-2024-00001'
         assert d.uuid_davie == UUID('00000000-0001-0000-0000-000000000000')
+        assert d.status == 'IN_OPMAAK'
 
         d2 = session.query(Delivery).filter(Delivery.uuid_em_infra == UUID('00000002-0000-0000-0000-000000000000')
-                                           ).scalar()
+                                            ).scalar()
         assert d2 is None
