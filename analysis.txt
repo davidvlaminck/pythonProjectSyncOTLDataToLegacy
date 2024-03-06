@@ -13,13 +13,13 @@
     - [ ] find all assets that were changed in that aanlevering (wait for EM-3200 or using emson endpoint)
     - [X] collect all related asset information using the asset info collector algorithm
     - [/] generate a report to update legacy data with
-      - [ ] relations
+      - [X] relations
       - [ ] attributes
-      - [ ] names
+      - [X] names
       - [ ] creation of new assets
     - [ ] save the report in the state db
     - [ ] at regular intervals, recollect the asset information
 4) update legacy data
-    - [ ] find reports in state db that have sufficient information to using for updates
+    - [ ] find reports in state db that have sufficient information to use for updates
     - [ ] update legacy data using the state report until everything is marked as done
     - [ ] update the status of the aanlevering in state db to 'verwerkt'

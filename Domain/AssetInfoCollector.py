@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from itertools import count
 from pathlib import Path
 from typing import Generator
 
@@ -9,6 +10,7 @@ from Domain.AssetCollection import AssetCollection
 from API.EMInfraRestClient import EMInfraRestClient
 from API.EMsonImporter import EMsonImporter
 from Domain.Enums import AuthType, Environment, Direction
+from Domain.InfoObject import NodeInfoObject
 from Exceptions.AssetsMissingError import AssetsMissingError
 from Exceptions.ObjectAlreadyExistsError import ObjectAlreadyExistsError
 from API.RequesterFactory import RequesterFactory
@@ -152,9 +154,12 @@ class AssetInfoCollector:
         df = DataFrame()
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'LED_toestel_uuid', 'LED_toestel_naam',
+            'LED_toestel_naam_conform_conventie',
             'relatie_naar_armatuur_controller_aanwezig', 'armatuur_controller_uuid', 'armatuur_controller_naam',
-            'relatie_naar_drager_aanwezig', 'drager_uuid', 'drager_type', 'drager_naam',
-            'relatie_naar_legacy_drager_aanwezig', 'legacy_drager_uuid', 'legacy_drager_type', 'legacy_drager_naampad']
+            'armatuur_controller_naam_conform_conventie',
+            'relatie_naar_drager_aanwezig', 'drager_uuid', 'drager_type', 'drager_naam', 'drager_naam_conform_conventie',
+            'relatie_naar_legacy_drager_aanwezig', 'legacy_drager_uuid', 'legacy_drager_type', 'legacy_drager_naampad',
+            'legacy_drager_naampad_conform_conventie']
         for missing_column_name in all_column_names:
             df[missing_column_name] = None
 
@@ -167,61 +172,8 @@ class AssetInfoCollector:
             toestel_name = toestel.attr_dict.get('AIMNaamObject.naam', '')
             current_toestel_dict = {'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
                                     'LED_toestel_uuid': [toestel_uuid], 'LED_toestel_naam': [toestel_name]}
-
-            if toestel_name is None:
-                toestel_name = toestel_uuid
-
-            controllers = list(self.collection.traverse_graph(
-                start_uuid=toestel_uuid, relation_types=['Bevestiging'], allowed_directions=[Direction.NONE],
-                return_type='info_object', filtered_node_types=['onderdeel#Armatuurcontroller']))
-
-            if not controllers:
-                logging.info(f"toestel {toestel_name} heeft geen relatie naar een armatuur controller")
-                current_toestel_dict['relatie_naar_armatuur_controller_aanwezig'] = [False]
-            else:
-                controller = controllers[0]
-                current_toestel_dict['relatie_naar_armatuur_controller_aanwezig'] = [True]
-                current_toestel_dict['armatuur_controller_uuid'] = [controller.uuid]
-                current_toestel_dict['armatuur_controller_naam'] = [controller.attr_dict.get('AIMNaamObject.naam', '')]
-
-            dragers = list(self.collection.traverse_graph(
-                start_uuid=toestel_uuid, relation_types=['Bevestiging'], allowed_directions=[Direction.NONE],
-                return_type='info_object', filtered_node_types=['onderdeel#WVLichtmast', 'onderdeel#WVConsole',
-                                                                'onderdeel#PunctueleVerlichtingsmast']))
-
-            if not dragers:
-                logging.info(f"toestel {toestel_name} heeft geen relatie naar een drager")
-                current_toestel_dict['relatie_naar_drager aanwezig'] = [False]
-                df_current = DataFrame(current_toestel_dict)
-                df = concat([df, df_current])
-                continue
-
-            drager = dragers[0]
-            drager_uuid = drager.uuid
-            current_toestel_dict['relatie_naar_drager_aanwezig'] = [True]
-            current_toestel_dict['drager_uuid'] = [drager.uuid]
-            current_toestel_dict['drager_type'] = [drager.short_type.split('#')[-1]]
-            current_toestel_dict['drager_naam'] = [drager.attr_dict.get('AIMNaamObject.naam', '')]
-
-            legacy_drager = next(self.collection.traverse_graph(
-                start_uuid=drager_uuid, relation_types=['HoortBij'], allowed_directions=[Direction.WITH],
-                return_type='info_object', filtered_node_types=['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole',
-                                                                'lgc:installatie#VVOP']))
-
-            if legacy_drager is None:
-                logging.info(f"drager {drager_uuid} heeft geen relatie naar een legacy equivalent")
-                current_toestel_dict['relatie_naar_legacy_drager_aanwezig'] = [False]
-                df_current = DataFrame(current_toestel_dict)
-                df = concat([df, df_current])
-                continue
-
-            legacy_drager_uuid = legacy_drager.uuid
-            current_toestel_dict['relatie_naar_legacy_drager_aanwezig'] = [True]
-            current_toestel_dict['legacy_drager_uuid'] = [legacy_drager_uuid]
-            current_toestel_dict['legacy_drager_type'] = [legacy_drager.short_type.split('#')[-1]]
-            current_toestel_dict['legacy_drager_naampad'] = [legacy_drager.attr_dict.get('NaampadObject.naampad', '')]
-
-            df_current = DataFrame(current_toestel_dict)
+            record_dict = self.get_report_record_for_one_toestel(toestel=toestel, record_dict=current_toestel_dict)
+            df_current = DataFrame(record_dict)
             df = concat([df, df_current])
 
         return df.sort_values('LED_toestel_uuid')
@@ -247,3 +199,134 @@ class AssetInfoCollector:
 
     def print_feed_page(self):
         self.em_infra_importer.print_feed_page()
+
+    def get_report_record_for_one_toestel(self, toestel: NodeInfoObject, record_dict: dict) -> dict:
+        toestel_uuid = toestel.uuid
+        toestel_name = toestel.attr_dict.get('AIMNaamObject.naam', '')
+
+        record_dict['LED_toestel_naam_conform_conventie'] = self.is_conform_name_convention_toestel(
+            toestel_name=toestel_name)
+        installatie_nummer = self.get_installatie_nummer_from_name(toestel_name=toestel_name)
+        lichtpunt_nummer = self.get_lichtpunt_nummer_from_name(toestel_name=toestel_name)
+
+        controllers = list(self.collection.traverse_graph(
+            start_uuid=toestel_uuid, relation_types=['Bevestiging'], allowed_directions=[Direction.NONE],
+            return_type='info_object', filtered_node_types=['onderdeel#Armatuurcontroller']))
+
+        if not controllers:
+            if toestel_name == '':
+                toestel_name = toestel_uuid
+            logging.info(f"toestel {toestel_name} heeft geen relatie naar een armatuur controller")
+            record_dict['relatie_naar_armatuur_controller_aanwezig'] = [False]
+        else:
+            controller = controllers[0]
+            record_dict['relatie_naar_armatuur_controller_aanwezig'] = [True]
+            record_dict['armatuur_controller_uuid'] = [controller.uuid]
+            controller_name = controller.attr_dict.get('AIMNaamObject.naam', '')
+            record_dict['armatuur_controller_naam'] = [controller_name]
+            record_dict['armatuur_controller_naam_conform_conventie'] = (
+                self.is_conform_name_convention_armatuur_controller(controller_name=controller_name,
+                                                                    toestel_name=toestel_name))
+
+        dragers = list(self.collection.traverse_graph(
+            start_uuid=toestel_uuid, relation_types=['Bevestiging'], allowed_directions=[Direction.NONE],
+            return_type='info_object', filtered_node_types=['onderdeel#WVLichtmast', 'onderdeel#WVConsole',
+                                                            'onderdeel#PunctueleVerlichtingsmast']))
+
+        if not dragers:
+            if toestel_name == '':
+                toestel_name = toestel_uuid
+            logging.info(f"toestel {toestel_name} heeft geen relatie naar een drager")
+            record_dict['relatie_naar_drager aanwezig'] = [False]
+            return record_dict
+
+        drager = dragers[0]
+        drager_uuid = drager.uuid
+        drager_naam = drager.attr_dict.get('AIMNaamObject.naam', '')
+        record_dict['relatie_naar_drager_aanwezig'] = [True]
+        record_dict['drager_uuid'] = [drager.uuid]
+        record_dict['drager_type'] = [drager.short_type.split('#')[-1]]
+        record_dict['drager_naam'] = [drager_naam]
+        record_dict['drager_naam_conform_conventie'] = (
+            self.is_conform_name_convention_drager(drager_name=drager_naam,
+                                                   toestel_name=toestel_name))
+
+        legacy_drager = next(self.collection.traverse_graph(
+            start_uuid=drager_uuid, relation_types=['HoortBij'], allowed_directions=[Direction.WITH],
+            return_type='info_object', filtered_node_types=['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole',
+                                                            'lgc:installatie#VVOP']))
+
+        if legacy_drager is None:
+            logging.info(f"drager {drager_uuid} heeft geen relatie naar een legacy equivalent")
+            record_dict['relatie_naar_legacy_drager_aanwezig'] = [False]
+            return record_dict
+
+        legacy_drager_uuid = legacy_drager.uuid
+        legacy_drager_naampad = legacy_drager.attr_dict.get('NaampadObject.naampad', '')
+        record_dict['relatie_naar_legacy_drager_aanwezig'] = [True]
+        record_dict['legacy_drager_uuid'] = [legacy_drager_uuid]
+        record_dict['legacy_drager_type'] = [legacy_drager.short_type.split('#')[-1]]
+        record_dict['legacy_drager_naampad'] = [legacy_drager_naampad]
+        record_dict['legacy_drager_naampad_conform_conventie'] = (
+            self.is_conform_name_convention_legacy_drager(
+                legacy_drager_naampad=legacy_drager_naampad, installatie_nummer=installatie_nummer,
+                lichtpunt_nummer=lichtpunt_nummer))
+
+
+        return record_dict
+
+    @classmethod
+    def is_conform_name_convention_toestel(cls, toestel_name: str) -> bool:
+        parts = toestel_name.split('.')
+        if len(parts) != 3:
+            return False
+
+        if len(parts[1]) == 0:
+            return False
+
+        if not parts[2].startswith('WV'):
+            return False
+
+        if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
+            return False
+
+        return True
+
+    @classmethod
+    def get_installatie_nummer_from_name(cls, toestel_name: str) -> str:
+        if toestel_name is None or not toestel_name or '.' not in toestel_name:
+            return ''
+        return toestel_name.split('.')[0]
+
+    @classmethod
+    def get_lichtpunt_nummer_from_name(cls, toestel_name: str) -> str:
+        if toestel_name is None or not toestel_name or '.' not in toestel_name:
+            return ''
+        return toestel_name.split('.')[1]
+
+    @classmethod
+    def is_conform_name_convention_armatuur_controller(cls, controller_name: str, toestel_name: str) -> bool:
+        if controller_name is None or not controller_name:
+            return False
+        if toestel_name is None or not toestel_name:
+            return False
+        return controller_name.startswith(f'{toestel_name}.AC')
+
+    @classmethod
+    def is_conform_name_convention_drager(cls, drager_name: str, toestel_name: str) -> bool:
+        if drager_name is None or not drager_name:
+            return False
+        if toestel_name is None or not toestel_name:
+            return False
+        return toestel_name.startswith(f'{drager_name}.WV')
+
+    @classmethod
+    def is_conform_name_convention_legacy_drager(cls, legacy_drager_naampad: str, installatie_nummer: str,
+                                                 lichtpunt_nummer: str) -> bool:
+        if legacy_drager_naampad is None or not legacy_drager_naampad:
+            return False
+        if installatie_nummer is None or not installatie_nummer:
+            return False
+        if lichtpunt_nummer is None or not lichtpunt_nummer:
+            return False
+        return legacy_drager_naampad == f'{installatie_nummer}/{installatie_nummer}.WV/{lichtpunt_nummer}'

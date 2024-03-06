@@ -36,6 +36,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
         "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000002-",
         "AIMDBStatus.isActief": True,
+        'AIMNaamObject.naam': 'A0000.A01.WV1',
         "AIMObject.assetId": {
             "DtcIdentificator.toegekendDoor": "AWV",
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000002-"
@@ -46,6 +47,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
         "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000003-",
         "AIMDBStatus.isActief": True,
+        'AIMNaamObject.naam': 'A0000.C02.WV1',
         "AIMObject.assetId": {
             "DtcIdentificator.toegekendDoor": "AWV",
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000003-"
@@ -56,6 +58,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast",
         "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000004-",
         "AIMDBStatus.isActief": True,
+        'AIMNaamObject.naam': 'A0000.A01',
         "AIMObject.assetId": {
             "DtcIdentificator.toegekendDoor": "AWV",
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000004-"
@@ -66,6 +69,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVConsole",
         "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000005-",
         "AIMDBStatus.isActief": True,
+        'AIMNaamObject.naam': 'A0000.FOUT1',
         "AIMObject.assetId": {
             "DtcIdentificator.toegekendDoor": "AWV",
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000005-"
@@ -76,6 +80,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller",
         "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000006-",
         "AIMDBStatus.isActief": True,
+        'AIMNaamObject.naam': 'A0000.A01.WV1.AC1',
         "AIMObject.assetId": {
             "DtcIdentificator.toegekendDoor": "AWV",
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000006-"
@@ -86,6 +91,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller",
         "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000007-",
         "AIMDBStatus.isActief": True,
+        'AIMNaamObject.naam': 'A0000.C02.WV1.AC1',
         "AIMObject.assetId": {
             "DtcIdentificator.toegekendDoor": "AWV",
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000007-"
@@ -96,21 +102,25 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         "@type": "https://lgc.data.wegenenverkeer.be/ns/installatie#VPLMast",
         "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000008-",
         "AIMDBStatus.isActief": True,
+        'AIMNaamObject.naam': 'A01',
         "AIMObject.assetId": {
             "DtcIdentificator.toegekendDoor": "AWV",
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000008-"
         },
         "AIMObject.typeURI": "https://lgc.data.wegenenverkeer.be/ns/installatie#VPLMast",
+        "NaampadObject.naampad": "A0000/A0000.WV/A01",
     }
     asset_9 = {
         "@type": "https://lgc.data.wegenenverkeer.be/ns/installatie#VPConsole",
         "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000009-",
         "AIMDBStatus.isActief": True,
+        'AIMNaamObject.naam': 'C02',
         "AIMObject.assetId": {
             "DtcIdentificator.toegekendDoor": "AWV",
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000009-"
         },
         "AIMObject.typeURI": "https://lgc.data.wegenenverkeer.be/ns/installatie#VPConsole",
+        "NaampadObject.naampad": "A0000/A0000.WV/C02",
     }
 
     relatie_10 = {
@@ -444,20 +454,90 @@ def test_start_creating_report():
     expected_report = {
         'columns': [
             'aanlevering_id', 'aanlevering_naam', 'LED_toestel_uuid', 'LED_toestel_naam',
+            'LED_toestel_naam_conform_conventie',
             'relatie_naar_armatuur_controller_aanwezig', 'armatuur_controller_uuid', 'armatuur_controller_naam',
-            'relatie_naar_drager_aanwezig', 'drager_uuid', 'drager_type', 'drager_naam',
-            'relatie_naar_legacy_drager_aanwezig', 'legacy_drager_uuid', 'legacy_drager_type', 'legacy_drager_naampad'],
+            'armatuur_controller_naam_conform_conventie',
+            'relatie_naar_drager_aanwezig', 'drager_uuid', 'drager_type', 'drager_naam', 'drager_naam_conform_conventie',
+            'relatie_naar_legacy_drager_aanwezig', 'legacy_drager_uuid', 'legacy_drager_type', 'legacy_drager_naampad',
+            'legacy_drager_naampad_conform_conventie'],
         'index': [0, 0],
         'data': [
-            ['01', 'DA-01', '00000000-0000-0000-0000-000000000002', '',
-             True, '00000000-0000-0000-0000-000000000006', '',
-             True, '00000000-0000-0000-0000-000000000004', 'WVLichtmast', '',
-             True, '00000000-0000-0000-0000-000000000008', 'VPLMast', ''],
-            ['01', 'DA-01', '00000000-0000-0000-0000-000000000003', '',
-             True, '00000000-0000-0000-0000-000000000007', '',
-             True, '00000000-0000-0000-0000-000000000005', 'WVConsole', '',
-             True, '00000000-0000-0000-0000-000000000009', 'VPConsole', '']]}
+            ['01', 'DA-01', '00000000-0000-0000-0000-000000000002', 'A0000.A01.WV1',
+             True,
+             True, '00000000-0000-0000-0000-000000000006', 'A0000.A01.WV1.AC1',
+             True,
+             True, '00000000-0000-0000-0000-000000000004', 'WVLichtmast', 'A0000.A01', True,
+             True, '00000000-0000-0000-0000-000000000008', 'VPLMast', 'A0000/A0000.WV/A01', True],
+            ['01', 'DA-01', '00000000-0000-0000-0000-000000000003', 'A0000.C02.WV1',
+             True,
+             True, '00000000-0000-0000-0000-000000000007', 'A0000.C02.WV1.AC1',
+             True,
+             True, '00000000-0000-0000-0000-000000000005', 'WVConsole', 'A0000.FOUT1', False,
+             True, '00000000-0000-0000-0000-000000000009', 'VPConsole', 'A0000/A0000.WV/C02', True]]}
 
     report = collector.start_creating_report('01', 'DA-01')
 
     assert report.to_dict('split') == expected_report
+
+
+def test_is_conform_name_convention_toestel():
+    assert AssetInfoCollector.is_conform_name_convention_toestel('A0000.A01.WV1')
+    assert not AssetInfoCollector.is_conform_name_convention_toestel('A0000..WV1')
+    assert not AssetInfoCollector.is_conform_name_convention_toestel('A0000.A01.AC1')
+    assert not AssetInfoCollector.is_conform_name_convention_toestel('0000.A01.WV1')
+    assert not AssetInfoCollector.is_conform_name_convention_toestel('A0000.A01')
+    assert not AssetInfoCollector.is_conform_name_convention_toestel('A0000.A01.WV1.AC1')
+
+
+def test_is_conform_name_convention_armatuur_controller():
+    assert AssetInfoCollector.is_conform_name_convention_armatuur_controller(
+        controller_name='A0000.A01.WV1.AC1', toestel_name='A0000.A01.WV1')
+    assert AssetInfoCollector.is_conform_name_convention_armatuur_controller(
+        controller_name='A0000.A01.WV1.AC2', toestel_name='A0000.A01.WV1')
+    assert not AssetInfoCollector.is_conform_name_convention_armatuur_controller(
+        controller_name='A0000.A01.AC1', toestel_name='A0000.A01.WV1')
+    assert not AssetInfoCollector.is_conform_name_convention_armatuur_controller(
+        controller_name='A0000.A01.WV1', toestel_name='A0000.A01.WV1.AC1')
+    assert not AssetInfoCollector.is_conform_name_convention_armatuur_controller(
+        controller_name='A0000.A01.WV2.AC1', toestel_name='A0000.A01.WV1')
+
+
+def test_is_conform_name_convention_drager():
+    assert AssetInfoCollector.is_conform_name_convention_drager(
+        drager_name='A0000.A01', toestel_name='A0000.A01.WV1')
+    assert AssetInfoCollector.is_conform_name_convention_drager(
+        drager_name='A0000.A01', toestel_name='A0000.A01.WV2')
+    assert not AssetInfoCollector.is_conform_name_convention_drager(
+        drager_name='A0000.A01.WV1', toestel_name='A0000.A01')
+    assert not AssetInfoCollector.is_conform_name_convention_drager(
+        drager_name='A0000.A01.WV1.AC1', toestel_name='A0000.A01.WV1')
+    assert not AssetInfoCollector.is_conform_name_convention_drager(
+        drager_name='A0000.A02', toestel_name='A0000.A01.WV1')
+
+
+def test_is_conform_name_convention_legacy_drager():
+    assert AssetInfoCollector.is_conform_name_convention_legacy_drager(
+        legacy_drager_naampad='A0000/A0000.WV/A01', installatie_nummer='A0000', lichtpunt_nummer='A01')
+    assert AssetInfoCollector.is_conform_name_convention_legacy_drager(
+        legacy_drager_naampad='A0001/A0001.WV/A02', installatie_nummer='A0001', lichtpunt_nummer='A02')
+    assert not AssetInfoCollector.is_conform_name_convention_legacy_drager(
+        legacy_drager_naampad='A0002/A0002.WV/A02', installatie_nummer='A0001', lichtpunt_nummer='A02')
+    assert not AssetInfoCollector.is_conform_name_convention_legacy_drager(
+        legacy_drager_naampad='A0001/A0001.WV/A02', installatie_nummer='A0001', lichtpunt_nummer='A01')
+
+def test_get_installatie_nummer_from_name():
+    assert AssetInfoCollector.get_installatie_nummer_from_name('A0000.A01.WV1') == 'A0000'
+    assert AssetInfoCollector.get_installatie_nummer_from_name('0000.A01.WV1') == '0000'
+    assert AssetInfoCollector.get_installatie_nummer_from_name('A0000.A01.WV1.AC1') == 'A0000'
+    assert AssetInfoCollector.get_installatie_nummer_from_name('A0000') == ''
+    assert AssetInfoCollector.get_installatie_nummer_from_name('') == ''
+    assert AssetInfoCollector.get_installatie_nummer_from_name(None) == ''
+
+
+def test_get_lichtpunt_nummer_from_name():
+    assert AssetInfoCollector.get_lichtpunt_nummer_from_name('A0000.A01.WV1') == 'A01'
+    assert AssetInfoCollector.get_lichtpunt_nummer_from_name('0000.01.WV1') == '01'
+    assert AssetInfoCollector.get_lichtpunt_nummer_from_name('A0000.A01.WV1.AC1') == 'A01'
+    assert AssetInfoCollector.get_lichtpunt_nummer_from_name('A0000') == ''
+    assert AssetInfoCollector.get_lichtpunt_nummer_from_name('') == ''
+    assert AssetInfoCollector.get_lichtpunt_nummer_from_name(None) == ''
