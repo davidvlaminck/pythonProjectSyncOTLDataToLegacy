@@ -1,4 +1,5 @@
 ﻿import logging
+import math
 from unittest.mock import Mock
 
 from API.AbstractRequester import AbstractRequester
@@ -42,6 +43,15 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000002-"
         },
         "AIMObject.typeURI": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
+        "geo:Geometrie.log": [
+            {
+                "geo:DtcLog.bron": "https://geo.data.wegenenverkeer.be/id/concept/KlLogBron/overerving",
+                "geo:DtcLog.niveau": "https://geo.data.wegenenverkeer.be/id/concept/KlLogNiveau/0",
+                "geo:DtcLog.geometrie": {
+                    "geo:DtuGeometrie.punt": "POINT Z (200000.00 200000.00 0)"
+                },
+            }
+        ],
     }
     asset_3 = {
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
@@ -64,6 +74,15 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000004-"
         },
         "AIMObject.typeURI": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast",
+        "geo:Geometrie.log": [
+            {
+                "geo:DtcLog.bron": "https://geo.data.wegenenverkeer.be/id/concept/KlLogBron/meettoestel",
+                "geo:DtcLog.niveau": "https://geo.data.wegenenverkeer.be/id/concept/KlLogNiveau/0",
+                "geo:DtcLog.geometrie": {
+                    "geo:DtuGeometrie.punt": "POINT Z (200000.00 200000.00 0)"
+                },
+            }
+        ],
     }
     asset_5 = {
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVConsole",
@@ -109,6 +128,17 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         },
         "AIMObject.typeURI": "https://lgc.data.wegenenverkeer.be/ns/installatie#VPLMast",
         "NaampadObject.naampad": "A0000/A0000.WV/A01",
+        "loc:Locatie.puntlocatie": {
+            "loc:DtcPuntlocatie.bron": "https://loc.data.wegenenverkeer.be/id/concept/KlLocatieBron/manueel",
+            "loc:3Dpunt.puntgeometrie": {
+                "loc:DtcCoord.lambert72": {
+                    "loc:DtcCoordLambert72.ycoordinaat": 200001.0,
+                    "loc:DtcCoordLambert72.zcoordinaat": 0,
+                    "loc:DtcCoordLambert72.xcoordinaat": 200001.0
+                }
+            },
+            "loc:DtcPuntlocatie.precisie": "https://loc.data.wegenenverkeer.be/id/concept/KlLocatiePrecisie/meter"
+        }
     }
     asset_9 = {
         "@type": "https://lgc.data.wegenenverkeer.be/ns/installatie#VPConsole",
@@ -459,7 +489,7 @@ def test_start_creating_report():
             'armatuur_controller_naam_conform_conventie',
             'relatie_naar_drager_aanwezig', 'drager_uuid', 'drager_type', 'drager_naam', 'drager_naam_conform_conventie',
             'relatie_naar_legacy_drager_aanwezig', 'legacy_drager_uuid', 'legacy_drager_type', 'legacy_drager_naampad',
-            'legacy_drager_naampad_conform_conventie'],
+            'legacy_drager_naampad_conform_conventie', 'legacy_drager_LED_toestel_binnen_5_meter'],
         'index': [0, 0],
         'data': [
             ['01', 'DA-01', '00000000-0000-0000-0000-000000000002', 'A0000.A01.WV1',
@@ -467,13 +497,13 @@ def test_start_creating_report():
              True, '00000000-0000-0000-0000-000000000006', 'A0000.A01.WV1.AC1',
              True,
              True, '00000000-0000-0000-0000-000000000004', 'WVLichtmast', 'A0000.A01', True,
-             True, '00000000-0000-0000-0000-000000000008', 'VPLMast', 'A0000/A0000.WV/A01', True],
+             True, '00000000-0000-0000-0000-000000000008', 'VPLMast', 'A0000/A0000.WV/A01', True, math.nan],
             ['01', 'DA-01', '00000000-0000-0000-0000-000000000003', 'A0000.C02.WV1',
              True,
              True, '00000000-0000-0000-0000-000000000007', 'A0000.C02.WV1.AC1',
              True,
              True, '00000000-0000-0000-0000-000000000005', 'WVConsole', 'A0000.FOUT1', False,
-             True, '00000000-0000-0000-0000-000000000009', 'VPConsole', 'A0000/A0000.WV/C02', True]]}
+             True, '00000000-0000-0000-0000-000000000009', 'VPConsole', 'A0000/A0000.WV/C02', True, math.nan]]}
 
     report = collector.start_creating_report('01', 'DA-01')
 

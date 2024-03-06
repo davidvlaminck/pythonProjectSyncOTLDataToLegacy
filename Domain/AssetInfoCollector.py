@@ -159,7 +159,7 @@ class AssetInfoCollector:
             'armatuur_controller_naam_conform_conventie',
             'relatie_naar_drager_aanwezig', 'drager_uuid', 'drager_type', 'drager_naam', 'drager_naam_conform_conventie',
             'relatie_naar_legacy_drager_aanwezig', 'legacy_drager_uuid', 'legacy_drager_type', 'legacy_drager_naampad',
-            'legacy_drager_naampad_conform_conventie']
+            'legacy_drager_naampad_conform_conventie', 'legacy_drager_LED_toestel_binnen_5_meter']
         for missing_column_name in all_column_names:
             df[missing_column_name] = None
 

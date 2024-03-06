@@ -15,6 +15,7 @@
     - [/] generate a report to update legacy data with
       - [X] relations
       - [ ] attributes
+      - [ ] geometry
       - [X] names
       - [ ] creation of new assets
     - [ ] save the report in the state db
