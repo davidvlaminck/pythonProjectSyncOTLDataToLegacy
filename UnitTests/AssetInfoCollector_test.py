@@ -43,7 +43,19 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
             "DtcIdentificator.toegekendDoor": "AWV",
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000002-"
         },
+        "AIMObject.datumOprichtingObject": "2020-01-01",
         "AIMObject.typeURI": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
+        "VerlichtingstoestelLED.kleurTemperatuur": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedKleurTemp/3000",
+        "Verlichtingstoestel.systeemvermogen": 100,
+        "Verlichtingstoestel.modelnaam": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlVerlichtingstoestelModelnaam/ampera",
+        "Verlichtingstoestel.merk": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlVerlichtingstoestelMerk/Schreder",
+        "VerlichtingstoestelLED.lichtpuntHoogte": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedLichtpunthoogte/6",
+        "VerlichtingstoestelLED.aantalTeVerlichtenRijstroken": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedAantalTeVerlichtenRijstroken/1",
+        "VerlichtingstoestelLED.lumenOutput": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlLumenOutput/10000",
+        "VerlichtingstoestelLED.overhang": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedOverhang/1",
+        "Verlichtingstoestel.verlichtGebied": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlVerlichtingstoestelVerlichtGebied/hoofdweg",
+        "VerlichtingstoestelLED.verlichtingsNiveau": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedVerlNiveau/M3",
+
     }
     asset_3 = {
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
@@ -75,6 +87,8 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
                 },
             }
         ],
+        "AIMToestand.toestand": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlAIMToestand/in-gebruik",
+        "Lichtmast.kleur": "7038"
     }
     asset_5 = {
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVConsole",
@@ -86,6 +100,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000005-"
         },
         "AIMObject.typeURI": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVConsole",
+        "AIMToestand.toestand": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlAIMToestand/uit-gebruik",
     }
     asset_6 = {
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller",
@@ -97,6 +112,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000006-"
         },
         "AIMObject.typeURI": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller",
+        "Armatuurcontroller.serienummer": '1234561'
     }
     asset_7 = {
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller",
@@ -130,7 +146,27 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
                 }
             },
             "loc:DtcPuntlocatie.precisie": "https://loc.data.wegenenverkeer.be/id/concept/KlLocatiePrecisie/meter"
-        }
+        },
+        "AIMToestand.toestand": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlAIMToestand/in-gebruik",
+        'lgc:EMObject.aantalTeVerlichtenRijvakkenLed': 'R1',
+        'lgc:EMObject.aantalVerlichtingstoestellen': 4,
+        'lgc:EMObject.contractnummerLeveringLed': '123456',
+        'lgc:EMObject.datumInstallatieLed': '2020-01-01',
+        'lgc:EMObject.kleurtemperatuurLed': 'K3000',
+        'lgc:EMObject.ledVerlichting': True,
+        'lgc:VPLMast.lichtmastBuitenGebruik': False,
+        'lgc:EMObject.lichtpunthoogteTovRijweg': 6,
+        'lgc:EMObject.lumenPakketLed': 10000,
+        'lgc:EMObject.overhangLed': 'O+1',
+        'lgc:VPLMast.ralKleurVplmast': '7038',
+        'lgc:VPLMast.serienummerArmatuurcontroller1': '1234561',
+        'lgc:VPLMast.serienummerArmatuurcontroller2': '1234562',
+        'lgc:VPLMast.serienummerArmatuurcontroller3': '1234563',
+        'lgc:VPLMast.serienummerArmatuurcontroller4': '1234564',
+        'lgc:EMObject.verlichtingsniveauLed': 'M3',
+        'lgc:EMObject.verlichtingstoestelMerkEnType': 'Schreder Ampera',
+        'lgc:EMObject.verlichtingstoestelSysteemvermogen': 100,
+        'lgc:EMObject.verlichtingstype': 'hoofdbaan'
     }
     asset_9 = {
         "@type": "https://lgc.data.wegenenverkeer.be/ns/installatie#VPConsole",
@@ -143,6 +179,23 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         },
         "AIMObject.typeURI": "https://lgc.data.wegenenverkeer.be/ns/installatie#VPConsole",
         "NaampadObject.naampad": "A0000/A0000.WV/C02",
+        "AIMToestand.toestand": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlAIMToestand/in-gebruik",
+        'lgc:EMObject.aantalTeVerlichtenRijvakkenLed': 'R2',
+        'lgc:EMObject.aantalVerlichtingstoestellen': 1,
+        'lgc:EMObject.contractnummerLeveringLed': '123456',
+        'lgc:EMObject.datumInstallatieLed': '2020-01-01',
+        'lgc:EMObject.kleurtemperatuurLed': 'K3000',
+        'lgc:EMObject.ledVerlichting': True,
+        'lgc:VPConsole.consoleBuitenGebruik': False,
+        'lgc:EMObject.lichtpunthoogteTovRijweg': 5,
+        'lgc:EMObject.lumenPakketLed': 10000,
+        'lgc:EMObject.overhangLed': '0',
+        'lgc:VPConsole.ralKleurVpconsole': '7038',
+        'lgc:EMObject.serienummerArmatuurcontroller': '1234561',
+        'lgc:EMObject.verlichtingsniveauLed': 'M2',
+        'lgc:EMObject.verlichtingstoestelMerkEnType': 'Schreder Ampera',
+        'lgc:EMObject.verlichtingstoestelSysteemvermogen': 100,
+        'lgc:EMObject.verlichtingstype': 'hoofdbaan'
     }
 
     relatie_10 = {
@@ -481,7 +534,10 @@ def test_start_creating_report():
             'armatuur_controller_naam_conform_conventie',
             'relatie_naar_drager_aanwezig', 'drager_uuid', 'drager_type', 'drager_naam', 'drager_naam_conform_conventie',
             'relatie_naar_legacy_drager_aanwezig', 'legacy_drager_uuid', 'legacy_drager_type', 'legacy_drager_naampad',
-            'legacy_drager_naampad_conform_conventie', 'legacy_drager_LED_toestel_binnen_5_meter'],
+            'legacy_drager_naampad_conform_conventie', 'legacy_drager_en_drager_binnen_5_meter',
+            'legacy_drager_en_drager_identieke_geometrie', 'update_legacy_drager_geometrie',
+            'legacy_drager_en_drager_gelijke_toestand', 'update_legacy_drager_toestand',
+            'attributen_gelijk', 'update_legacy_drager_attributen'],
         'index': [0, 0],
         'data': [
             ['01', 'DA-01', '00000000-0000-0000-0000-000000000002', 'A0000.A01.WV1',
@@ -489,13 +545,21 @@ def test_start_creating_report():
              True, '00000000-0000-0000-0000-000000000006', 'A0000.A01.WV1.AC1',
              True,
              True, '00000000-0000-0000-0000-000000000004', 'WVLichtmast', 'A0000.A01', True,
-             True, '00000000-0000-0000-0000-000000000008', 'VPLMast', 'A0000/A0000.WV/A01', True, True],
+             True, '00000000-0000-0000-0000-000000000008', 'VPLMast', 'A0000/A0000.WV/A01',
+             True, True,
+             False, '',
+             True, '',
+             True, ''],
             ['01', 'DA-01', '00000000-0000-0000-0000-000000000003', 'A0000.C02.WV1',
              True,
              True, '00000000-0000-0000-0000-000000000007', 'A0000.C02.WV1.AC1',
              True,
              True, '00000000-0000-0000-0000-000000000005', 'WVConsole', 'A0000.FOUT1', False,
-             True, '00000000-0000-0000-0000-000000000009', 'VPConsole', 'A0000/A0000.WV/C02', True, False]]}
+             True, '00000000-0000-0000-0000-000000000009', 'VPConsole', 'A0000/A0000.WV/C02',
+             True, False,
+             False, '',
+             False, 'uit-gebruik',
+             True, '']]}
 
     report = collector.start_creating_report('01', 'DA-01')
 
@@ -547,6 +611,7 @@ def test_is_conform_name_convention_legacy_drager():
     assert not AssetInfoCollector.is_conform_name_convention_legacy_drager(
         legacy_drager_naampad='A0001/A0001.WV/A02', installatie_nummer='A0001', lichtpunt_nummer='A01')
 
+
 def test_get_installatie_nummer_from_name():
     assert AssetInfoCollector.get_installatie_nummer_from_name('A0000.A01.WV1') == 'A0000'
     assert AssetInfoCollector.get_installatie_nummer_from_name('0000.A01.WV1') == '0000'
@@ -565,7 +630,7 @@ def test_get_lichtpunt_nummer_from_name():
     assert AssetInfoCollector.get_lichtpunt_nummer_from_name(None) == ''
 
 
-def test_is_drager_within_small_radius_legacy_drager():
+def test_distance_between_drager_and_legacy_drager():
     fake_requester = Mock(spec=AbstractRequester)
     fake_requester.first_part_url = ''
     AssetInfoCollector.create_requester_with_settings = Mock(return_value=fake_requester)
@@ -580,58 +645,157 @@ def test_is_drager_within_small_radius_legacy_drager():
     drager_node_2 = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000005')
     legacy_drager_node_2 = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000009')
 
-    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
-        drager=None, legacy_drager=None)
+    assert AssetInfoCollector.distance_between_drager_and_legacy_drager(
+        drager=None, legacy_drager=None) == 100.0
 
-    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
-        drager=drager_node_2, legacy_drager=legacy_drager_node_2)
+    assert AssetInfoCollector.distance_between_drager_and_legacy_drager(
+        drager=drager_node_2, legacy_drager=legacy_drager_node_2) == 100.0
 
-    assert AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
-        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+    assert AssetInfoCollector.distance_between_drager_and_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1) == 1.0
 
     drager_node_1.attr_dict['geo:Geometrie.log'][0]['geo:DtcLog.geometrie'][
-        'geo:DtuGeometrie.punt'] = 'POINT Z (200008.0 200000.0 0)'
+        'geo:DtuGeometrie.punt'] = 'POINT Z (200005.0 200004.0 0)'
 
-    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
-        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+    assert AssetInfoCollector.distance_between_drager_and_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1) == 5.0
 
     del drager_node_1.attr_dict['geo:Geometrie.log'][0]['geo:DtcLog.geometrie']['geo:DtuGeometrie.punt']
 
-    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
-        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+    assert AssetInfoCollector.distance_between_drager_and_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1) == 100.0
 
     del drager_node_1.attr_dict['geo:Geometrie.log'][0]['geo:DtcLog.geometrie']
 
-    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
-        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+    assert AssetInfoCollector.distance_between_drager_and_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1) == 100.0
 
     del drager_node_1.attr_dict['geo:Geometrie.log'][0]
 
-    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
-        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+    assert AssetInfoCollector.distance_between_drager_and_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1) == 100.0
 
     del drager_node_1.attr_dict['geo:Geometrie.log']
 
-    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
-        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+    assert AssetInfoCollector.distance_between_drager_and_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1) == 100.0
 
     del legacy_drager_node_1.attr_dict['loc:Locatie.puntlocatie']['loc:3Dpunt.puntgeometrie'][
         'loc:DtcCoord.lambert72']['loc:DtcCoordLambert72.xcoordinaat']
 
-    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
-        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+    assert AssetInfoCollector.distance_between_drager_and_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1) == 100.0
 
     del legacy_drager_node_1.attr_dict['loc:Locatie.puntlocatie']['loc:3Dpunt.puntgeometrie']['loc:DtcCoord.lambert72']
 
-    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
-        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+    assert AssetInfoCollector.distance_between_drager_and_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1) == 100.0
 
     del legacy_drager_node_1.attr_dict['loc:Locatie.puntlocatie']['loc:3Dpunt.puntgeometrie']
 
-    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
-        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+    assert AssetInfoCollector.distance_between_drager_and_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1) == 100.0
 
     del legacy_drager_node_1.attr_dict['loc:Locatie.puntlocatie']
 
-    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
-        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+    assert AssetInfoCollector.distance_between_drager_and_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1) == 100.0
+
+
+def test_get_attribute_dict_from_legacy_drager():
+    fake_requester = Mock(spec=AbstractRequester)
+    fake_requester.first_part_url = ''
+    AssetInfoCollector.create_requester_with_settings = Mock(return_value=fake_requester)
+    collector = AssetInfoCollector(auth_type=Mock(), env=Mock(), settings_path=Mock())
+    collector.em_infra_importer = fake_em_infra_importer
+
+    collector.collect_asset_info(uuids=['00000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000009'])
+    legacy_drager_node_1 = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000008')
+    legacy_drager_node_2 = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000009')
+
+    d_1 = AssetInfoCollector.get_attribute_dict_from_legacy_drager(legacy_drager=legacy_drager_node_1)
+    d_2 = AssetInfoCollector.get_attribute_dict_from_legacy_drager(legacy_drager=legacy_drager_node_2)
+
+    assert d_1 == {
+        'aantal_te_verlichten_rijvakken_LED': 'R1',
+        'aantal_verlichtingstoestellen': 4,
+        'contractnummer_levering_LED': '123456',
+        'datum_installatie_LED': '2020-01-01',
+        'kleurtemperatuur_LED': 'K3000',
+        'LED_verlichting': True,
+        'drager_buiten_gebruik': False,
+        'lichtpunthoogte_tov_rijweg': 6,
+        'lumen_pakket_LED': 10000,
+        'overhang_LED': 'O+1',
+        'RAL_kleur': '7038',
+        'serienummer_armatuurcontroller_1': '1234561',
+        'serienummer_armatuurcontroller_2': '1234562',
+        'serienummer_armatuurcontroller_3': '1234563',
+        'serienummer_armatuurcontroller_4': '1234564',
+        'verlichtingsniveau_LED': 'M3',
+        'verlichtingstoestel_merk_en_type': 'Schreder Ampera',
+        'verlichtingstoestel_systeemvermogen': 100,
+        'verlichtingstype': 'hoofdbaan'
+    }
+    assert d_2 == {
+        'aantal_te_verlichten_rijvakken_LED': 'R2',
+        'aantal_verlichtingstoestellen': 1,
+        'contractnummer_levering_LED': '123456',
+        'datum_installatie_LED': '2020-01-01',
+        'kleurtemperatuur_LED': 'K3000',
+        'LED_verlichting': True,
+        'drager_buiten_gebruik': False,
+        'lichtpunthoogte_tov_rijweg': 5,
+        'lumen_pakket_LED': 10000,
+        'overhang_LED': '0',
+        'RAL_kleur': '7038',
+        'serienummer_armatuurcontroller_1': '1234561',
+        'verlichtingsniveau_LED': 'M2',
+        'verlichtingstoestel_merk_en_type': 'Schreder Ampera',
+        'verlichtingstoestel_systeemvermogen': 100,
+        'verlichtingstype': 'hoofdbaan'
+    }
+
+
+def test_get_attribute_dict_from_drager():
+    fake_requester = Mock(spec=AbstractRequester)
+    fake_requester.first_part_url = ''
+    AssetInfoCollector.create_requester_with_settings = Mock(return_value=fake_requester)
+    collector = AssetInfoCollector(auth_type=Mock(), env=Mock(), settings_path=Mock())
+    collector.em_infra_importer = fake_em_infra_importer
+
+    collector.collect_asset_info(uuids=['00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000002',
+                                        '00000000-0000-0000-0000-000000000006'])
+    drager = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000004')
+    toestel = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000002')
+    armatuur_controller = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000006')
+
+    d_1 = AssetInfoCollector.get_attribute_dict_from_otl_assets(drager=drager, toestel=toestel,
+                                                                armatuur_controller=armatuur_controller)
+
+    d_expected = {
+        'aantal_verlichtingstoestellen': 4,
+        'contractnummer_levering_LED': '123456',
+        'datum_installatie_LED': '2020-01-01',
+        'kleurtemperatuur_LED': 'K3000',
+        'LED_verlichting': True,
+        'drager_buiten_gebruik': False,
+        'lichtpunthoogte_tov_rijweg': 6,
+        'lumen_pakket_LED': 10000,
+        'overhang_LED': 'O+1',
+        'RAL_kleur': '7038',
+        'serienummer_armatuurcontroller_1': '1234561',
+        'serienummer_armatuurcontroller_2': '1234562',
+        'serienummer_armatuurcontroller_3': '1234563',
+        'serienummer_armatuurcontroller_4': '1234564',
+        'verlichtingsniveau_LED': 'M3',
+        'verlichtingstoestel_merk_en_type': 'Schreder Ampera',
+        'verlichtingstoestel_systeemvermogen': 100,
+        'verlichtingstype': 'hoofdbaan'
+    }
+
+    d_expected = {
+        'aantal_te_verlichten_rijvakken_LED': 'R1',
+    }
+
+    assert d_expected == d_1

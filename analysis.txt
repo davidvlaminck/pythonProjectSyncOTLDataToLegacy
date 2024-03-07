@@ -17,12 +17,14 @@
     - [/] generate a report to update legacy data with
       - [X] relations
       - [ ] attributes
-      - [ ] geometry
+      - [X] geometry
       - [X] names
-      - [ ] creation of new assets
+      - [ ] (N/A in first implementation) creation of new assets
     - [ ] save the report in the state db
     - [ ] at regular intervals, recollect the asset information by clearing the asset data
 4) update legacy data
     - [ ] find reports in state db that have sufficient information to use for updates
     - [ ] update legacy data using the state report until everything is marked as done
     - [ ] update the status of the aanlevering in state db to 'verwerkt'
+
+refactor to allow for multiple leds on one drager

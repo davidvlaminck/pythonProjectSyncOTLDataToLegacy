@@ -159,7 +159,10 @@ class AssetInfoCollector:
             'armatuur_controller_naam_conform_conventie',
             'relatie_naar_drager_aanwezig', 'drager_uuid', 'drager_type', 'drager_naam', 'drager_naam_conform_conventie',
             'relatie_naar_legacy_drager_aanwezig', 'legacy_drager_uuid', 'legacy_drager_type', 'legacy_drager_naampad',
-            'legacy_drager_naampad_conform_conventie', 'legacy_drager_LED_toestel_binnen_5_meter']
+            'legacy_drager_naampad_conform_conventie', 'legacy_drager_en_drager_binnen_5_meter',
+            'legacy_drager_en_drager_identieke_geometrie', 'update_legacy_drager_geometrie',
+            'legacy_drager_en_drager_gelijke_toestand', 'update_legacy_drager_toestand',
+            'attributen_gelijk', 'update_legacy_drager_attributen']
         for missing_column_name in all_column_names:
             df[missing_column_name] = None
 
@@ -271,8 +274,66 @@ class AssetInfoCollector:
             self.is_conform_name_convention_legacy_drager(
                 legacy_drager_naampad=legacy_drager_naampad, installatie_nummer=installatie_nummer,
                 lichtpunt_nummer=lichtpunt_nummer))
-        record_dict['legacy_drager_LED_toestel_binnen_5_meter'] = self.is_drager_within_small_radius_legacy_drager(
-            legacy_drager=legacy_drager, drager=drager)
+
+        # geometry
+        distance = self.distance_between_drager_and_legacy_drager(legacy_drager=legacy_drager, drager=drager)
+        record_dict['legacy_drager_en_drager_binnen_5_meter'] = [distance <= 5.0]
+        record_dict['legacy_drager_en_drager_identieke_geometrie'] = [0.0 < distance <= 0.01]
+        record_dict['update_legacy_drager_geometrie'] = ''  # TODO: change to legacy geometry for legacy_drager
+
+        # toestand
+        legacy_drager_toestand = legacy_drager.attr_dict.get('AIMToestand.toestand')
+        drager_toestand = drager.attr_dict.get('AIMToestand.toestand')
+        record_dict['legacy_drager_en_drager_gelijke_toestand'] = [legacy_drager_toestand == drager_toestand]
+        if record_dict['legacy_drager_en_drager_gelijke_toestand'][0]:
+            record_dict['update_legacy_drager_toestand'] = ''
+        else:
+            record_dict['update_legacy_drager_toestand'] = drager_toestand[67:]
+
+        # bestekkoppeling
+        # TODO
+
+        # schadebeheerder
+        # TODO
+
+        # toezichter
+        # TODO
+
+        # vtc instructie
+        # TODO?
+
+        # attributen
+        drager_dict = self.get_attribute_dict_from_otl_assets(drager=drager, toestel=toestel,
+                                                              armatuur_controller=controller)
+        legacy_drager_dict = self.get_attribute_dict_from_legacy_drager(legacy_drager=legacy_drager)
+        update_dict = self.get_update_dict(drager_dict=drager_dict, legacy_drager_dict=legacy_drager_dict)
+        if update_dict == {}:
+            record_dict['attributen_gelijk'] = [True]
+            record_dict['update_legacy_drager_attributen'] = ['']
+        else:
+            record_dict['attributen_gelijk'] = [False]
+            record_dict['update_legacy_drager_attributen'] = [json.dumps(update_dict, indent=4)]
+
+
+        # aantal_te_verlichten_rijvakken_LED
+        # aantal_verlichtingstoestellen
+        # contractnummer_levering_LED
+        # datum_installatie_LED
+        # kleurtemperatuur_LED
+        # LED_verlichting
+        # lichtmast/bevestiging/console_buiten_gebruik
+        # lichtpunthoogte_tov_rijweg
+        # lumen_pakket_LED
+        # overhang_LED
+        # RAL_kleur_(VPLMAST/console/VVOP)
+        # serienummer_armatuurcontroller_1
+        # serienummer_armatuurcontroller_2
+        # serienummer_armatuurcontroller_3
+        # serienummer_armatuurcontroller_4
+        # verlichtingsniveau_LED
+        # verlichtingstoestel_merk_en_type
+        # verlichtingstoestel_systeemvermogen
+        # verlichtingstype
 
 
         return record_dict
@@ -334,28 +395,36 @@ class AssetInfoCollector:
         return legacy_drager_naampad == f'{installatie_nummer}/{installatie_nummer}.WV/{lichtpunt_nummer}'
 
     @classmethod
-    def is_drager_within_small_radius_legacy_drager(cls, legacy_drager: NodeInfoObject, drager: NodeInfoObject):
+    def distance_between_drager_and_legacy_drager(cls, legacy_drager: NodeInfoObject, drager: NodeInfoObject) -> float:
         if legacy_drager is None or drager is None:
-            return False
+            return 100.0
         legacy_puntlocatie = legacy_drager.attr_dict.get('loc:Locatie.puntlocatie')
         if legacy_puntlocatie is None:
-            return False
+            return 100.0
         legacy_puntgeometrie = legacy_puntlocatie.get('loc:3Dpunt.puntgeometrie')
         if legacy_puntgeometrie is None:
-            return False
+            return 100.0
         legacy_coords = legacy_puntgeometrie.get('loc:DtcCoord.lambert72')
         if legacy_coords is None:
-            return False
+            return 100.0
         legacy_x = legacy_coords.get('loc:DtcCoordLambert72.xcoordinaat')
         legacy_y = legacy_coords.get('loc:DtcCoordLambert72.ycoordinaat')
         if legacy_x is None or legacy_y is None:
-            return False
+            return 100.0
 
+        drager_x, drager_y = cls.get_drager_x_y(drager=drager)
+        if drager_x is None or drager_y is None:
+            return 100.0
+
+        return math.sqrt(abs(legacy_x - drager_x)**2 + abs(legacy_y - drager_y)**2)
+
+    @classmethod
+    def get_drager_x_y(cls, drager: NodeInfoObject) -> (float, float):
         drager_logs = drager.attr_dict.get('geo:Geometrie.log')
         if drager_logs is None:
-            return False
+            return None, None
         if len(drager_logs) == 0:
-            return False
+            return None, None
         log = next((log for log in drager_logs
                     if log.get('geo:DtcLog.niveau') == 'https://geo.data.wegenenverkeer.be/id/concept/KlLogNiveau/0'),
                    None)
@@ -364,18 +433,89 @@ class AssetInfoCollector:
                         if log.get('geo:DtcLog.niveau') == 'https://geo.data.wegenenverkeer.be/id/concept/KlLogNiveau/-1'),
                        None)
         if log is None:
-            return False
+            return None, None
         drager_geometrie = log.get('geo:DtcLog.geometrie')
         if drager_geometrie is None:
-            return False
+            return None, None
         drager_puntgeometrie = drager_geometrie.get('geo:DtuGeometrie.punt')
         if drager_puntgeometrie is None:
-            return False
+            return None, None
         # use regex to get coordinates out of wkt string in drager_puntgeometrie
         drager_coords = re.match(r'POINT Z \((\d+.\d+) (\d+.\d+) (\d+)\)', drager_puntgeometrie)
         if len(drager_coords.groups()) != 3:
-            return False
-        drager_x = float(drager_coords[1])
-        drager_y = float(drager_coords[2])
+            return None, None
+        return float(drager_coords[1]), float(drager_coords[2])
 
-        return math.sqrt(abs(legacy_x - drager_x)**2 + abs(legacy_y - drager_y)**2) < 5
+    @classmethod
+    def get_attribute_dict_from_legacy_drager(cls, legacy_drager: NodeInfoObject) -> dict:
+        d = {
+            'aantal_te_verlichten_rijvakken_LED': legacy_drager.attr_dict.get('lgc:EMObject.aantalTeVerlichtenRijvakkenLed'),
+            'aantal_verlichtingstoestellen': legacy_drager.attr_dict.get('lgc:EMObject.aantalVerlichtingstoestellen'),
+            'contractnummer_levering_LED': legacy_drager.attr_dict.get('lgc:EMObject.contractnummerLeveringLed'),
+            'datum_installatie_LED': legacy_drager.attr_dict.get('lgc:EMObject.datumInstallatieLed'),
+            'kleurtemperatuur_LED': legacy_drager.attr_dict.get('lgc:EMObject.kleurtemperatuurLed'),
+            'LED_verlichting': legacy_drager.attr_dict.get('lgc:EMObject.ledVerlichting'),
+            'lichtpunthoogte_tov_rijweg': legacy_drager.attr_dict.get('lgc:EMObject.lichtpunthoogteTovRijweg'),
+            'lumen_pakket_LED': legacy_drager.attr_dict.get('lgc:EMObject.lumenPakketLed'),
+            'overhang_LED': legacy_drager.attr_dict.get('lgc:EMObject.overhangLed'),
+            'verlichtingsniveau_LED': legacy_drager.attr_dict.get('lgc:EMObject.verlichtingsniveauLed'),
+            'verlichtingstoestel_merk_en_type': legacy_drager.attr_dict.get('lgc:EMObject.verlichtingstoestelMerkEnType'),
+            'verlichtingstoestel_systeemvermogen': legacy_drager.attr_dict.get('lgc:EMObject.verlichtingstoestelSysteemvermogen'),
+            'verlichtingstype': legacy_drager.attr_dict.get('lgc:EMObject.verlichtingstype')
+        }
+        if legacy_drager.short_type == 'lgc:installatie#VPLMast':
+            d['drager_buiten_gebruik'] = legacy_drager.attr_dict.get('lgc:VPLMast.lichtmastBuitenGebruik')
+            d['RAL_kleur'] = legacy_drager.attr_dict.get('lgc:VPLMast.ralKleurVplmast')
+            d['serienummer_armatuurcontroller_1'] = legacy_drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller1')
+            d['serienummer_armatuurcontroller_2'] = legacy_drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller2')
+            d['serienummer_armatuurcontroller_3'] = legacy_drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller3')
+            d['serienummer_armatuurcontroller_4'] = legacy_drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller4')
+        elif legacy_drager.short_type == 'lgc:installatie#VPConsole':
+            d['drager_buiten_gebruik'] = legacy_drager.attr_dict.get('lgc:VPConsole.consoleBuitenGebruik')
+            d['RAL_kleur'] = legacy_drager.attr_dict.get('lgc:VPConsole.ralKleurVpconsole') # TODO RAL VVOP?
+            d['serienummer_armatuurcontroller_1'] = legacy_drager.attr_dict.get('lgc:EMObject.serienummerArmatuurcontroller')
+        elif legacy_drager.short_type == 'lgc:installatie#VPBevestig':
+            d['drager_buiten_gebruik'] = legacy_drager.attr_dict.get('lgc:VPBevestig.bevestigingBuitenGebruik')
+            d['serienummer_armatuurcontroller_1'] = legacy_drager.attr_dict.get('lgc:EMObject.serienummerArmatuurcontroller')
+        return d
+
+    @classmethod
+    def get_attribute_dict_from_otl_assets(cls, drager: NodeInfoObject, toestel: NodeInfoObject,
+                                           armatuur_controller: NodeInfoObject) -> dict:
+        aantal_te_verlichten_rijvakken = toestel.attr_dict.get('VerlichtingstoestelLED.aantalTeVerlichtenRijstroken', None)
+        if aantal_te_verlichten_rijvakken is not None:
+            aantal_te_verlichten_rijvakken = 'R' + aantal_te_verlichten_rijvakken[89:]
+
+        d = {
+            'aantal_te_verlichten_rijvakken_LED': aantal_te_verlichten_rijvakken,
+        }
+        return d
+
+        d = {
+            'aantal_verlichtingstoestellen': drager.attr_dict.get('lgc:EMObject.aantalVerlichtingstoestellen'),
+            'contractnummer_levering_LED': drager.attr_dict.get('lgc:EMObject.contractnummerLeveringLed'),
+            'datum_installatie_LED': drager.attr_dict.get('lgc:EMObject.datumInstallatieLed'),
+            'kleurtemperatuur_LED': drager.attr_dict.get('lgc:EMObject.kleurtemperatuurLed'),
+            'LED_verlichting': drager.attr_dict.get('lgc:EMObject.ledVerlichting'),
+            'lichtpunthoogte_tov_rijweg': drager.attr_dict.get('lgc:EMObject.lichtpunthoogteTovRijweg'),
+            'lumen_pakket_LED': drager.attr_dict.get('lgc:EMObject.lumenPakketLed'),
+            'overhang_LED': drager.attr_dict.get('lgc:EMObject.overhangLed'),
+            'verlichtingsniveau_LED': drager.attr_dict.get('lgc:EMObject.verlichtingsniveauLed'),
+            'verlichtingstoestel_merk_en_type': drager.attr_dict.get('lgc:EMObject.verlichtingstoestelMerkEnType'),
+            'verlichtingstoestel_systeemvermogen': drager.attr_dict.get('lgc:EMObject.verlichtingstoestelSysteemvermogen'),
+            'verlichtingstype': drager.attr_dict.get('lgc:EMObject.verlichtingstype')
+        }
+        if drager.short_type == 'lgc:installatie#VPLMast':
+            d['drager_buiten_gebruik'] = drager.attr_dict.get('lgc:VPLMast.lichtmastBuitenGebruik')
+            d['RAL_kleur'] = drager.attr_dict.get('lgc:VPLMast.ralKleurVplmast')
+            d['serienummer_armatuurcontroller_1'] = drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller1')
+            d['serienummer_armatuurcontroller_2'] = drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller2')
+            d['serienummer_armatuurcontroller_3'] = drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller3')
+            d['serienummer_armatuurcontroller_4'] = drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller4')
+
+        return d
+
+    @classmethod
+    def get_update_dict(cls, drager_dict: dict, legacy_drager_dict: dict) -> dict:
+        return {}
+
