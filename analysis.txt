@@ -10,7 +10,9 @@
     - [X] save the aanlevering uuid
     - [ ] poll often to check for status 'Goedgekeurd'
 3) use validated aanlevering
+    - [ ] clear all asset data from state db that is related to the aanlevering
     - [ ] find all assets that were changed in that aanlevering (wait for EM-3200 or using emson endpoint)
+    - [ ] filter for isActief = true
     - [X] collect all related asset information using the asset info collector algorithm
     - [/] generate a report to update legacy data with
       - [X] relations
@@ -19,7 +21,7 @@
       - [X] names
       - [ ] creation of new assets
     - [ ] save the report in the state db
-    - [ ] at regular intervals, recollect the asset information
+    - [ ] at regular intervals, recollect the asset information by clearing the asset data
 4) update legacy data
     - [ ] find reports in state db that have sufficient information to use for updates
     - [ ] update legacy data using the state report until everything is marked as done
