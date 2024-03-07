@@ -1,7 +1,7 @@
 import json
 import logging
+import math
 import re
-from itertools import count
 from pathlib import Path
 from typing import Generator
 
@@ -271,6 +271,8 @@ class AssetInfoCollector:
             self.is_conform_name_convention_legacy_drager(
                 legacy_drager_naampad=legacy_drager_naampad, installatie_nummer=installatie_nummer,
                 lichtpunt_nummer=lichtpunt_nummer))
+        record_dict['legacy_drager_LED_toestel_binnen_5_meter'] = self.is_drager_within_small_radius_legacy_drager(
+            legacy_drager=legacy_drager, drager=drager)
 
 
         return record_dict
@@ -330,3 +332,50 @@ class AssetInfoCollector:
         if lichtpunt_nummer is None or not lichtpunt_nummer:
             return False
         return legacy_drager_naampad == f'{installatie_nummer}/{installatie_nummer}.WV/{lichtpunt_nummer}'
+
+    @classmethod
+    def is_drager_within_small_radius_legacy_drager(cls, legacy_drager: NodeInfoObject, drager: NodeInfoObject):
+        if legacy_drager is None or drager is None:
+            return False
+        legacy_puntlocatie = legacy_drager.attr_dict.get('loc:Locatie.puntlocatie')
+        if legacy_puntlocatie is None:
+            return False
+        legacy_puntgeometrie = legacy_puntlocatie.get('loc:3Dpunt.puntgeometrie')
+        if legacy_puntgeometrie is None:
+            return False
+        legacy_coords = legacy_puntgeometrie.get('loc:DtcCoord.lambert72')
+        if legacy_coords is None:
+            return False
+        legacy_x = legacy_coords.get('loc:DtcCoordLambert72.xcoordinaat')
+        legacy_y = legacy_coords.get('loc:DtcCoordLambert72.ycoordinaat')
+        if legacy_x is None or legacy_y is None:
+            return False
+
+        drager_logs = drager.attr_dict.get('geo:Geometrie.log')
+        if drager_logs is None:
+            return False
+        if len(drager_logs) == 0:
+            return False
+        log = next((log for log in drager_logs
+                    if log.get('geo:DtcLog.niveau') == 'https://geo.data.wegenenverkeer.be/id/concept/KlLogNiveau/0'),
+                   None)
+        if log is None:
+            log = next((log for log in drager_logs
+                        if log.get('geo:DtcLog.niveau') == 'https://geo.data.wegenenverkeer.be/id/concept/KlLogNiveau/-1'),
+                       None)
+        if log is None:
+            return False
+        drager_geometrie = log.get('geo:DtcLog.geometrie')
+        if drager_geometrie is None:
+            return False
+        drager_puntgeometrie = drager_geometrie.get('geo:DtuGeometrie.punt')
+        if drager_puntgeometrie is None:
+            return False
+        # use regex to get coordinates out of wkt string in drager_puntgeometrie
+        drager_coords = re.match(r'POINT Z \((\d+.\d+) (\d+.\d+) (\d+)\)', drager_puntgeometrie)
+        if len(drager_coords.groups()) != 3:
+            return False
+        drager_x = float(drager_coords[1])
+        drager_y = float(drager_coords[2])
+
+        return math.sqrt(abs(legacy_x - drager_x)**2 + abs(legacy_y - drager_y)**2) < 5

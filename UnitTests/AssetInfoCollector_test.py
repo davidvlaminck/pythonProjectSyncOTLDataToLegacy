@@ -1,5 +1,6 @@
 ﻿import logging
 import math
+from copy import deepcopy
 from unittest.mock import Mock
 
 from API.AbstractRequester import AbstractRequester
@@ -43,15 +44,6 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000002-"
         },
         "AIMObject.typeURI": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
-        "geo:Geometrie.log": [
-            {
-                "geo:DtcLog.bron": "https://geo.data.wegenenverkeer.be/id/concept/KlLogBron/overerving",
-                "geo:DtcLog.niveau": "https://geo.data.wegenenverkeer.be/id/concept/KlLogNiveau/0",
-                "geo:DtcLog.geometrie": {
-                    "geo:DtuGeometrie.punt": "POINT Z (200000.00 200000.00 0)"
-                },
-            }
-        ],
     }
     asset_3 = {
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
@@ -79,7 +71,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
                 "geo:DtcLog.bron": "https://geo.data.wegenenverkeer.be/id/concept/KlLogBron/meettoestel",
                 "geo:DtcLog.niveau": "https://geo.data.wegenenverkeer.be/id/concept/KlLogNiveau/0",
                 "geo:DtcLog.geometrie": {
-                    "geo:DtuGeometrie.punt": "POINT Z (200000.00 200000.00 0)"
+                    "geo:DtuGeometrie.punt": "POINT Z (200000.00 200001.00 0)"
                 },
             }
         ],
@@ -497,13 +489,13 @@ def test_start_creating_report():
              True, '00000000-0000-0000-0000-000000000006', 'A0000.A01.WV1.AC1',
              True,
              True, '00000000-0000-0000-0000-000000000004', 'WVLichtmast', 'A0000.A01', True,
-             True, '00000000-0000-0000-0000-000000000008', 'VPLMast', 'A0000/A0000.WV/A01', True, math.nan],
+             True, '00000000-0000-0000-0000-000000000008', 'VPLMast', 'A0000/A0000.WV/A01', True, True],
             ['01', 'DA-01', '00000000-0000-0000-0000-000000000003', 'A0000.C02.WV1',
              True,
              True, '00000000-0000-0000-0000-000000000007', 'A0000.C02.WV1.AC1',
              True,
              True, '00000000-0000-0000-0000-000000000005', 'WVConsole', 'A0000.FOUT1', False,
-             True, '00000000-0000-0000-0000-000000000009', 'VPConsole', 'A0000/A0000.WV/C02', True, math.nan]]}
+             True, '00000000-0000-0000-0000-000000000009', 'VPConsole', 'A0000/A0000.WV/C02', True, False]]}
 
     report = collector.start_creating_report('01', 'DA-01')
 
@@ -571,3 +563,75 @@ def test_get_lichtpunt_nummer_from_name():
     assert AssetInfoCollector.get_lichtpunt_nummer_from_name('A0000') == ''
     assert AssetInfoCollector.get_lichtpunt_nummer_from_name('') == ''
     assert AssetInfoCollector.get_lichtpunt_nummer_from_name(None) == ''
+
+
+def test_is_drager_within_small_radius_legacy_drager():
+    fake_requester = Mock(spec=AbstractRequester)
+    fake_requester.first_part_url = ''
+    AssetInfoCollector.create_requester_with_settings = Mock(return_value=fake_requester)
+    collector = AssetInfoCollector(auth_type=Mock(), env=Mock(), settings_path=Mock())
+    collector.em_infra_importer = fake_em_infra_importer
+
+    collector.collect_asset_info(uuids=['00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000008',
+                                        '00000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000009'])
+
+    drager_node_1 = deepcopy(collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000004'))
+    legacy_drager_node_1 = deepcopy(collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000008'))
+    drager_node_2 = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000005')
+    legacy_drager_node_2 = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000009')
+
+    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
+        drager=None, legacy_drager=None)
+
+    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
+        drager=drager_node_2, legacy_drager=legacy_drager_node_2)
+
+    assert AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+
+    drager_node_1.attr_dict['geo:Geometrie.log'][0]['geo:DtcLog.geometrie'][
+        'geo:DtuGeometrie.punt'] = 'POINT Z (200008.0 200000.0 0)'
+
+    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+
+    del drager_node_1.attr_dict['geo:Geometrie.log'][0]['geo:DtcLog.geometrie']['geo:DtuGeometrie.punt']
+
+    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+
+    del drager_node_1.attr_dict['geo:Geometrie.log'][0]['geo:DtcLog.geometrie']
+
+    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+
+    del drager_node_1.attr_dict['geo:Geometrie.log'][0]
+
+    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+
+    del drager_node_1.attr_dict['geo:Geometrie.log']
+
+    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+
+    del legacy_drager_node_1.attr_dict['loc:Locatie.puntlocatie']['loc:3Dpunt.puntgeometrie'][
+        'loc:DtcCoord.lambert72']['loc:DtcCoordLambert72.xcoordinaat']
+
+    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+
+    del legacy_drager_node_1.attr_dict['loc:Locatie.puntlocatie']['loc:3Dpunt.puntgeometrie']['loc:DtcCoord.lambert72']
+
+    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+
+    del legacy_drager_node_1.attr_dict['loc:Locatie.puntlocatie']['loc:3Dpunt.puntgeometrie']
+
+    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
+
+    del legacy_drager_node_1.attr_dict['loc:Locatie.puntlocatie']
+
+    assert not AssetInfoCollector.is_drager_within_small_radius_legacy_drager(
+        drager=drager_node_1, legacy_drager=legacy_drager_node_1)
