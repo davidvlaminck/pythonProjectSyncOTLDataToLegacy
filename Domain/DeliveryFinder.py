@@ -15,7 +15,14 @@ class DeliveryFinder:
         self.em_infra_client = em_infra_client
         self.davie_client = davie_client
         self.db_manager = db_manager
-        self.allowed_dossiers = {'VWT-CEW-2020-009-5'}
+        self.allowed_dossiers = {
+            'VWT/WU/2020/007.001', 'VWT/WU/2020/007.002', 'VWT/WU/2020/007.003', 'VWT/WU/2020/007.004',
+            'VWT/WU/2020/007.005', 'WVT/WU/2020/007.003', 'VWT/EW/2020/024-1', 'VWT/EW/2020/024-2', 'VWT/EW/2020/024-3',
+            'VWT/EW/2020/024-4', 'VWT/EW/2020/024_5', 'VWT/EW/2023/1_P1', 'VWT/EW/2023/1_P2', 'VWT/EW/2023/1_P3',
+            'VWT/EW/2023/1_P4', 'VWT/EW/2023/1_P5', 'VWT-CEW-2020-008-1', 'VWT-CEW-2020-008-2', 'VWT-CEW-2020-008-3',
+            'VWT-CEW-2020-008-4', 'VWT-CEW-2020-008-5', 'VWT-CEW-2020-009-1', 'VWT-CEW-2020-009-2',
+            'VWT-CEW-2020-009-3', 'VWT/CEW/2020/009-3', 'VWT-CEW-2020-009-4', 'VWT-CEW-2020-009-5',
+            'VWT/CEW/2020/009-5', 'VWT/EW/2020/027', 'VWT/EW/2020/028'}
         self.filtered_asset_types = {
             'b25kZXJkZWVsI1dWTGljaHRtYXN0',  # 'WVLichtmast'
             'b25kZXJkZWVsI1ZlcmxpY2h0aW5nc3RvZXN0ZWxMRUQ',  # onderdeel#VerlichtingstoestelLED
