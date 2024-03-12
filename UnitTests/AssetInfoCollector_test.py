@@ -270,6 +270,20 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         }
     }
 
+    asset_21 = {
+        "@type": "https://lgc.data.wegenenverkeer.be/ns/installatie#VPBevestig",
+        "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000021-",
+        "AIMDBStatus.isActief": True,
+        'AIMNaamObject.naam': 'C03',
+        "AIMObject.assetId": {
+            "DtcIdentificator.toegekendDoor": "AWV",
+            "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000021-"
+        },
+        "AIMObject.typeURI": "https://lgc.data.wegenenverkeer.be/ns/installatie#VPBevestig",
+        "NaampadObject.naampad": "A0000/A0000.WV/C03",
+        "AIMToestand.toestand": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlAIMToestand/in-gebruik",
+    }
+
     asset_22 = {
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
         "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000022-",
@@ -336,7 +350,31 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         "Verlichtingstoestel.verlichtGebied": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlVerlichtingstoestelVerlichtGebied/hoofdweg",
         "VerlichtingstoestelLED.verlichtingsNiveau": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedVerlNiveau/M3",
     }
+    asset_25 = {
+        "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
+        "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000025-",
+        "AIMDBStatus.isActief": True,
+        'AIMNaamObject.naam': 'A0000.C03.WV1',
+        "AIMObject.assetId": {
+            "DtcIdentificator.toegekendDoor": "AWV",
+            "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000025-"
+        },
+        "AIMObject.datumOprichtingObject": "2020-01-01",
+        "AIMObject.typeURI": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
+    }
 
+    relatie_31 = {
+        "@type": "https://grp.data.wegenenverkeer.be/ns/onderdeel#HoortBij",
+        "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000025--HoortBij--000000000021-",
+        "RelatieObject.bron": {
+            "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
+            "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000025-"
+        },
+        "RelatieObject.doel": {
+            "@type": "https://lgc.data.wegenenverkeer.be/ns/installatie#VPBevestig",
+            "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000021-"
+        }
+    }
     relatie_32 = {
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Bevestiging",
         "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000022-Bevestigin-000000000004-",
@@ -378,11 +416,11 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
 
     if resource == 'assets':
         yield from iter([a for a in [asset_1, asset_2, asset_3, asset_4, asset_5, asset_6, asset_7, asset_8, asset_9,
-                                     asset_inactief, asset_22, asset_23, asset_24]
+                                     asset_inactief, asset_21, asset_22, asset_23, asset_24, asset_25]
                          if a['@id'][39:75] in filter_dict['uuid']])
     elif resource == 'assetrelaties':
         assetrelaties = [relatie_10, relatie_11, relatie_12, relatie_13, relatie_14, relatie_15,
-                         relatie_32, relatie_33, relatie_34]
+                         relatie_31, relatie_32, relatie_33, relatie_34]
         if 'uuid' in filter_dict:
             yield from iter([r for r in assetrelaties
                              if r['@id'][46:82] in filter_dict['uuid']])
@@ -429,37 +467,43 @@ def test_start_collecting_from_starting_uuids_using_pattern_giving_uuids_of_a():
     collector.em_infra_importer = fake_em_infra_importer
 
     collector.start_collecting_from_starting_uuids_using_pattern(
-        starting_uuids=['00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003'],
+        starting_uuids=['00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003',
+                        '00000000-0000-0000-0000-000000000025'],
         pattern=[('uuids', 'of', 'a'),
                  ('a', 'type_of', ['onderdeel#VerlichtingstoestelLED']),
                  ('a', '-[r1]-', 'b'),
                  ('b', 'type_of', ['onderdeel#WVLichtmast', 'onderdeel#WVConsole', 'onderdeel#Armatuurcontroller']),
                  ('b', '-[r2]->', 'c'),
-                 ('c', 'type_of', ['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole']),
+                 ('a', '-[r2]->', 'c'),
+                 ('c', 'type_of', ['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole',
+                                   'lgc:installatie#VPBevestig']),
                  ('r1', 'type_of', ['onderdeel#Bevestiging']),
                  ('r2', 'type_of', ['onderdeel#HoortBij'])])
 
     assert collector.collection.short_uri_dict == {
-        'onderdeel#VerlichtingstoestelLED': {'00000000-0000-0000-0000-000000000002',
-                                             '00000000-0000-0000-0000-000000000003',
-                                             '00000000-0000-0000-0000-000000000022',
-                                             '00000000-0000-0000-0000-000000000023',
-                                             '00000000-0000-0000-0000-000000000024'},
-        'onderdeel#WVLichtmast': {'00000000-0000-0000-0000-000000000004'},
-        'onderdeel#WVConsole': {'00000000-0000-0000-0000-000000000005'},
+        'lgc:installatie#VPBevestig': {'00000000-0000-0000-0000-000000000021'},
+        'lgc:installatie#VPConsole': {'00000000-0000-0000-0000-000000000009'},
+        'lgc:installatie#VPLMast': {'00000000-0000-0000-0000-000000000008'},
         'onderdeel#Armatuurcontroller': {'00000000-0000-0000-0000-000000000006',
                                          '00000000-0000-0000-0000-000000000007'},
-        'lgc:installatie#VPLMast': {'00000000-0000-0000-0000-000000000008'},
-        'lgc:installatie#VPConsole': {'00000000-0000-0000-0000-000000000009'},
         'onderdeel#Bevestiging': {'000000000002-Bevestigin-000000000004',
-                                  '000000000006-Bevestigin-000000000002',
-                                  '000000000005-Bevestigin-000000000003',
                                   '000000000003-Bevestigin-000000000007',
+                                  '000000000005-Bevestigin-000000000003',
+                                  '000000000006-Bevestigin-000000000002',
                                   '000000000022-Bevestigin-000000000004',
                                   '000000000023-Bevestigin-000000000004',
                                   '000000000024-Bevestigin-000000000004'},
         'onderdeel#HoortBij': {'000000000004--HoortBij--000000000008',
-                               '000000000005--HoortBij--000000000009'}
+                               '000000000005--HoortBij--000000000009',
+                               '000000000025--HoortBij--000000000021'},
+        'onderdeel#VerlichtingstoestelLED': {'00000000-0000-0000-0000-000000000002',
+                                             '00000000-0000-0000-0000-000000000003',
+                                             '00000000-0000-0000-0000-000000000022',
+                                             '00000000-0000-0000-0000-000000000023',
+                                             '00000000-0000-0000-0000-000000000024',
+                                             '00000000-0000-0000-0000-000000000025'},
+        'onderdeel#WVConsole': {'00000000-0000-0000-0000-000000000005'},
+        'onderdeel#WVLichtmast': {'00000000-0000-0000-0000-000000000004'}
     }
 
 
@@ -594,6 +638,7 @@ def test_start_collecting_from_starting_uuids_using_pattern_giving_uuids_of_b():
                                '000000000005--HoortBij--000000000009'}
     }
 
+
 def test_start_collecting_from_starting_uuids():
     fake_requester = Mock(spec=AbstractRequester)
     fake_requester.first_part_url = ''
@@ -661,58 +706,82 @@ def test_start_creating_report():
 
     expected_report = {
         'columns': [
-            'aanlevering_id', 'aanlevering_naam', 'LED_toestel_uuid', 'LED_toestel_naam',
-            'LED_toestel_naam_conform_conventie',
-            'relatie_naar_armatuur_controller_aanwezig', 'armatuur_controller_uuid', 'armatuur_controller_naam',
-            'armatuur_controller_naam_conform_conventie',
-            'relatie_naar_drager_aanwezig', 'drager_uuid', 'drager_type', 'drager_naam', 'drager_naam_conform_conventie',
-            'relatie_naar_legacy_drager_aanwezig', 'legacy_drager_uuid', 'legacy_drager_type', 'legacy_drager_naampad',
-            'legacy_drager_naampad_conform_conventie', 'legacy_drager_en_drager_binnen_5_meter',
+            'aanlevering_id', 'aanlevering_naam', 'legacy_drager_uuid', 'legacy_drager_type',
+            'legacy_drager_naampad', 'legacy_drager_naampad_conform_conventie',
+            'drager_verwacht', 'relatie_legacy_naar_drager_aanwezig',
+            'drager_uuid', 'drager_type', 'drager_naam', 'drager_naam_conform_conventie',
+            'relatie_drager_naar_toestel_aanwezig',
+            'LED_toestel_1_uuid', 'LED_toestel_1_naam', 'LED_toestel_1_naam_conform_conventie',
+            'relatie_naar_armatuur_controller_1_aanwezig',
+            'armatuur_controller_1_uuid', 'armatuur_controller_1_naam', 'armatuur_controller_1_naam_conform_conventie',
+            'legacy_drager_en_drager_binnen_5_meter',
             'legacy_drager_en_drager_identieke_geometrie', 'update_legacy_drager_geometrie',
             'legacy_drager_en_drager_gelijke_toestand', 'update_legacy_drager_toestand',
             'attributen_gelijk', 'update_legacy_drager_attributen'],
         'index': [0, 0],
         'data': [
-            ['01', 'DA-01', '00000000-0000-0000-0000-000000000002', 'A0000.A01.WV1',
+            ['01', 'DA-01', '00000000-0000-0000-0000-000000000008', 'VPLMast',
+             'A0000/A0000.WV/A01', True,  # 'legacy_drager_naampad', 'legacy_drager_naampad_conform_conventie',
+             True, True,  # 'drager_verwacht', 'relatie_legacy_naar_drager_aanwezig',
+             # 'drager_uuid', 'drager_type', 'drager_naam', 'drager_naam_conform_conventie',
+             '00000000-0000-0000-0000-000000000004', 'WVLichtmast', 'A0000.A01', True,
+             True,  # 'relatie_drager_naar_toestel_aanwezig',
+             # 'LED_toestel_1_uuid', 'LED_toestel_1_naam', 'LED_toestel_1_naam_conform_conventie',
+             '00000000-0000-0000-0000-000000000002', 'A0000.A01.WV1', True,
+             True,  # 'relatie_naar_armatuur_controller_1_aanwezig',
+             # 'armatuur_controller_1_uuid', 'armatuur_controller_1_naam', 'armatuur_controller_1_naam_conform_conventie'
+             '00000000-0000-0000-0000-000000000006', 'A0000.A01.WV1.AC1', True,
              True,
-             True, '00000000-0000-0000-0000-000000000006', 'A0000.A01.WV1.AC1',
-             True,
-             True, '00000000-0000-0000-0000-000000000004', 'WVLichtmast', 'A0000.A01', True,
-             True, '00000000-0000-0000-0000-000000000008', 'VPLMast', 'A0000/A0000.WV/A01',
-             True, True,
              False, '',
              True, '',
              True, ''],
-            ['01', 'DA-01', '00000000-0000-0000-0000-000000000003', 'A0000.C02.WV1',
+            ['01', 'DA-01', '00000000-0000-0000-0000-000000000009', 'VPConsole',
+             'A0000/A0000.WV/C02', True, # 'legacy_drager_naampad', 'legacy_drager_naampad_conform_conventie',
+             True, True,  # 'drager_verwacht', 'relatie_legacy_naar_drager_aanwezig',
+             # 'drager_uuid', 'drager_type', 'drager_naam', 'drager_naam_conform_conventie',
+             '00000000-0000-0000-0000-000000000005', 'WVConsole', 'A0000.FOUT1', False,
+             True, # 'relatie_drager_naar_toestel_aanwezig',
+             # 'LED_toestel_1_uuid', 'LED_toestel_1_naam', 'LED_toestel_1_naam_conform_conventie',
+             '00000000-0000-0000-0000-000000000003', 'A0000.C02.WV1', True,
+             True, # 'relatie_naar_armatuur_controller_1_aanwezig',
+             # 'armatuur_controller_1_uuid', 'armatuur_controller_1_naam', 'armatuur_controller_1_naam_conform_conventie'
+             '00000000-0000-0000-0000-000000000007', 'A0000.C02.WV1.AC1', True,
+             False,
+             False,
+             '',
+             False,
+             'uit-gebruik',
              True,
-             True, '00000000-0000-0000-0000-000000000007', 'A0000.C02.WV1.AC1',
-             True,
-             True, '00000000-0000-0000-0000-000000000005', 'WVConsole', 'A0000.FOUT1', False,
-             True, '00000000-0000-0000-0000-000000000009', 'VPConsole', 'A0000/A0000.WV/C02',
-             True, False,
-             False, '',
-             False, 'uit-gebruik',
-             True, '']]}
+             '']]}
 
     report = collector.start_creating_report('01', 'DA-01')
+    report = report.iloc[:, :-21]
 
     assert report.to_dict('split') == expected_report
 
 
 def test_is_conform_name_convention_toestel():
-    assert AssetInfoCollector.is_conform_name_convention_toestel('A0000.A01.WV1')
-    assert not AssetInfoCollector.is_conform_name_convention_toestel('A0000..WV1')
-    assert not AssetInfoCollector.is_conform_name_convention_toestel('A0000.A01.AC1')
-    assert not AssetInfoCollector.is_conform_name_convention_toestel('0000.A01.WV1')
-    assert not AssetInfoCollector.is_conform_name_convention_toestel('A0000.A01')
-    assert not AssetInfoCollector.is_conform_name_convention_toestel('A0000.A01.WV1.AC1')
+    assert AssetInfoCollector.is_conform_name_convention_toestel(
+        toestel_name='A0000.A01.WV1', installatie_nummer='A0000', lichtpunt_nummer='A01', toestel_index=1)
+    assert AssetInfoCollector.is_conform_name_convention_toestel(
+        toestel_name='A0002.A02.WV2', installatie_nummer='A0002', lichtpunt_nummer='A02', toestel_index=2)
+    assert not AssetInfoCollector.is_conform_name_convention_toestel(
+        toestel_name='A0000.A01.WV1', installatie_nummer='A0000', lichtpunt_nummer='A01', toestel_index=2)
+    assert not AssetInfoCollector.is_conform_name_convention_toestel(
+        toestel_name='A0000.A01.WV2', installatie_nummer='A0000', lichtpunt_nummer='A02', toestel_index=1)
+    assert not AssetInfoCollector.is_conform_name_convention_toestel(
+        toestel_name='A0001.A01.WV1', installatie_nummer='A0000', lichtpunt_nummer='A01', toestel_index=1)
+    assert not AssetInfoCollector.is_conform_name_convention_toestel(
+        toestel_name='A0000.A01.WV1.AC1', installatie_nummer='A0000', lichtpunt_nummer='A01', toestel_index=1)
+    assert not AssetInfoCollector.is_conform_name_convention_toestel(
+        toestel_name='A0000.A01.WV', installatie_nummer='A0000', lichtpunt_nummer='A01', toestel_index=1)
 
 
 def test_is_conform_name_convention_armatuur_controller():
     assert AssetInfoCollector.is_conform_name_convention_armatuur_controller(
         controller_name='A0000.A01.WV1.AC1', toestel_name='A0000.A01.WV1')
     assert AssetInfoCollector.is_conform_name_convention_armatuur_controller(
-        controller_name='A0000.A01.WV1.AC2', toestel_name='A0000.A01.WV1')
+        controller_name='A0000.A01.WV2.AC1', toestel_name='A0000.A01.WV2')
     assert not AssetInfoCollector.is_conform_name_convention_armatuur_controller(
         controller_name='A0000.A01.AC1', toestel_name='A0000.A01.WV1')
     assert not AssetInfoCollector.is_conform_name_convention_armatuur_controller(
@@ -723,15 +792,15 @@ def test_is_conform_name_convention_armatuur_controller():
 
 def test_is_conform_name_convention_drager():
     assert AssetInfoCollector.is_conform_name_convention_drager(
-        drager_name='A0000.A01', toestel_name='A0000.A01.WV1')
+        drager_name='A0000.A01', installatie_nummer='A0000', lichtpunt_nummer='A01')
     assert AssetInfoCollector.is_conform_name_convention_drager(
-        drager_name='A0000.A01', toestel_name='A0000.A01.WV2')
+        drager_name='A0001.A02', installatie_nummer='A0001', lichtpunt_nummer='A02')
     assert not AssetInfoCollector.is_conform_name_convention_drager(
-        drager_name='A0000.A01.WV1', toestel_name='A0000.A01')
+        drager_name='A0000.A01.WV1', installatie_nummer='A0000', lichtpunt_nummer='A01')
     assert not AssetInfoCollector.is_conform_name_convention_drager(
-        drager_name='A0000.A01.WV1.AC1', toestel_name='A0000.A01.WV1')
+        drager_name='A0000.A01.WV1.AC1', installatie_nummer='A0000', lichtpunt_nummer='A01')
     assert not AssetInfoCollector.is_conform_name_convention_drager(
-        drager_name='A0000.A02', toestel_name='A0000.A01.WV1')
+        drager_name='A0000.A02', installatie_nummer='A0001', lichtpunt_nummer='A02')
 
 
 def test_is_conform_name_convention_legacy_drager():
@@ -743,24 +812,35 @@ def test_is_conform_name_convention_legacy_drager():
         legacy_drager_naampad='A0002/A0002.WV/A02', installatie_nummer='A0001', lichtpunt_nummer='A02')
     assert not AssetInfoCollector.is_conform_name_convention_legacy_drager(
         legacy_drager_naampad='A0001/A0001.WV/A02', installatie_nummer='A0001', lichtpunt_nummer='A01')
+    assert not AssetInfoCollector.is_conform_name_convention_legacy_drager(
+        legacy_drager_naampad='A00002/A0002.WV/A02', installatie_nummer='A00002', lichtpunt_nummer='A02')
 
 
-def test_get_installatie_nummer_from_name():
-    assert AssetInfoCollector.get_installatie_nummer_from_name('A0000.A01.WV1') == 'A0000'
-    assert AssetInfoCollector.get_installatie_nummer_from_name('0000.A01.WV1') == '0000'
-    assert AssetInfoCollector.get_installatie_nummer_from_name('A0000.A01.WV1.AC1') == 'A0000'
-    assert AssetInfoCollector.get_installatie_nummer_from_name('A0000') == ''
-    assert AssetInfoCollector.get_installatie_nummer_from_name('') == ''
-    assert AssetInfoCollector.get_installatie_nummer_from_name(None) == ''
+def test_get_installatie_nummer_from_naampad():
+    assert AssetInfoCollector.get_installatie_nummer_from_naampad('A0000/A0000.WV/A01') == 'A0000'
+    assert AssetInfoCollector.get_installatie_nummer_from_naampad('0000/A0000.WV/A01') == '0000'
+    assert AssetInfoCollector.get_installatie_nummer_from_naampad('A0000/A0000.WV/101') == 'A0000'
+    assert AssetInfoCollector.get_installatie_nummer_from_naampad('A0000') == ''
+    assert AssetInfoCollector.get_installatie_nummer_from_naampad('') == ''
+    assert AssetInfoCollector.get_installatie_nummer_from_naampad(None) == ''
 
 
-def test_get_lichtpunt_nummer_from_name():
-    assert AssetInfoCollector.get_lichtpunt_nummer_from_name('A0000.A01.WV1') == 'A01'
-    assert AssetInfoCollector.get_lichtpunt_nummer_from_name('0000.01.WV1') == '01'
-    assert AssetInfoCollector.get_lichtpunt_nummer_from_name('A0000.A01.WV1.AC1') == 'A01'
-    assert AssetInfoCollector.get_lichtpunt_nummer_from_name('A0000') == ''
-    assert AssetInfoCollector.get_lichtpunt_nummer_from_name('') == ''
-    assert AssetInfoCollector.get_lichtpunt_nummer_from_name(None) == ''
+def test_get_installatie_nummer_from_toestel_name():
+    assert AssetInfoCollector.get_installatie_nummer_from_toestel_name('A0000.A01.WV1') == 'A0000'
+    assert AssetInfoCollector.get_installatie_nummer_from_toestel_name('0000.A01.WV1') == '0000'
+    assert AssetInfoCollector.get_installatie_nummer_from_toestel_name('A0000.A01.WV1.AC1') == 'A0000'
+    assert AssetInfoCollector.get_installatie_nummer_from_toestel_name('A0000') == ''
+    assert AssetInfoCollector.get_installatie_nummer_from_toestel_name('') == ''
+    assert AssetInfoCollector.get_installatie_nummer_from_toestel_name(None) == ''
+
+
+def test_get_lichtpunt_nummer_from_toestel_name():
+    assert AssetInfoCollector.get_lichtpunt_nummer_from_toestel_name('A0000.A01.WV1') == 'A01'
+    assert AssetInfoCollector.get_lichtpunt_nummer_from_toestel_name('0000.01.WV1') == '01'
+    assert AssetInfoCollector.get_lichtpunt_nummer_from_toestel_name('A0000.A01.WV1.AC1') == 'A01'
+    assert AssetInfoCollector.get_lichtpunt_nummer_from_toestel_name('A0000') == ''
+    assert AssetInfoCollector.get_lichtpunt_nummer_from_toestel_name('') == ''
+    assert AssetInfoCollector.get_lichtpunt_nummer_from_toestel_name(None) == ''
 
 
 def test_distance_between_drager_and_legacy_drager():
@@ -774,7 +854,8 @@ def test_distance_between_drager_and_legacy_drager():
                                         '00000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000009'])
 
     drager_node_1 = deepcopy(collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000004'))
-    legacy_drager_node_1 = deepcopy(collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000008'))
+    legacy_drager_node_1 = deepcopy(
+        collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000008'))
     drager_node_2 = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000005')
     legacy_drager_node_2 = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000009')
 
@@ -904,8 +985,8 @@ def test_get_attribute_dict_from_drager():
     toestel = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000002')
     armatuur_controller = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000006')
 
-    d_1 = AssetInfoCollector.get_attribute_dict_from_otl_assets(drager=drager, toestel=toestel,
-                                                                armatuur_controller=armatuur_controller)
+    d_1 = AssetInfoCollector.get_attribute_dict_from_otl_assets(drager=drager, toestellen=[toestel],
+                                                                armatuur_controllers=[armatuur_controller])
 
     d_expected = {
         'aantal_verlichtingstoestellen': 4,

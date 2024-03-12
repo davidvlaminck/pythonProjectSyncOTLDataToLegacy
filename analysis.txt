@@ -13,8 +13,8 @@
     - [ ] clear all asset data from state db that is related to the aanlevering
     - [ ] find all assets that were changed in that aanlevering (wait for EM-3200 or using emson endpoint)
     - [ ] filter for isActief = true
-    - [X] collect all related asset information using the asset info collector algorithm
-    - [/] generate a report to update legacy data with
+    - [X] collect all related asset information using the asset info collector algorithm (starting from a LED toestel)
+    - [/] generate a report to update legacy data (1 record per legacy asset) with
       - [X] relations
       - [/] attributes
       - [X] geometry
@@ -29,5 +29,6 @@
 
  X) Extra
     - [ ] regex check on armatuur controller
+    - [ ] more than 1 controller / toestel found with traverse_graph is captured as an extra error
 
 refactor to allow for multiple leds on one drager
