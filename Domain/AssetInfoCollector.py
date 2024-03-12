@@ -480,34 +480,72 @@ class AssetInfoCollector:
         return d
 
     @classmethod
-    def get_attribute_dict_from_otl_assets(cls, drager: NodeInfoObject, toestel: NodeInfoObject,
-                                           armatuur_controller: NodeInfoObject) -> dict:
+    def get_attribute_dict_from_otl_assets(cls, drager: NodeInfoObject, toestellen: [NodeInfoObject],
+                                           armatuur_controllers: [NodeInfoObject]) -> dict:
+        toestel = toestellen[0]
         aantal_te_verlichten_rijvakken = toestel.attr_dict.get('VerlichtingstoestelLED.aantalTeVerlichtenRijstroken', None)
         if aantal_te_verlichten_rijvakken is not None:
             aantal_te_verlichten_rijvakken = 'R' + aantal_te_verlichten_rijvakken[89:]
 
+        datum_installatie_LED = toestel.attr_dict.get('AIMObject.datumOprichtingObject', None)
+
+        kleurtemperatuur_LED = toestel.attr_dict.get('VerlichtingstoestelLED.kleurTemperatuur', None)
+        if kleurtemperatuur_LED is not None:
+            kleurtemperatuur_LED = 'K' + kleurtemperatuur_LED[70:]
+
+        lichtpunthoogte = toestel.attr_dict.get('VerlichtingstoestelLED.lichtpuntHoogte')
+        if lichtpunthoogte is not None:
+            lichtpunthoogte = int(lichtpunthoogte[76:])
+
+        lumen_pakket_LED = toestel.attr_dict.get('VerlichtingstoestelLED.lumenOutput')
+        if lumen_pakket_LED is not None:
+            lumen_pakket_LED = int(lumen_pakket_LED[67:])
+
+        overhang_LED = toestel.attr_dict.get('VerlichtingstoestelLED.overhang')
+        if overhang_LED is not None:
+            overhang_LED = cls.map_overhang(overhang_LED)
+
+        verlichtingsniveau = toestel.attr_dict.get('VerlichtingstoestelLED.verlichtingsNiveau')
+        if verlichtingsniveau is not None:
+            verlichtingsniveau = verlichtingsniveau[71:]
+
+        merk = toestel.attr_dict.get('Verlichtingstoestel.merk')
+        modelnaam = toestel.attr_dict.get('Verlichtingstoestel.modelnaam')
+        merk_en_type = None
+        if merk is not None and modelnaam is not None:
+            merk = merk[79:]
+            modelnaam = modelnaam[84:].title()
+            merk_en_type = f'{merk} {modelnaam}'
+
+        verlichtingstype = toestel.attr_dict.get('Verlichtingstoestel.verlichtGebied')
+        if verlichtingstype is not None:
+            verlichtingstype = cls.map_verlichtingstype(verlichtingstype)
+
         d = {
             'aantal_te_verlichten_rijvakken_LED': aantal_te_verlichten_rijvakken,
+            'datum_installatie_LED': datum_installatie_LED,
+            'kleurtemperatuur_LED': kleurtemperatuur_LED,
+            'LED_verlichting': True,
+            'lichtpunthoogte_tov_rijweg': lichtpunthoogte,
+            'lumen_pakket_LED': lumen_pakket_LED,
+            'overhang_LED': overhang_LED,
+            'verlichtingsniveau_LED': verlichtingsniveau,
+            'verlichtingstoestel_merk_en_type': merk_en_type,
+            'verlichtingstoestel_systeemvermogen': toestel.attr_dict.get('Verlichtingstoestel.systeemvermogen'),
+            'verlichtingstype': verlichtingstype
         }
+        if drager.short_type == 'onderdeel#WVLichtmast':
+            d['RAL_kleur'] = drager.attr_dict.get('Lichtmast.kleur')
+
         return d
 
         d = {
             'aantal_verlichtingstoestellen': drager.attr_dict.get('lgc:EMObject.aantalVerlichtingstoestellen'),
             'contractnummer_levering_LED': drager.attr_dict.get('lgc:EMObject.contractnummerLeveringLed'),
-            'datum_installatie_LED': drager.attr_dict.get('lgc:EMObject.datumInstallatieLed'),
-            'kleurtemperatuur_LED': drager.attr_dict.get('lgc:EMObject.kleurtemperatuurLed'),
-            'LED_verlichting': drager.attr_dict.get('lgc:EMObject.ledVerlichting'),
-            'lichtpunthoogte_tov_rijweg': drager.attr_dict.get('lgc:EMObject.lichtpunthoogteTovRijweg'),
-            'lumen_pakket_LED': drager.attr_dict.get('lgc:EMObject.lumenPakketLed'),
-            'overhang_LED': drager.attr_dict.get('lgc:EMObject.overhangLed'),
-            'verlichtingsniveau_LED': drager.attr_dict.get('lgc:EMObject.verlichtingsniveauLed'),
-            'verlichtingstoestel_merk_en_type': drager.attr_dict.get('lgc:EMObject.verlichtingstoestelMerkEnType'),
-            'verlichtingstoestel_systeemvermogen': drager.attr_dict.get('lgc:EMObject.verlichtingstoestelSysteemvermogen'),
-            'verlichtingstype': drager.attr_dict.get('lgc:EMObject.verlichtingstype')
+
         }
         if drager.short_type == 'lgc:installatie#VPLMast':
             d['drager_buiten_gebruik'] = drager.attr_dict.get('lgc:VPLMast.lichtmastBuitenGebruik')
-            d['RAL_kleur'] = drager.attr_dict.get('lgc:VPLMast.ralKleurVplmast')
             d['serienummer_armatuurcontroller_1'] = drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller1')
             d['serienummer_armatuurcontroller_2'] = drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller2')
             d['serienummer_armatuurcontroller_3'] = drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller3')
@@ -518,4 +556,31 @@ class AssetInfoCollector:
     @classmethod
     def get_update_dict(cls, drager_dict: dict, legacy_drager_dict: dict) -> dict:
         return {}
+
+    @classmethod
+    def map_overhang(cls, overhang_LED: str) -> str:
+        return 'O+1'
+
+    @classmethod
+    def map_verlichtingstype(cls, verlichtingstype: str) -> str:
+        verlichtingstype = verlichtingstype[89:]
+        map_dict = {
+            'afrit': 'opafrit',
+            'bebakening': 'bebakening',
+            'doorlopende-straatverlichting':  'doorlopende straatverlichting',
+            'fietspad': 'fietspadverlichting',
+            'hoofdweg': 'hoofdbaan',
+            'kruispunt': 'kruispunt',
+            'monument': 'monument',
+            'onderdoorgang': 'onderdoorgang',
+            'oprit': 'opafrit',
+            'parking': 'parking',
+            'projector': 'projector',
+            'punctuele-verlichting': 'punctuele verlichting',
+            'rotonde': 'rotonde verlichting',
+            'tunnelverlichting': 'tunnelverlichting',  # of 'tunnel verlichting', beiden bestaan en worden gebruikt!
+            'wisselaar': 'wisselaar'
+        }
+
+        return map_dict.get(verlichtingstype)
 
