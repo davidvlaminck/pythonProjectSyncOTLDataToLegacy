@@ -16,7 +16,7 @@
     - [X] collect all related asset information using the asset info collector algorithm
     - [/] generate a report to update legacy data with
       - [X] relations
-      - [ ] attributes
+      - [/] attributes
       - [X] geometry
       - [X] names
       - [ ] (N/A in first implementation) creation of new assets
@@ -26,5 +26,8 @@
     - [ ] find reports in state db that have sufficient information to use for updates
     - [ ] update legacy data using the state report until everything is marked as done
     - [ ] update the status of the aanlevering in state db to 'verwerkt'
+
+ X) Extra
+    - [ ] regex check on armatuur controller
 
 refactor to allow for multiple leds on one drager
