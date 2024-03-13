@@ -235,7 +235,7 @@ class AssetInfoCollector:
 
         record_dict['drager_verwacht'] = [legacy_drager_type != 'VPBevestig']
 
-        toestellen: Generator[str|NodeInfoObject, None, None]
+        toestellen: [str | NodeInfoObject]
         if record_dict['drager_verwacht'][0]:
             dragers = list(self.collection.traverse_graph(
                 start_uuid=legacy_drager_uuid, relation_types=['HoortBij'], allowed_directions=[Direction.REVERSED],
@@ -263,7 +263,8 @@ class AssetInfoCollector:
             if not toestellen:
                 if drager_naam == '':
                     drager_naam = drager_uuid
-                logging.info(f"drager {drager_naam} van {legacy_drager_naampad} heeft geen relatie naar een LED toestel")
+                logging.info(
+                    f"drager {drager_naam} van {legacy_drager_naampad} heeft geen relatie naar een LED toestel")
                 record_dict['relatie_drager_naar_toestel_aanwezig'] = [False]
                 return record_dict
         else:
@@ -285,7 +286,8 @@ class AssetInfoCollector:
             toestel_name = toestel.attr_dict.get('AIMNaamObject.naam', '')
             record_dict[f'LED_toestel_{toestel_index}_uuid'] = [toestel_uuid]
             record_dict[f'LED_toestel_{toestel_index}_naam'] = [toestel_name]
-            record_dict[f'LED_toestel_{toestel_index}_naam_conform_conventie'] = self.is_conform_name_convention_toestel(
+            record_dict[
+                f'LED_toestel_{toestel_index}_naam_conform_conventie'] = self.is_conform_name_convention_toestel(
                 toestel_name=toestel_name, installatie_nummer=installatie_nummer, lichtpunt_nummer=lichtpunt_nummer,
                 toestel_index=toestel_index)
 
@@ -308,20 +310,22 @@ class AssetInfoCollector:
                     self.is_conform_name_convention_armatuur_controller(
                         controller_name=controller_name, toestel_name=toestel_name))
 
-        # geometry
-        distance = self.distance_between_drager_and_legacy_drager(legacy_drager=lgc_drager, drager=drager)
-        record_dict['legacy_drager_en_drager_binnen_5_meter'] = [distance <= 5.0]
-        record_dict['legacy_drager_en_drager_identieke_geometrie'] = [0.0 < distance <= 0.01]
-        record_dict['update_legacy_drager_geometrie'] = ''  # TODO: change to legacy geometry for legacy_drager
 
-        # toestand
-        legacy_drager_toestand = lgc_drager.attr_dict.get('AIMToestand.toestand')
-        drager_toestand = drager.attr_dict.get('AIMToestand.toestand')
-        record_dict['legacy_drager_en_drager_gelijke_toestand'] = [legacy_drager_toestand == drager_toestand]
-        if record_dict['legacy_drager_en_drager_gelijke_toestand'][0]:
-            record_dict['update_legacy_drager_toestand'] = ''
-        else:
-            record_dict['update_legacy_drager_toestand'] = drager_toestand[67:]
+        if drager:
+            # geometry
+            distance = self.distance_between_drager_and_legacy_drager(legacy_drager=lgc_drager, drager=drager)
+            record_dict['legacy_drager_en_drager_binnen_5_meter'] = [distance <= 5.0]
+            record_dict['legacy_drager_en_drager_identieke_geometrie'] = [0.0 < distance <= 0.01]
+            record_dict['update_legacy_drager_geometrie'] = ''  # TODO: change to legacy geometry for legacy_drager
+
+            # toestand
+            legacy_drager_toestand = lgc_drager.attr_dict.get('AIMToestand.toestand')
+            drager_toestand = drager.attr_dict.get('AIMToestand.toestand')
+            record_dict['legacy_drager_en_drager_gelijke_toestand'] = [legacy_drager_toestand == drager_toestand]
+            if record_dict['legacy_drager_en_drager_gelijke_toestand'][0]:
+                record_dict['update_legacy_drager_toestand'] = ''
+            else:
+                record_dict['update_legacy_drager_toestand'] = drager_toestand[67:]
 
         # bestekkoppeling
         # TODO
@@ -407,7 +411,8 @@ class AssetInfoCollector:
         return controller_name == f'{toestel_name}.AC1'
 
     @classmethod
-    def is_conform_name_convention_drager(cls, drager_name: str, installatie_nummer: str, lichtpunt_nummer: str) -> bool:
+    def is_conform_name_convention_drager(cls, drager_name: str, installatie_nummer: str,
+                                          lichtpunt_nummer: str) -> bool:
         if drager_name is None or not drager_name:
             return False
         if installatie_nummer is None or not installatie_nummer:
@@ -563,9 +568,7 @@ class AssetInfoCollector:
             modelnaam = modelnaam[84:].title()
             merk_en_type = f'{merk} {modelnaam}'
 
-        verlichtingstype = toestel.attr_dict.get('Verlichtingstoestel.verlichtGebied')
-        if verlichtingstype is not None:
-            verlichtingstype = cls.map_verlichtingstype(verlichtingstype)
+        verlichtingstype = cls.get_verlichtingstype(toestellen)
 
         d = {
             'aantal_te_verlichten_rijvakken_LED': aantal_te_verlichten_rijvakken,
@@ -578,7 +581,9 @@ class AssetInfoCollector:
             'verlichtingsniveau_LED': verlichtingsniveau,
             'verlichtingstoestel_merk_en_type': merk_en_type,
             'verlichtingstoestel_systeemvermogen': toestel.attr_dict.get('Verlichtingstoestel.systeemvermogen'),
-            'verlichtingstype': verlichtingstype
+            'verlichtingstype': verlichtingstype,
+            'aantal_verlichtingstoestellen': len(toestellen),
+
         }
         if drager.short_type == 'onderdeel#WVLichtmast':
             d['RAL_kleur'] = drager.attr_dict.get('Lichtmast.kleur')
@@ -586,9 +591,7 @@ class AssetInfoCollector:
         return d
 
         d = {
-            'aantal_verlichtingstoestellen': drager.attr_dict.get('lgc:EMObject.aantalVerlichtingstoestellen'),
-            'contractnummer_levering_LED': drager.attr_dict.get('lgc:EMObject.contractnummerLeveringLed'),
-
+            'contractnummer_levering_LED': drager.attr_dict.get('lgc:EMObject.contractnummerLeveringLed'), # via aanleveringsbestek
         }
         if drager.short_type == 'lgc:installatie#VPLMast':
             d['drager_buiten_gebruik'] = drager.attr_dict.get('lgc:VPLMast.lichtmastBuitenGebruik')
@@ -608,24 +611,31 @@ class AssetInfoCollector:
         return 'O+1'
 
     @classmethod
-    def map_verlichtingstype(cls, verlichtingstype: str) -> str:
-        verlichtingstype = verlichtingstype[89:]
+    def get_verlichtingstype(cls, toestellen: [NodeInfoObject]) -> str | None:
         map_dict = {
-            'afrit': 'opafrit',
-            'bebakening': 'bebakening',
-            'doorlopende-straatverlichting': 'doorlopende straatverlichting',
-            'fietspad': 'fietspadverlichting',
-            'hoofdweg': 'hoofdbaan',
-            'kruispunt': 'kruispunt',
-            'monument': 'monument',
-            'onderdoorgang': 'onderdoorgang',
-            'oprit': 'opafrit',
-            'parking': 'parking',
-            'projector': 'projector',
-            'punctuele-verlichting': 'punctuele verlichting',
-            'rotonde': 'rotonde verlichting',
-            'tunnelverlichting': 'tunnelverlichting',  # of 'tunnel verlichting', beiden bestaan en worden gebruikt!
-            'wisselaar': 'wisselaar'
+            'afrit': ('opafrit', 2),
+            'bebakening': ('bebakening', 10),
+            'doorlopende-straatverlichting': ('doorlopende straatverlichting', 11),
+            'fietspad': ('fietspadverlichting', 12),
+            'hoofdweg': ('hoofdbaan', 4),
+            'kruispunt': ('kruispunt', 5),
+            'monument': ('monument', 14),
+            'onderdoorgang': ('onderdoorgang', 9),
+            'oprit': ('opafrit', 2),
+            'parking': ('parking', 13),
+            'projector': ('projector', 100),
+            'punctuele-verlichting': ('punctuele verlichting', 1),
+            'rotonde': ('rotonde verlichting', 6),
+            'tunnelverlichting': ('tunnel verlichting', 7),
+            'wisselaar': ('wisselaar', 3),
+            'onderdoorgang-dag': ('onderdoorgang dag', 8)
         }
 
-        return map_dict.get(verlichtingstype)
+        verlichtingstype_prio = 1000
+        verlichtingstype = None
+        for toestel in toestellen:
+            verlichtingstype = toestel.attr_dict.get('Verlichtingstoestel.verlichtGebied')
+            if verlichtingstype is not None and verlichtingstype[1] < verlichtingstype_prio:
+                verlichtingstype_prio = verlichtingstype[1]
+                verlichtingstype = verlichtingstype[0]
+        return verlichtingstype

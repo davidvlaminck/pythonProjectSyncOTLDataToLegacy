@@ -3,9 +3,12 @@ import math
 from copy import deepcopy
 from unittest.mock import Mock
 
+import pytest
+
 from API.AbstractRequester import AbstractRequester
 from Domain.AssetInfoCollector import AssetInfoCollector
 from API.EMInfraRestClient import EMInfraRestClient
+from Domain.InfoObject import NodeInfoObject
 
 
 def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cursor: str | None = None,
@@ -736,14 +739,14 @@ def test_start_creating_report():
              True, '',
              True, ''],
             ['01', 'DA-01', '00000000-0000-0000-0000-000000000009', 'VPConsole',
-             'A0000/A0000.WV/C02', True, # 'legacy_drager_naampad', 'legacy_drager_naampad_conform_conventie',
+             'A0000/A0000.WV/C02', True,  # 'legacy_drager_naampad', 'legacy_drager_naampad_conform_conventie',
              True, True,  # 'drager_verwacht', 'relatie_legacy_naar_drager_aanwezig',
              # 'drager_uuid', 'drager_type', 'drager_naam', 'drager_naam_conform_conventie',
              '00000000-0000-0000-0000-000000000005', 'WVConsole', 'A0000.FOUT1', False,
-             True, # 'relatie_drager_naar_toestel_aanwezig',
+             True,  # 'relatie_drager_naar_toestel_aanwezig',
              # 'LED_toestel_1_uuid', 'LED_toestel_1_naam', 'LED_toestel_1_naam_conform_conventie',
              '00000000-0000-0000-0000-000000000003', 'A0000.C02.WV1', True,
-             True, # 'relatie_naar_armatuur_controller_1_aanwezig',
+             True,  # 'relatie_naar_armatuur_controller_1_aanwezig',
              # 'armatuur_controller_1_uuid', 'armatuur_controller_1_naam', 'armatuur_controller_1_naam_conform_conventie'
              '00000000-0000-0000-0000-000000000007', 'A0000.C02.WV1.AC1', True,
              False,
@@ -982,14 +985,13 @@ def test_get_attribute_dict_from_drager():
                                         '00000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000022',
                                         '00000000-0000-0000-0000-000000000023', '00000000-0000-0000-0000-000000000024'])
     drager = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000004')
-    toestel = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000002')
-    armatuur_controller = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000006')
+    toestellen = collector.collection.get_node_objects_by_types(['onderdeel#VerlichtingstoestelLED'])
+    armatuur_controllers = collector.collection.get_node_objects_by_types(['onderdeel#Armatuurcontroller'])
 
-    d_1 = AssetInfoCollector.get_attribute_dict_from_otl_assets(drager=drager, toestellen=[toestel],
-                                                                armatuur_controllers=[armatuur_controller])
+    d_1 = AssetInfoCollector.get_attribute_dict_from_otl_assets(drager=drager, toestellen=list(toestellen),
+                                                                armatuur_controllers=list(armatuur_controllers))
 
     d_expected = {
-        'aantal_verlichtingstoestellen': 4,
         'contractnummer_levering_LED': '123456',
         'drager_buiten_gebruik': False,
         'serienummer_armatuurcontroller_1': '1234561',
@@ -1000,6 +1002,7 @@ def test_get_attribute_dict_from_drager():
     }
 
     d_expected = {
+        'aantal_verlichtingstoestellen': 4,
         'aantal_te_verlichten_rijvakken_LED': 'R1',
         'datum_installatie_LED': '2020-01-01',
         'kleurtemperatuur_LED': 'K3000',
@@ -1015,3 +1018,9 @@ def test_get_attribute_dict_from_drager():
     }
 
     assert d_expected == d_1
+
+
+def node_info_object_mock(verlichtingstype_value):
+    node_info_object = Mock(spec=NodeInfoObject)
+    node_info_object.attr_dict = {'Verlichtingstoestel.verlichtGebied': verlichtingstype_value[0]}
+    return node_info_object
