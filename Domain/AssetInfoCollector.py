@@ -634,8 +634,10 @@ class AssetInfoCollector:
         verlichtingstype_prio = 1000
         verlichtingstype = None
         for toestel in toestellen:
-            verlichtingstype = toestel.attr_dict.get('Verlichtingstoestel.verlichtGebied')
-            if verlichtingstype is not None and verlichtingstype[1] < verlichtingstype_prio:
-                verlichtingstype_prio = verlichtingstype[1]
-                verlichtingstype = verlichtingstype[0]
+            verlichtingstype_node = toestel.attr_dict.get('Verlichtingstoestel.verlichtGebied')
+            if verlichtingstype_node is not None:
+                verlichtingstype_tuple = map_dict[verlichtingstype_node]
+                if verlichtingstype_tuple[1] < verlichtingstype_prio:
+                    verlichtingstype_prio = verlichtingstype_tuple[1]
+                    verlichtingstype = verlichtingstype_tuple[0]
         return verlichtingstype

@@ -1022,5 +1022,20 @@ def test_get_attribute_dict_from_drager():
 
 def node_info_object_mock(verlichtingstype_value):
     node_info_object = Mock(spec=NodeInfoObject)
-    node_info_object.attr_dict = {'Verlichtingstoestel.verlichtGebied': verlichtingstype_value[0]}
+    node_info_object.attr_dict = {'Verlichtingstoestel.verlichtGebied': verlichtingstype_value}
     return node_info_object
+
+
+def test_get_verlichtingstype():
+    toestellen = [node_info_object_mock('hoofdweg'), node_info_object_mock('hoofdweg')]
+    assert AssetInfoCollector.get_verlichtingstype(toestellen) == 'hoofdbaan'
+    toestellen = [node_info_object_mock('hoofdweg'), node_info_object_mock('fietspad')]
+    assert AssetInfoCollector.get_verlichtingstype(toestellen) == 'hoofdbaan'
+    toestellen = [node_info_object_mock('fietspad'), node_info_object_mock('fietspad')]
+    assert AssetInfoCollector.get_verlichtingstype(toestellen) == 'fietspadverlichting'
+    toestellen = [node_info_object_mock('hoofdweg'), node_info_object_mock('fietspad'),
+                  node_info_object_mock('hoofdweg'), node_info_object_mock('fietspad')]
+    assert AssetInfoCollector.get_verlichtingstype(toestellen) == 'hoofdbaan'
+    toestellen = [node_info_object_mock('hoofdweg'), node_info_object_mock('afrit')]
+    assert AssetInfoCollector.get_verlichtingstype(toestellen) == 'opafrit'
+
