@@ -2,6 +2,8 @@
 from copy import deepcopy
 from unittest.mock import Mock
 
+import pytest
+
 from API.AbstractRequester import AbstractRequester
 from API.EMInfraRestClient import EMInfraRestClient
 from Domain.AssetInfoCollector import AssetInfoCollector
@@ -52,7 +54,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         "VerlichtingstoestelLED.lichtpuntHoogte": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedLichtpunthoogte/6",
         "VerlichtingstoestelLED.aantalTeVerlichtenRijstroken": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedAantalTeVerlichtenRijstroken/1",
         "VerlichtingstoestelLED.lumenOutput": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlLumenOutput/10000",
-        "VerlichtingstoestelLED.overhang": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedOverhang/1",
+        "VerlichtingstoestelLED.overhang": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedOverhang/1-0",
         "Verlichtingstoestel.verlichtGebied": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlVerlichtingstoestelVerlichtGebied/hoofdweg",
         "VerlichtingstoestelLED.verlichtingsNiveau": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedVerlNiveau/M3",
     }
@@ -302,7 +304,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         "VerlichtingstoestelLED.lichtpuntHoogte": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedLichtpunthoogte/6",
         "VerlichtingstoestelLED.aantalTeVerlichtenRijstroken": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedAantalTeVerlichtenRijstroken/1",
         "VerlichtingstoestelLED.lumenOutput": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlLumenOutput/10000",
-        "VerlichtingstoestelLED.overhang": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedOverhang/1",
+        "VerlichtingstoestelLED.overhang": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedOverhang/1-0",
         "Verlichtingstoestel.verlichtGebied": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlVerlichtingstoestelVerlichtGebied/hoofdweg",
         "VerlichtingstoestelLED.verlichtingsNiveau": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedVerlNiveau/M3",
     }
@@ -726,11 +728,15 @@ def test_start_creating_report():
         uuids=['00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003',
                '00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000005',
                '00000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000007',
-               '00000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000009'])
+               '00000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000009',
+               '00000000-0000-0000-0000-000000000026', '00000000-0000-0000-0000-000000000022',
+               '00000000-0000-0000-0000-000000000023', '00000000-0000-0000-0000-000000000024'])
     collector.collect_relation_info(
         uuids=['000000000002-Bevestigin-000000000004', '000000000006-Bevestigin-000000000002',
                '000000000005-Bevestigin-000000000003', '000000000003-Bevestigin-000000000007',
-               '000000000004--HoortBij--000000000008', '000000000005--HoortBij--000000000009'])
+               '000000000004--HoortBij--000000000008', '000000000005--HoortBij--000000000009',
+               '000000000024-Bevestigin-000000000004', '000000000023-Bevestigin-000000000004',
+               '000000000022-Bevestigin-000000000004', '000000000002-Bevestigin-000000000026'])
 
     expected_report = {
         'columns': [
@@ -779,8 +785,19 @@ def test_start_creating_report():
              '',
              False,
              'uit-gebruik',
-             True,
-             '']]}
+             False,
+             '{\n'
+             '    "aantal_te_verlichten_rijvakken_LED": null,\n'
+             '    "datum_installatie_LED": null,\n'
+             '    "kleurtemperatuur_LED": null,\n'
+             '    "lichtpunthoogte_tov_rijweg": null,\n'
+             '    "lumen_pakket_LED": null,\n'
+             '    "overhang_LED": null,\n'
+             '    "verlichtingsniveau_LED": null,\n'
+             '    "verlichtingstoestel_merk_en_type": null,\n'
+             '    "verlichtingstoestel_systeemvermogen": null,\n'
+             '    "verlichtingstype": null\n'
+             '}']]}
 
     report = collector.start_creating_report('01', 'DA-01')
     report = report.iloc[:, :-21]
@@ -869,6 +886,15 @@ def test_get_lichtpunt_nummer_from_toestel_name():
     assert AssetInfoCollector.get_lichtpunt_nummer_from_toestel_name('A0000') == ''
     assert AssetInfoCollector.get_lichtpunt_nummer_from_toestel_name('') == ''
     assert AssetInfoCollector.get_lichtpunt_nummer_from_toestel_name(None) == ''
+
+
+@pytest.mark.parametrize("value, expected", [
+    ('https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedOverhang/1-0', 'O+1'),
+    ('https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedOverhang/1-0-2', 'O-1'),
+    ('https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLedOverhang/0-2', '0'),
+])
+def test_map_overhang(value, expected):
+    assert AssetInfoCollector.map_overhang(value) == expected
 
 
 def test_distance_between_drager_and_legacy_drager():

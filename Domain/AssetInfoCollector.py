@@ -531,7 +531,10 @@ class AssetInfoCollector:
     @classmethod
     def get_attribute_dict_from_otl_assets(cls, drager: NodeInfoObject, toestellen: [NodeInfoObject],
                                            armatuur_controllers: [NodeInfoObject]) -> dict:
-        toestel = toestellen[0]
+        toestel = cls.get_toestel_by_index(toestellen=toestellen, index=1)
+        if toestel is None:
+            return {'error': 'toestel 1 kon niet worden gevonden'}
+
         aantal_te_verlichten_rijvakken = toestel.attr_dict.get('VerlichtingstoestelLED.aantalTeVerlichtenRijstroken',
                                                                None)
         if aantal_te_verlichten_rijvakken is not None:
@@ -586,41 +589,75 @@ class AssetInfoCollector:
         }
         if drager.short_type == 'onderdeel#WVLichtmast':
             d['RAL_kleur'] = drager.attr_dict.get('Lichtmast.kleur')
-            sorted_toestellen = sorted(toestellen, key=lambda t: t.attr_dict.get('AIMNaamObject.naam', ''))
-            for index, toestel in enumerate(sorted_toestellen):
-                toestel_naam = toestel.attr_dict.get('AIMNaamObject.naam')
-                if toestel_naam is None:
-                    continue
-                ac = next((c for c in armatuur_controllers
-                           if c.attr_dict.get('AIMNaamObject.naam', '').startswith(toestel_naam)), None)
+            for index in range(1, len(toestellen) + 1):
+                ac = cls.get_armatuur_controller_by_index(armatuur_controllers=armatuur_controllers, index=index)
                 if ac is None:
                     continue
-                d[f'serienummer_armatuurcontroller_{(index + 1)}'] = ac.attr_dict.get('Armatuurcontroller.serienummer',
-                                                                                      None)
-
+                d[f'serienummer_armatuurcontroller_{index}'] = ac.attr_dict.get('Armatuurcontroller.serienummer', None)
         return d
 
+        # TODO
         d = {
-            'contractnummer_levering_LED': drager.attr_dict.get('lgc:EMObject.contractnummerLeveringLed'), # via aanleveringsbestek
+            'contractnummer_levering_LED': drager.attr_dict.get('lgc:EMObject.contractnummerLeveringLed'),
+            # via aanleveringsbestek
         }
         if drager.short_type == 'lgc:installatie#VPLMast':
             d['drager_buiten_gebruik'] = drager.attr_dict.get('lgc:VPLMast.lichtmastBuitenGebruik')
-            d['serienummer_armatuurcontroller_1'] = drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller1')
-            d['serienummer_armatuurcontroller_2'] = drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller2')
-            d['serienummer_armatuurcontroller_3'] = drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller3')
-            d['serienummer_armatuurcontroller_4'] = drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller4')
-
-
 
         return d
 
     @classmethod
     def get_update_dict(cls, drager_dict: dict, legacy_drager_dict: dict) -> dict:
-        return {}
+        # TODO compare legacy with otl drager and create a dict that's the difference of those two
+        update_dict = {}
+        for key, value in drager_dict.items():
+            if key not in legacy_drager_dict:
+                update_dict[key] = value
+            elif value != legacy_drager_dict[key]:
+                update_dict[key] = value
+        return update_dict
 
     @classmethod
-    def map_overhang(cls, overhang_LED: str) -> str:
-        return 'O+1'
+    def map_overhang(cls, overhang_LED: str) -> str | None:
+        map_dict = {
+            '0-2': '0',
+            '0-5': '+0.5',
+            '0-5-2': '-0.5',
+            '1-0': '+1.0',
+            '1-0-2': '-1.0',
+            '1-5': '+1.5',
+            '1-5-2': '-1.5',
+            '2-0': '+2.0',
+            '2-0-2': '-2.0',
+            '2-5': '+2.5',
+            '2-5-2': '-2.5',
+            '3-0': '+3.0',
+            '3-0-2': '-3.0',
+            '3-5': '+3.5',
+            '3-5-2': '-3.5',
+            '4': '-4',
+            '4-2': '+4',
+            '4-5': '+4.5',
+            '4-5-2': '-4.5',
+            '5-0': '+5.0',
+            '5-0-2': '-5.0',
+            '5-5': '+5.5',
+            '5-5-2': '-5.5',
+            '6-0': '+6.0',
+            '6-0-2': '-6.0',
+            '6-5': '+6.5',
+            '6-5-2': '-6.5',
+            '7-0': '+7.0',
+            '7-0-2': '-7.0'}
+        overhang = map_dict.get(overhang_LED[69:])
+        if overhang is None:
+            return None
+        if overhang == '0':
+            return '0'
+        if overhang.endswith('.0'):
+            overhang = overhang[:-2]
+
+        return f'O{overhang}'
 
     @classmethod
     def get_verlichtingstype(cls, toestellen: [NodeInfoObject]) -> str | None:
@@ -654,3 +691,21 @@ class AssetInfoCollector:
                     verlichtingstype_prio = verlichtingstype_tuple[1]
                     verlichtingstype = verlichtingstype_tuple[0]
         return verlichtingstype
+
+    @classmethod
+    def get_armatuur_controller_by_index(cls, armatuur_controllers: [NodeInfoObject], index: int
+                                         ) -> NodeInfoObject | None:
+        index_str = str(index)
+        for ac in armatuur_controllers:
+            naam = ac.attr_dict.get('AIMNaamObject.naam')
+            if naam and naam.split('.')[-2][2:3] == index_str:
+                return ac
+
+    @classmethod
+    def get_toestel_by_index(cls, toestellen: [NodeInfoObject], index: int) -> NodeInfoObject | None:
+        index_str = str(index)
+        for toestel in toestellen:
+            naam = toestel.attr_dict.get('AIMNaamObject.naam')
+            if naam and naam[-1] == index_str:
+                return toestel
+
