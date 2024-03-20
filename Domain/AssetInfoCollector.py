@@ -310,7 +310,6 @@ class AssetInfoCollector:
                     self.is_conform_name_convention_armatuur_controller(
                         controller_name=controller_name, toestel_name=toestel_name))
 
-
         if drager:
             # geometry
             distance = self.distance_between_drager_and_legacy_drager(legacy_drager=lgc_drager, drager=drager)
@@ -587,6 +586,17 @@ class AssetInfoCollector:
         }
         if drager.short_type == 'onderdeel#WVLichtmast':
             d['RAL_kleur'] = drager.attr_dict.get('Lichtmast.kleur')
+            sorted_toestellen = sorted(toestellen, key=lambda t: t.attr_dict.get('AIMNaamObject.naam', ''))
+            for index, toestel in enumerate(sorted_toestellen):
+                toestel_naam = toestel.attr_dict.get('AIMNaamObject.naam')
+                if toestel_naam is None:
+                    continue
+                ac = next((c for c in armatuur_controllers
+                           if c.attr_dict.get('AIMNaamObject.naam', '').startswith(toestel_naam)), None)
+                if ac is None:
+                    continue
+                d[f'serienummer_armatuurcontroller_{(index + 1)}'] = ac.attr_dict.get('Armatuurcontroller.serienummer',
+                                                                                      None)
 
         return d
 
@@ -599,6 +609,8 @@ class AssetInfoCollector:
             d['serienummer_armatuurcontroller_2'] = drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller2')
             d['serienummer_armatuurcontroller_3'] = drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller3')
             d['serienummer_armatuurcontroller_4'] = drager.attr_dict.get('lgc:VPLMast.serienummerArmatuurcontroller4')
+
+
 
         return d
 
@@ -636,6 +648,7 @@ class AssetInfoCollector:
         for toestel in toestellen:
             verlichtingstype_node = toestel.attr_dict.get('Verlichtingstoestel.verlichtGebied')
             if verlichtingstype_node is not None:
+                verlichtingstype_node = verlichtingstype_node[89:]
                 verlichtingstype_tuple = map_dict[verlichtingstype_node]
                 if verlichtingstype_tuple[1] < verlichtingstype_prio:
                     verlichtingstype_prio = verlichtingstype_tuple[1]

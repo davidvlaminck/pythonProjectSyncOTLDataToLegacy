@@ -1,13 +1,10 @@
 ﻿import logging
-import math
 from copy import deepcopy
 from unittest.mock import Mock
 
-import pytest
-
 from API.AbstractRequester import AbstractRequester
-from Domain.AssetInfoCollector import AssetInfoCollector
 from API.EMInfraRestClient import EMInfraRestClient
+from Domain.AssetInfoCollector import AssetInfoCollector
 from Domain.InfoObject import NodeInfoObject
 
 
@@ -365,6 +362,18 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         "AIMObject.datumOprichtingObject": "2020-01-01",
         "AIMObject.typeURI": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
     }
+    asset_26 = {
+        "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller",
+        "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000026-",
+        "AIMDBStatus.isActief": True,
+        'AIMNaamObject.naam': 'A0000.A01.WV2.AC1',
+        "AIMObject.assetId": {
+            "DtcIdentificator.toegekendDoor": "AWV",
+            "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000026-"
+        },
+        "AIMObject.typeURI": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller",
+        "Armatuurcontroller.serienummer": '1234562'
+    }
 
     relatie_31 = {
         "@type": "https://grp.data.wegenenverkeer.be/ns/onderdeel#HoortBij",
@@ -414,16 +423,28 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
             "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000004-"
         }
     }
+    relatie_35 = {
+        "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Bevestiging",
+        "@id": "https://data.awvvlaanderen.be/id/assetrelatie/000000000002-Bevestigin-000000000026-",
+        "RelatieObject.bron": {
+            "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED",
+            "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000002-"
+        },
+        "RelatieObject.doel": {
+            "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller",
+            "@id": "https://data.awvvlaanderen.be/id/asset/00000000-0000-0000-0000-000000000026-"
+        }
+    }
 
     logging.debug(f'API Call made to get objects from oslo search endpoint using iterator, resource: {resource}')
 
     if resource == 'assets':
         yield from iter([a for a in [asset_1, asset_2, asset_3, asset_4, asset_5, asset_6, asset_7, asset_8, asset_9,
-                                     asset_inactief, asset_21, asset_22, asset_23, asset_24, asset_25]
+                                     asset_inactief, asset_21, asset_22, asset_23, asset_24, asset_25, asset_26]
                          if a['@id'][39:75] in filter_dict['uuid']])
     elif resource == 'assetrelaties':
         assetrelaties = [relatie_10, relatie_11, relatie_12, relatie_13, relatie_14, relatie_15,
-                         relatie_31, relatie_32, relatie_33, relatie_34]
+                         relatie_31, relatie_32, relatie_33, relatie_34, relatie_35]
         if 'uuid' in filter_dict:
             yield from iter([r for r in assetrelaties
                              if r['@id'][46:82] in filter_dict['uuid']])
@@ -483,31 +504,31 @@ def test_start_collecting_from_starting_uuids_using_pattern_giving_uuids_of_a():
                  ('r1', 'type_of', ['onderdeel#Bevestiging']),
                  ('r2', 'type_of', ['onderdeel#HoortBij'])])
 
-    assert collector.collection.short_uri_dict == {
-        'lgc:installatie#VPBevestig': {'00000000-0000-0000-0000-000000000021'},
-        'lgc:installatie#VPConsole': {'00000000-0000-0000-0000-000000000009'},
-        'lgc:installatie#VPLMast': {'00000000-0000-0000-0000-000000000008'},
-        'onderdeel#Armatuurcontroller': {'00000000-0000-0000-0000-000000000006',
-                                         '00000000-0000-0000-0000-000000000007'},
-        'onderdeel#Bevestiging': {'000000000002-Bevestigin-000000000004',
-                                  '000000000003-Bevestigin-000000000007',
-                                  '000000000005-Bevestigin-000000000003',
-                                  '000000000006-Bevestigin-000000000002',
-                                  '000000000022-Bevestigin-000000000004',
-                                  '000000000023-Bevestigin-000000000004',
-                                  '000000000024-Bevestigin-000000000004'},
-        'onderdeel#HoortBij': {'000000000004--HoortBij--000000000008',
-                               '000000000005--HoortBij--000000000009',
-                               '000000000025--HoortBij--000000000021'},
-        'onderdeel#VerlichtingstoestelLED': {'00000000-0000-0000-0000-000000000002',
-                                             '00000000-0000-0000-0000-000000000003',
-                                             '00000000-0000-0000-0000-000000000022',
-                                             '00000000-0000-0000-0000-000000000023',
-                                             '00000000-0000-0000-0000-000000000024',
-                                             '00000000-0000-0000-0000-000000000025'},
-        'onderdeel#WVConsole': {'00000000-0000-0000-0000-000000000005'},
-        'onderdeel#WVLichtmast': {'00000000-0000-0000-0000-000000000004'}
-    }
+    assert collector.collection.short_uri_dict == {'lgc:installatie#VPBevestig': {'00000000-0000-0000-0000-000000000021'},
+ 'lgc:installatie#VPConsole': {'00000000-0000-0000-0000-000000000009'},
+ 'lgc:installatie#VPLMast': {'00000000-0000-0000-0000-000000000008'},
+ 'onderdeel#Armatuurcontroller': {'00000000-0000-0000-0000-000000000006',
+                                  '00000000-0000-0000-0000-000000000007',
+                                  '00000000-0000-0000-0000-000000000026'},
+ 'onderdeel#Bevestiging': {'000000000002-Bevestigin-000000000004',
+                           '000000000002-Bevestigin-000000000026',
+                           '000000000003-Bevestigin-000000000007',
+                           '000000000005-Bevestigin-000000000003',
+                           '000000000006-Bevestigin-000000000002',
+                           '000000000022-Bevestigin-000000000004',
+                           '000000000023-Bevestigin-000000000004',
+                           '000000000024-Bevestigin-000000000004'},
+ 'onderdeel#HoortBij': {'000000000004--HoortBij--000000000008',
+                        '000000000005--HoortBij--000000000009',
+                        '000000000025--HoortBij--000000000021'},
+ 'onderdeel#VerlichtingstoestelLED': {'00000000-0000-0000-0000-000000000002',
+                                      '00000000-0000-0000-0000-000000000003',
+                                      '00000000-0000-0000-0000-000000000022',
+                                      '00000000-0000-0000-0000-000000000023',
+                                      '00000000-0000-0000-0000-000000000024',
+                                      '00000000-0000-0000-0000-000000000025'},
+ 'onderdeel#WVConsole': {'00000000-0000-0000-0000-000000000005'},
+ 'onderdeel#WVLichtmast': {'00000000-0000-0000-0000-000000000004'}}
 
 
 def test_start_collecting_from_starting_uuids_using_pattern_giving_uuids_of_c():
@@ -531,27 +552,28 @@ def test_start_collecting_from_starting_uuids_using_pattern_giving_uuids_of_c():
                  ('r2', 'type_of', ['onderdeel#HoortBij'])])
 
     assert collector.collection.short_uri_dict == {
+        'lgc:installatie#VPConsole': {'00000000-0000-0000-0000-000000000009'},
+        'lgc:installatie#VPLMast': {'00000000-0000-0000-0000-000000000008'},
+        'onderdeel#Armatuurcontroller': {'00000000-0000-0000-0000-000000000006',
+                                         '00000000-0000-0000-0000-000000000007',
+                                         '00000000-0000-0000-0000-000000000026'},
+        'onderdeel#Bevestiging': {'000000000002-Bevestigin-000000000004',
+                                  '000000000002-Bevestigin-000000000026',
+                                  '000000000003-Bevestigin-000000000007',
+                                  '000000000005-Bevestigin-000000000003',
+                                  '000000000006-Bevestigin-000000000002',
+                                  '000000000022-Bevestigin-000000000004',
+                                  '000000000023-Bevestigin-000000000004',
+                                  '000000000024-Bevestigin-000000000004'},
+        'onderdeel#HoortBij': {'000000000004--HoortBij--000000000008',
+                               '000000000005--HoortBij--000000000009'},
         'onderdeel#VerlichtingstoestelLED': {'00000000-0000-0000-0000-000000000002',
                                              '00000000-0000-0000-0000-000000000003',
                                              '00000000-0000-0000-0000-000000000022',
                                              '00000000-0000-0000-0000-000000000023',
                                              '00000000-0000-0000-0000-000000000024'},
-        'onderdeel#WVLichtmast': {'00000000-0000-0000-0000-000000000004'},
         'onderdeel#WVConsole': {'00000000-0000-0000-0000-000000000005'},
-        'onderdeel#Armatuurcontroller': {'00000000-0000-0000-0000-000000000006',
-                                         '00000000-0000-0000-0000-000000000007'},
-        'lgc:installatie#VPLMast': {'00000000-0000-0000-0000-000000000008'},
-        'lgc:installatie#VPConsole': {'00000000-0000-0000-0000-000000000009'},
-        'onderdeel#Bevestiging': {'000000000002-Bevestigin-000000000004',
-                                  '000000000006-Bevestigin-000000000002',
-                                  '000000000005-Bevestigin-000000000003',
-                                  '000000000003-Bevestigin-000000000007',
-                                  '000000000022-Bevestigin-000000000004',
-                                  '000000000023-Bevestigin-000000000004',
-                                  '000000000024-Bevestigin-000000000004'},
-        'onderdeel#HoortBij': {'000000000004--HoortBij--000000000008',
-                               '000000000005--HoortBij--000000000009'}
-    }
+        'onderdeel#WVLichtmast': {'00000000-0000-0000-0000-000000000004'}}
 
 
 def test_start_collecting_from_starting_uuids_using_pattern_giving_uuids_of_d():
@@ -575,27 +597,28 @@ def test_start_collecting_from_starting_uuids_using_pattern_giving_uuids_of_d():
                  ('r2', 'type_of', ['onderdeel#HoortBij'])])
 
     assert collector.collection.short_uri_dict == {
+        'lgc:installatie#VPConsole': {'00000000-0000-0000-0000-000000000009'},
+        'lgc:installatie#VPLMast': {'00000000-0000-0000-0000-000000000008'},
+        'onderdeel#Armatuurcontroller': {'00000000-0000-0000-0000-000000000006',
+                                         '00000000-0000-0000-0000-000000000007',
+                                         '00000000-0000-0000-0000-000000000026'},
+        'onderdeel#Bevestiging': {'000000000002-Bevestigin-000000000004',
+                                  '000000000002-Bevestigin-000000000026',
+                                  '000000000003-Bevestigin-000000000007',
+                                  '000000000005-Bevestigin-000000000003',
+                                  '000000000006-Bevestigin-000000000002',
+                                  '000000000022-Bevestigin-000000000004',
+                                  '000000000023-Bevestigin-000000000004',
+                                  '000000000024-Bevestigin-000000000004'},
+        'onderdeel#HoortBij': {'000000000004--HoortBij--000000000008',
+                               '000000000005--HoortBij--000000000009'},
         'onderdeel#VerlichtingstoestelLED': {'00000000-0000-0000-0000-000000000002',
                                              '00000000-0000-0000-0000-000000000003',
                                              '00000000-0000-0000-0000-000000000022',
                                              '00000000-0000-0000-0000-000000000023',
                                              '00000000-0000-0000-0000-000000000024'},
-        'onderdeel#WVLichtmast': {'00000000-0000-0000-0000-000000000004'},
         'onderdeel#WVConsole': {'00000000-0000-0000-0000-000000000005'},
-        'onderdeel#Armatuurcontroller': {'00000000-0000-0000-0000-000000000006',
-                                         '00000000-0000-0000-0000-000000000007'},
-        'lgc:installatie#VPLMast': {'00000000-0000-0000-0000-000000000008'},
-        'lgc:installatie#VPConsole': {'00000000-0000-0000-0000-000000000009'},
-        'onderdeel#Bevestiging': {'000000000002-Bevestigin-000000000004',
-                                  '000000000006-Bevestigin-000000000002',
-                                  '000000000005-Bevestigin-000000000003',
-                                  '000000000003-Bevestigin-000000000007',
-                                  '000000000022-Bevestigin-000000000004',
-                                  '000000000023-Bevestigin-000000000004',
-                                  '000000000024-Bevestigin-000000000004'},
-        'onderdeel#HoortBij': {'000000000004--HoortBij--000000000008',
-                               '000000000005--HoortBij--000000000009'}
-    }
+        'onderdeel#WVLichtmast': {'00000000-0000-0000-0000-000000000004'}}
 
 
 def test_start_collecting_from_starting_uuids_using_pattern_giving_uuids_of_b():
@@ -619,27 +642,28 @@ def test_start_collecting_from_starting_uuids_using_pattern_giving_uuids_of_b():
                  ('r2', 'type_of', ['onderdeel#HoortBij'])])
 
     assert collector.collection.short_uri_dict == {
+        'lgc:installatie#VPConsole': {'00000000-0000-0000-0000-000000000009'},
+        'lgc:installatie#VPLMast': {'00000000-0000-0000-0000-000000000008'},
+        'onderdeel#Armatuurcontroller': {'00000000-0000-0000-0000-000000000006',
+                                         '00000000-0000-0000-0000-000000000007',
+                                         '00000000-0000-0000-0000-000000000026'},
+        'onderdeel#Bevestiging': {'000000000002-Bevestigin-000000000004',
+                                  '000000000002-Bevestigin-000000000026',
+                                  '000000000003-Bevestigin-000000000007',
+                                  '000000000005-Bevestigin-000000000003',
+                                  '000000000006-Bevestigin-000000000002',
+                                  '000000000022-Bevestigin-000000000004',
+                                  '000000000023-Bevestigin-000000000004',
+                                  '000000000024-Bevestigin-000000000004'},
+        'onderdeel#HoortBij': {'000000000004--HoortBij--000000000008',
+                               '000000000005--HoortBij--000000000009'},
         'onderdeel#VerlichtingstoestelLED': {'00000000-0000-0000-0000-000000000002',
                                              '00000000-0000-0000-0000-000000000003',
                                              '00000000-0000-0000-0000-000000000022',
                                              '00000000-0000-0000-0000-000000000023',
                                              '00000000-0000-0000-0000-000000000024'},
-        'onderdeel#WVLichtmast': {'00000000-0000-0000-0000-000000000004'},
         'onderdeel#WVConsole': {'00000000-0000-0000-0000-000000000005'},
-        'onderdeel#Armatuurcontroller': {'00000000-0000-0000-0000-000000000006',
-                                         '00000000-0000-0000-0000-000000000007'},
-        'lgc:installatie#VPLMast': {'00000000-0000-0000-0000-000000000008'},
-        'lgc:installatie#VPConsole': {'00000000-0000-0000-0000-000000000009'},
-        'onderdeel#Bevestiging': {'000000000002-Bevestigin-000000000004',
-                                  '000000000006-Bevestigin-000000000002',
-                                  '000000000005-Bevestigin-000000000003',
-                                  '000000000003-Bevestigin-000000000007',
-                                  '000000000022-Bevestigin-000000000004',
-                                  '000000000023-Bevestigin-000000000004',
-                                  '000000000024-Bevestigin-000000000004'},
-        'onderdeel#HoortBij': {'000000000004--HoortBij--000000000008',
-                               '000000000005--HoortBij--000000000009'}
-    }
+        'onderdeel#WVLichtmast': {'00000000-0000-0000-0000-000000000004'}}
 
 
 def test_start_collecting_from_starting_uuids():
@@ -653,27 +677,28 @@ def test_start_collecting_from_starting_uuids():
         starting_uuids=['00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003'])
 
     assert collector.collection.short_uri_dict == {
+        'lgc:installatie#VPConsole': {'00000000-0000-0000-0000-000000000009'},
+        'lgc:installatie#VPLMast': {'00000000-0000-0000-0000-000000000008'},
+        'onderdeel#Armatuurcontroller': {'00000000-0000-0000-0000-000000000006',
+                                         '00000000-0000-0000-0000-000000000007',
+                                         '00000000-0000-0000-0000-000000000026'},
+        'onderdeel#Bevestiging': {'000000000002-Bevestigin-000000000004',
+                                  '000000000002-Bevestigin-000000000026',
+                                  '000000000003-Bevestigin-000000000007',
+                                  '000000000005-Bevestigin-000000000003',
+                                  '000000000006-Bevestigin-000000000002',
+                                  '000000000022-Bevestigin-000000000004',
+                                  '000000000023-Bevestigin-000000000004',
+                                  '000000000024-Bevestigin-000000000004'},
+        'onderdeel#HoortBij': {'000000000004--HoortBij--000000000008',
+                               '000000000005--HoortBij--000000000009'},
         'onderdeel#VerlichtingstoestelLED': {'00000000-0000-0000-0000-000000000002',
                                              '00000000-0000-0000-0000-000000000003',
                                              '00000000-0000-0000-0000-000000000022',
                                              '00000000-0000-0000-0000-000000000023',
                                              '00000000-0000-0000-0000-000000000024'},
-        'onderdeel#WVLichtmast': {'00000000-0000-0000-0000-000000000004'},
         'onderdeel#WVConsole': {'00000000-0000-0000-0000-000000000005'},
-        'onderdeel#Armatuurcontroller': {'00000000-0000-0000-0000-000000000006',
-                                         '00000000-0000-0000-0000-000000000007'},
-        'lgc:installatie#VPLMast': {'00000000-0000-0000-0000-000000000008'},
-        'lgc:installatie#VPConsole': {'00000000-0000-0000-0000-000000000009'},
-        'onderdeel#Bevestiging': {'000000000002-Bevestigin-000000000004',
-                                  '000000000006-Bevestigin-000000000002',
-                                  '000000000005-Bevestigin-000000000003',
-                                  '000000000003-Bevestigin-000000000007',
-                                  '000000000022-Bevestigin-000000000004',
-                                  '000000000023-Bevestigin-000000000004',
-                                  '000000000024-Bevestigin-000000000004'},
-        'onderdeel#HoortBij': {'000000000004--HoortBij--000000000008',
-                               '000000000005--HoortBij--000000000009'}
-    }
+        'onderdeel#WVLichtmast': {'00000000-0000-0000-0000-000000000004'}}
 
 
 def test_reverse_relation_pattern():
@@ -983,7 +1008,8 @@ def test_get_attribute_dict_from_drager():
 
     collector.collect_asset_info(uuids=['00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000002',
                                         '00000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000022',
-                                        '00000000-0000-0000-0000-000000000023', '00000000-0000-0000-0000-000000000024'])
+                                        '00000000-0000-0000-0000-000000000023', '00000000-0000-0000-0000-000000000024',
+                                        '00000000-0000-0000-0000-000000000026'])
     drager = collector.collection.get_node_object_by_uuid('00000000-0000-0000-0000-000000000004')
     toestellen = collector.collection.get_node_objects_by_types(['onderdeel#VerlichtingstoestelLED'])
     armatuur_controllers = collector.collection.get_node_objects_by_types(['onderdeel#Armatuurcontroller'])
@@ -994,11 +1020,6 @@ def test_get_attribute_dict_from_drager():
     d_expected = {
         'contractnummer_levering_LED': '123456',
         'drager_buiten_gebruik': False,
-        'serienummer_armatuurcontroller_1': '1234561',
-        'serienummer_armatuurcontroller_2': '1234562',
-        'serienummer_armatuurcontroller_3': '1234563',
-        'serienummer_armatuurcontroller_4': '1234564',
-
     }
 
     d_expected = {
@@ -1011,18 +1032,23 @@ def test_get_attribute_dict_from_drager():
         'lumen_pakket_LED': 10000,
         'overhang_LED': 'O+1',
         'RAL_kleur': '7038',
+        'serienummer_armatuurcontroller_1': '1234561',
+        'serienummer_armatuurcontroller_2': '1234562',
         'verlichtingsniveau_LED': 'M3',
         'verlichtingstoestel_merk_en_type': 'Schreder Ampera',
         'verlichtingstoestel_systeemvermogen': 100,
         'verlichtingstype': 'hoofdbaan'
     }
 
-    assert d_expected == d_1
+    assert  d_1 == d_expected
 
 
 def node_info_object_mock(verlichtingstype_value):
     node_info_object = Mock(spec=NodeInfoObject)
-    node_info_object.attr_dict = {'Verlichtingstoestel.verlichtGebied': verlichtingstype_value}
+    node_info_object.attr_dict = {
+        'Verlichtingstoestel.verlichtGebied':
+            'https://wegenenverkeer.data.vlaanderen.be/id/concept/KlVerlichtingstoestelVerlichtGebied/' +
+            verlichtingstype_value}
     return node_info_object
 
 
@@ -1038,4 +1064,3 @@ def test_get_verlichtingstype():
     assert AssetInfoCollector.get_verlichtingstype(toestellen) == 'hoofdbaan'
     toestellen = [node_info_object_mock('hoofdweg'), node_info_object_mock('afrit')]
     assert AssetInfoCollector.get_verlichtingstype(toestellen) == 'opafrit'
-
