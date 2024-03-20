@@ -1,3 +1,4 @@
+import datetime
 import logging
 import time
 import traceback
@@ -57,8 +58,8 @@ class DeliveryFinder:
             try:
                 current_feedproxy_page, current_feedproxy_event = self.get_current_feedproxy_page_and_event()
                 #
-                # current_feedproxy_page = '279270'
-                # current_feedproxy_event = 'c8632e7b-3b6c-4a44-80ee-b7d94681bec3'
+                current_feedproxy_page = '279520'
+                current_feedproxy_event = '9323f9dc-493c-48a2-84c3-824ee49ca2b1'
 
                 print(current_feedproxy_page, current_feedproxy_event)
                 proxy_feed_page = self.fetch_current_feed_page(current_feedproxy_page)
@@ -165,14 +166,28 @@ class DeliveryFinder:
 
         return collected_events, current_feedproxy_page, current_feedproxy_event
 
-    def get_events_ready_to_process(self, events: list[ProxyEntryObject]):
+    def get_events_ready_to_process(self, events: list[ProxyEntryObject]) -> {str: {str: datetime.datetime}}:
         # may be used to also add asset uuid and save those to the db as well
-        return events
+        event_dict = {}
+        for event in events:
+            context_id = event.content.value.context_id
+            if context_id not in event_dict:
+                event_dict[context_id] = {}
+            for aim_id in event.content.value.aim_ids:
+                event_dict[context_id][aim_id[:36]] = event.updated
+        return event_dict
 
-    def save_events_to_process_to_db(self, events_to_process: list[ProxyEntryObject], feed_page_number: str,
+    def save_events_to_process_to_db(self, events_to_process: {str: {str: datetime.datetime}}, feed_page_number: str,
                                      event_id: str):
-        for event in events_to_process:
-            self.db_manager.add_delivery(event.content.value.context_id)
+        for context_id, assets in events_to_process.items():
+            if self.db_manager.get_a_delivery_by_em_infra_uuid(em_infra_uuid=context_id) is not None:
+                logging.info(f'No need to add delivery {context_id} to the database.')
+            else:
+                self.db_manager.add_delivery(context_id)
+
+            self.db_manager.upsert_assets_delivery(delivery_em_infra_uuid=context_id, asset_timestamp_dict=assets)
+
+        self.get_additional_attributes_of_deliveries() # optimize by putting this before upsert and check if the delivery still exists
 
         self.db_manager.set_state_variable('feedproxy_page', feed_page_number)
         self.db_manager.set_state_variable('feedproxy_event_id', event_id)

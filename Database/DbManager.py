@@ -1,3 +1,4 @@
+import datetime
 from pathlib import Path
 from uuid import UUID
 
@@ -5,7 +6,7 @@ import sqlalchemy
 from sqlalchemy import Table, select, update, delete
 from sqlalchemy.orm import sessionmaker
 
-from Database.DatabaseModel import Base, State, Delivery
+from Database.DatabaseModel import Base, State, Delivery, DeliveryAsset
 from Domain.Enums import AanleveringStatus
 
 
@@ -43,6 +44,12 @@ class DbManager:
             query = session.query(Delivery.uuid_em_infra).filter(Delivery.referentie.is_(None)).limit(1)
             return query.scalar()
 
+    def get_a_delivery_by_em_infra_uuid(self, em_infra_uuid) -> UUID:
+        em_infra_guid = UUID(em_infra_uuid)
+        with self.session_maker.begin() as session:
+            query = session.query(Delivery.uuid_em_infra).filter(Delivery.uuid_em_infra == em_infra_guid)
+            return query.scalar()
+
     def get_a_delivery_without_davie_uuid(self) -> Delivery:
         with self.session_maker.begin() as session:
             query = session.query(Delivery).filter(Delivery.uuid_davie.is_(None)).limit(1)
@@ -75,6 +82,17 @@ class DbManager:
     def add_delivery(self, em_infra_uuid: str):
         with self.session_maker.begin() as session:
             session.add(Delivery(uuid_em_infra=UUID(em_infra_uuid)))
+            session.commit()
+
+    def upsert_assets_delivery(self, delivery_em_infra_uuid: str, asset_timestamp_dict: {str: datetime.datetime}):
+        with self.session_maker.begin() as session:
+            for asset_uuid, timestamp in asset_timestamp_dict.items():
+                query = update(DeliveryAsset).where(
+                    DeliveryAsset.uuid_delivery_em_infra == UUID(delivery_em_infra_uuid),
+                    DeliveryAsset.uuid_asset == UUID(asset_uuid)
+                ).values(last_updated=timestamp)
+                session.execute(query)
+
             session.commit()
 
 
