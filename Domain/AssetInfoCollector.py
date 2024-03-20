@@ -315,7 +315,7 @@ class AssetInfoCollector:
             distance = self.distance_between_drager_and_legacy_drager(legacy_drager=lgc_drager, drager=drager)
             record_dict['legacy_drager_en_drager_binnen_5_meter'] = [distance <= 5.0]
             record_dict['legacy_drager_en_drager_identieke_geometrie'] = [0.0 < distance <= 0.01]
-            record_dict['update_legacy_drager_geometrie'] = ''  # TODO: change to legacy geometry for legacy_drager
+            record_dict['update_legacy_drager_geometrie'] = ''
 
             # toestand
             legacy_drager_toestand = lgc_drager.attr_dict.get('AIMToestand.toestand')

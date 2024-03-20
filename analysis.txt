@@ -8,6 +8,7 @@
     - [X] use the description to search in the DAVIE API using field "vrijeZoekterm"
     - [X] filter using "aanleveringnummer" and "dossierNummer" ("VWT-CEW-2020-009-5", ...)
     - [X] save the aanlevering uuid
+    - [ ] save the aanlevering with the modified assets and their updated timestamps
     - [ ] poll often to check for status 'Goedgekeurd'
 3) use validated aanlevering
     - [ ] clear all asset data from state db that is related to the aanlevering
@@ -17,6 +18,14 @@
     - [/] generate a report to update legacy data (1 record per legacy asset) with
       - [X] relations
       - [/] attributes
+        - [X] most attributes
+        - [ ] contractnummer_levering_LED (via aanleveringsbestek)
+        - [ ] calculating the difference between existing legacy and otl
+      - [ ] kenmerken
+        - [ ] bestekkoppeling
+        - [ ] schadebeheerder
+        - [ ] VTC instructie
+        - [ ] toezichter / toezichtgroep
       - [X] geometry
       - [X] names
       - [ ] (N/A in first implementation) creation of new assets
