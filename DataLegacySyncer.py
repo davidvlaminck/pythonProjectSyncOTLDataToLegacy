@@ -48,17 +48,7 @@ class DataLegacySyncer:
 
     def poll_aanleveringen(self):
         pass
-
-    # poll often to check for status 'Goedgekeurd'
-
-    def use_aanlevering_to_generate_report(self):
-        pass
-
-    # 3) use validated aanlevering
-    #     - [ ] find all assets that were changed in that aanlevering (wait for EM-3200 or using emson endpoint)
-    #     - [x] collect all related asset information using the asset info collector algorithm
-    #     - [/] generate a report to update legacy data with
-    #     - [ ] save the report in the state db
+        # poll often to check for status 'Goedgekeurd'
 
     def update_legacy_data(self):
         pass
@@ -70,7 +60,7 @@ class DataLegacySyncer:
     def _collect_all_info(self, asset_info_collector, batch_size: int = 10000):
         # work in batches of <batch_size> asset_uuids
 
-        asset_uuids = self.db_manager.get_asset_uuids_from_final_deliveries()[:100]
+        asset_uuids = self.db_manager.get_asset_uuids_from_final_deliveries()
         for uuids in batched(asset_uuids, batch_size):
             print('collecting asset info')
             asset_info_collector.start_collecting_from_starting_uuids_using_pattern(
@@ -107,8 +97,7 @@ class DataLegacySyncer:
                          ('a', '-[r1]-', 'b'),
                          ('b', 'type_of', ['onderdeel#VerlichtingstoestelLED']),
                          ('a', '-[r2]->', 'c'),
-                         ('c', 'type_of', ['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole',
-                                           'lgc:installatie#VPBevestig']),
+                         ('c', 'type_of', ['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole']),
                          ('r1', 'type_of', ['onderdeel#Bevestiging']),
                          ('r2', 'type_of', ['onderdeel#HoortBij'])])
             print('collected asset info starting from OTL drager')

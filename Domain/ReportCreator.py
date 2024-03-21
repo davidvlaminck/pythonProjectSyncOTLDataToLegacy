@@ -18,8 +18,251 @@ class ReportCreator:
 
     def create_all_reports(self):
         df = self.start_creating_report_pov_legacy()
-        df.to_excel('Reports/report.xlsx')
-        print('done writing report')
+        df.to_excel('Reports/report_pov_legacy.xlsx')
+        print('done writing report pov legacy')
+        df = self.start_creating_report_pov_toestel()
+        df.to_excel('Reports/report_pov_toestel.xlsx')
+        print('done writing report pov toestel')
+        df = self.start_creating_report_pov_armatuur_controller()
+        df.to_excel('Reports/report_pov_ac.xlsx')
+        print('done writing report pov ac')
+        df = self.start_creating_report_pov_drager()
+        df.to_excel('Reports/report_pov_drager.xlsx')
+        print('done writing report pov drager')
+
+    def start_creating_report_pov_drager(self) -> DataFrame:
+        df = DataFrame()
+        all_column_names = [
+            'aanlevering_id', 'aanlevering_naam', 'drager_uuid', 'drager_naam', 'alles_ok',
+            'drager_naam_conform_conventie', 'relatie_naar_toestel', 'relatie_naar_legacy_drager', 'kleur_ingevuld']
+
+        for missing_column_name in all_column_names:
+            df[missing_column_name] = None
+
+        # get all dragers
+        dragers = self.collection.get_node_objects_by_types(['onderdeel#WVLichtmast', 'onderdeel#WVConsole'])
+
+        for drager in dragers:
+            if not drager.active:
+                continue
+            deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=drager.uuid)
+            if len(deliveries) == 0:
+                aanlevering_naam = ''
+                aanlevering_id = ''
+            else:
+                aanlevering_naam = '|'.join([d.referentie for d in deliveries])
+                aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
+
+            drager_uuid = drager.uuid
+            drager_naam = drager.attr_dict.get('AIMNaamObject.naam', '')
+
+            current_ac_drager_dict = {
+                'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
+                'drager_uuid': [drager_uuid], 'drager_naam': [drager_naam],
+            }
+
+            record_dict = self.get_report_record_for_one_drager(drager=drager, record_dict=current_ac_drager_dict)
+            df_current = DataFrame(record_dict)
+            df = concat([df, df_current])
+
+        return df.sort_values('drager_naam')
+
+    def get_report_record_for_one_drager(self, drager: NodeInfoObject, record_dict: dict) -> dict:
+        drager_uuid = drager.uuid
+        drager_naam = drager.attr_dict.get('AIMNaamObject.naam', '')
+
+        record_dict['drager_naam_conform_conventie'] = [self.is_conform_name_convention_drager_no_reference(
+            drager_naam=drager_naam)]
+        alles_ok = record_dict['drager_naam_conform_conventie'][0]
+
+        toestellen = list(self.collection.traverse_graph(
+            start_uuid=drager_uuid, relation_types=['Bevestiging'], allowed_directions=[Direction.NONE],
+            return_type='info_object', filtered_node_types=['onderdeel#VerlichtingstoestelLED']))
+        record_dict['relatie_naar_toestel'] = [(len(toestellen) > 0)]
+        alles_ok = record_dict['relatie_naar_toestel'][0] and alles_ok
+
+        legacy_dragers = list(self.collection.traverse_graph(
+            start_uuid=drager_uuid, relation_types=['HoortBij'], allowed_directions=[Direction.WITH],
+            return_type='info_object', filtered_node_types=['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole']))
+        record_dict['relatie_naar_legacy_drager'] = [(len(legacy_dragers) > 0)]
+        alles_ok = record_dict['relatie_naar_legacy_drager'][0] and alles_ok
+
+        if drager.short_type == 'onderdeel#WVLichtmast':
+            record_dict['kleur_ingevuld'] = [(drager.attr_dict.get('Lichtmast.kleur', None) is not None)]
+            alles_ok = record_dict['kleur_ingevuld'][0] and alles_ok
+
+        record_dict['alles_ok'] = [alles_ok]
+        return record_dict
+
+    def start_creating_report_pov_armatuur_controller(self) -> DataFrame:
+        df = DataFrame()
+        all_column_names = [
+            'aanlevering_id', 'aanlevering_naam', 'ac_uuid', 'ac_naam', 'alles_ok',
+            'ac_naam_conform_conventie', 'relatie_naar_toestel', 'serienummer_ingevuld']
+
+        for missing_column_name in all_column_names:
+            df[missing_column_name] = None
+
+        # get all armatuur controllers
+        armatuur_controllers = self.collection.get_node_objects_by_types(['onderdeel#Armatuurcontroller'])
+
+        for ac in armatuur_controllers:
+            if not ac.active:
+                continue
+            deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=ac.uuid)
+            if len(deliveries) == 0:
+                aanlevering_naam = ''
+                aanlevering_id = ''
+            else:
+                aanlevering_naam = '|'.join([d.referentie for d in deliveries])
+                aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
+
+            ac_uuid = ac.uuid
+            ac_naam = ac.attr_dict.get('AIMNaamObject.naam', '')
+
+            current_ac_drager_dict = {
+                'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
+                'ac_uuid': [ac_uuid], 'ac_naam': [ac_naam],
+            }
+
+            record_dict = self.get_report_record_for_one_armatuur_controller(armatuur_controller=ac,
+                                                                             record_dict=current_ac_drager_dict)
+            df_current = DataFrame(record_dict)
+            df = concat([df, df_current])
+
+        return df.sort_values('ac_naam')
+
+    def get_report_record_for_one_armatuur_controller(self, armatuur_controller: NodeInfoObject,
+                                                      record_dict: dict) -> dict:
+        ac_uuid = armatuur_controller.uuid
+        ac_naam = armatuur_controller.attr_dict.get('AIMNaamObject.naam', '')
+
+        record_dict['ac_naam_conform_conventie'] = [self.is_conform_name_convention_armatuur_controller_no_reference(
+            ac_naam=ac_naam)]
+        alles_ok = record_dict['ac_naam_conform_conventie'][0]
+
+        toestellen = list(self.collection.traverse_graph(
+            start_uuid=ac_uuid, relation_types=['Bevestiging'], allowed_directions=[Direction.NONE],
+            return_type='info_object', filtered_node_types=['onderdeel#VerlichtingstoestelLED']))
+        record_dict['relatie_naar_toestel'] = [(len(toestellen) > 0)]
+        alles_ok = record_dict['relatie_naar_toestel'][0] and alles_ok
+
+        record_dict['serienummer_ingevuld'] = [
+            (armatuur_controller.attr_dict.get('Armatuurcontroller.serienummer', None) is not None)]
+        alles_ok = record_dict['serienummer_ingevuld'][0] and alles_ok
+
+        record_dict['alles_ok'] = [alles_ok]
+        return record_dict
+
+    def start_creating_report_pov_toestel(self) -> DataFrame:
+        df = DataFrame()
+        all_column_names = [
+            'aanlevering_id', 'aanlevering_naam', 'toestel_uuid', 'toestel_naam', 'alles_ok',
+            'toestel_naam_conform_conventie',
+            'relatie_naar_armatuur_controller', 'relatie_naar_otl_of_legacy_drager',
+            'aantalTeVerlichtenRijstroken_ingevuld', 'datumOprichtingObject_ingevuld', 'kleurTemperatuur_ingevuld',
+            'lichtpuntHoogte_ingevuld', 'lumenOutput_ingevuld', 'overhang_ingevuld', 'verlichtingsNiveau_ingevuld',
+            'merk_ingevuld', 'modelnaam_ingevuld', 'verlichtGebied_ingevuld', 'systeemvermogen_ingevuld']
+
+        for missing_column_name in all_column_names:
+            df[missing_column_name] = None
+
+        # get all toestellen
+        toestellen = self.collection.get_node_objects_by_types(['onderdeel#VerlichtingstoestelLED'])
+
+        for toestel in toestellen:
+            if not toestel.active:
+                continue
+            deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=toestel.uuid)
+            if len(deliveries) == 0:
+                aanlevering_naam = ''
+                aanlevering_id = ''
+            else:
+                aanlevering_naam = '|'.join([d.referentie for d in deliveries])
+                aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
+
+            toestel_uuid = toestel.uuid
+            toestel_naam = toestel.attr_dict.get('AIMNaamObject.naam', '')
+
+            current_toestel_drager_dict = {
+                'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
+                'toestel_uuid': [toestel_uuid], 'toestel_naam': [toestel_naam],
+            }
+
+            record_dict = self.get_report_record_for_one_toestel(toestel=toestel,
+                                                                 record_dict=current_toestel_drager_dict)
+            df_current = DataFrame(record_dict)
+            df = concat([df, df_current])
+
+        return df.sort_values('toestel_naam')
+
+    def get_report_record_for_one_toestel(self, toestel: NodeInfoObject, record_dict: dict) -> dict:
+        toestel_uuid = toestel.uuid
+        toestel_naam = toestel.attr_dict.get('AIMNaamObject.naam', '')
+
+        record_dict['toestel_naam_conform_conventie'] = [self.is_conform_name_convention_toestel_no_reference(
+            toestel_naam=toestel_naam)]
+        alles_ok = record_dict['toestel_naam_conform_conventie'][0]
+
+        armatuur_controllers = list(self.collection.traverse_graph(
+            start_uuid=toestel_uuid, relation_types=['Bevestiging'], allowed_directions=[Direction.NONE],
+            return_type='info_object', filtered_node_types=['onderdeel#Armatuurcontroller']))
+        record_dict['relatie_naar_armatuur_controller'] = [(len(armatuur_controllers) > 0)]
+        alles_ok = record_dict['relatie_naar_armatuur_controller'][0] and alles_ok
+
+        dragers = list(self.collection.traverse_graph(
+            start_uuid=toestel_uuid, relation_types=['HoortBij', 'Bevestiging'],
+            allowed_directions=[Direction.REVERSED, Direction.NONE], return_type='info_object',
+            filtered_node_types=['onderdeel#WVLichtmast', 'onderdeel#WVConsole', 'lgc:installatie#VPBevestig']))
+        record_dict['relatie_naar_otl_of_legacy_drager'] = [(len(dragers) > 0)]
+        alles_ok = record_dict['relatie_naar_otl_of_legacy_drager'][0] and alles_ok
+
+        record_dict['aantalTeVerlichtenRijstroken_ingevuld'] = [
+            (toestel.attr_dict.get('VerlichtingstoestelLED.aantalTeVerlichtenRijstroken', None) is not None)]
+        alles_ok = record_dict['aantalTeVerlichtenRijstroken_ingevuld'][0] and alles_ok
+
+        record_dict['datumOprichtingObject_ingevuld'] = [
+            (toestel.attr_dict.get('AIMObject.datumOprichtingObject', None) is not None)]
+        alles_ok = record_dict['datumOprichtingObject_ingevuld'][0] and alles_ok
+
+        record_dict['kleurTemperatuur_ingevuld'] = [
+            (toestel.attr_dict.get('VerlichtingstoestelLED.kleurTemperatuur', None) is not None)]
+        alles_ok = record_dict['kleurTemperatuur_ingevuld'][0] and alles_ok
+
+        record_dict['lichtpuntHoogte_ingevuld'] = [
+            (toestel.attr_dict.get('VerlichtingstoestelLED.lichtpuntHoogte', None) is not None)]
+        alles_ok = record_dict['lichtpuntHoogte_ingevuld'][0] and alles_ok
+
+        record_dict['lumenOutput_ingevuld'] = [
+            (toestel.attr_dict.get('VerlichtingstoestelLED.lumenOutput', None) is not None)]
+        alles_ok = record_dict['lumenOutput_ingevuld'][0] and alles_ok
+
+        record_dict['overhang_ingevuld'] = [
+            (toestel.attr_dict.get('VerlichtingstoestelLED.overhang', None) is not None)]
+        alles_ok = record_dict['overhang_ingevuld'][0] and alles_ok
+
+        record_dict['verlichtingsNiveau_ingevuld'] = [
+            (toestel.attr_dict.get('VerlichtingstoestelLED.verlichtingsNiveau', None) is not None)]
+        alles_ok = record_dict['verlichtingsNiveau_ingevuld'][0] and alles_ok
+
+        record_dict['merk_ingevuld'] = [
+            (toestel.attr_dict.get('Verlichtingstoestel.merk', None) is not None)]
+        alles_ok = record_dict['merk_ingevuld'][0] and alles_ok
+
+        record_dict['modelnaam_ingevuld'] = [
+            (toestel.attr_dict.get('Verlichtingstoestel.modelnaam', None) is not None)]
+        alles_ok = record_dict['modelnaam_ingevuld'][0] and alles_ok
+
+        record_dict['verlichtGebied_ingevuld'] = [
+            (toestel.attr_dict.get('Verlichtingstoestel.verlichtGebied', None) is not None)]
+        alles_ok = record_dict['verlichtGebied_ingevuld'][0] and alles_ok
+
+        record_dict['systeemvermogen_ingevuld'] = [
+            (toestel.attr_dict.get('Verlichtingstoestel.systeemvermogen', None) is not None)]
+        alles_ok = record_dict['systeemvermogen_ingevuld'][0] and alles_ok
+
+        record_dict['alles_ok'] = [alles_ok]
+        return record_dict
 
     def start_creating_report_pov_legacy(self) -> DataFrame:
         df = DataFrame()
@@ -53,6 +296,8 @@ class ReportCreator:
             'lgc:installatie#VPLMast', 'lgc:installatie#VPConsole', 'lgc:installatie#VPBevestig'])
 
         for drager in dragers:
+            if not drager.active:
+                continue
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=drager.uuid)
             if len(deliveries) == 0:
                 aanlevering_naam = ''
@@ -74,7 +319,7 @@ class ReportCreator:
             df_current = DataFrame(record_dict)
             df = concat([df, df_current])
 
-        return df.sort_values('legacy_drager_uuid')
+        return df.sort_values('legacy_drager_naampad')
 
     def get_report_record_for_one_lgc_drager(self, lgc_drager: NodeInfoObject, record_dict: dict) -> dict:
         legacy_drager_uuid = record_dict['legacy_drager_uuid']
@@ -568,4 +813,38 @@ class ReportCreator:
             if naam and naam[-1] == index_str:
                 return toestel
 
+    def is_conform_name_convention_toestel_no_reference(self, toestel_naam: str) -> bool:
+        if '.' not in toestel_naam:
+            return False
+        parts = toestel_naam.split('.')
+        if len(parts) != 3:
+            return False
+        if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
+            return False
+        if parts[2][0:2] != 'WV':
+            return False
+        return True
 
+    def is_conform_name_convention_armatuur_controller_no_reference(self, ac_naam: str) -> bool:
+        if '.' not in ac_naam:
+            return False
+        parts = ac_naam.split('.')
+        if len(parts) != 4:
+            return False
+        if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
+            return False
+        if parts[2][0:2] != 'WV':
+            return False
+        if parts[3][0:2] != 'AC':
+            return False
+        return True
+
+    def is_conform_name_convention_drager_no_reference(self, drager_naam: str) -> bool:
+        if '.' not in drager_naam:
+            return False
+        parts = drager_naam.split('.')
+        if len(parts) != 2:
+            return False
+        if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
+            return False
+        return True

@@ -27,7 +27,6 @@
       - [ ] kenmerken
         - [ ] bestekkoppeling
         - [ ] schadebeheerder
-        - [ ] VTC instructie
         - [ ] toezichter / toezichtgroep
       - [X] geometry
       - [X] names
