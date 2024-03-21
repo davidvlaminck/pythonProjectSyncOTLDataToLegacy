@@ -6,7 +6,7 @@ import sqlalchemy
 from sqlalchemy import Table, select, update, delete
 from sqlalchemy.orm import sessionmaker
 
-from Database.DatabaseModel import Base, State, Delivery, DeliveryAsset
+from Database.DatabaseModel import Base, State, Delivery, DeliveryAsset, Asset
 from Domain.Enums import AanleveringStatus
 
 
@@ -87,13 +87,15 @@ class DbManager:
     def upsert_assets_delivery(self, delivery_em_infra_uuid: str, asset_timestamp_dict: {str: datetime.datetime}):
         with self.session_maker.begin() as session:
             for asset_uuid, timestamp in asset_timestamp_dict.items():
-                query = update(DeliveryAsset).where(
-                    DeliveryAsset.uuid_delivery_em_infra == UUID(delivery_em_infra_uuid),
-                    DeliveryAsset.uuid_asset == UUID(asset_uuid)
-                ).values(last_updated=timestamp)
-                session.execute(query)
-
+                session.merge(Asset(uuid=UUID(asset_uuid)))
+                session.merge(DeliveryAsset(
+                    uuid_delivery_em_infra=UUID(delivery_em_infra_uuid),
+                    uuid_asset=UUID(asset_uuid),
+                    last_updated=timestamp
+                ))
             session.commit()
 
-
-
+    def get_asset_uuids_from_final_deliveries(self):
+        with self.session_maker.begin() as session:
+            result = [str(s) for s in session.scalars(select(DeliveryAsset.uuid_asset)).all()]  # TODO add filter
+            return result

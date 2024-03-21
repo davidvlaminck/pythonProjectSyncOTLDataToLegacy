@@ -58,8 +58,8 @@ class DeliveryFinder:
             try:
                 current_feedproxy_page, current_feedproxy_event = self.get_current_feedproxy_page_and_event()
                 #
-                current_feedproxy_page = '279520'
-                current_feedproxy_event = '9323f9dc-493c-48a2-84c3-824ee49ca2b1'
+                # current_feedproxy_page = '279520'
+                # current_feedproxy_event = '9323f9dc-493c-48a2-84c3-824ee49ca2b1'
 
                 print(current_feedproxy_page, current_feedproxy_event)
                 proxy_feed_page = self.fetch_current_feed_page(current_feedproxy_page)
@@ -102,20 +102,20 @@ class DeliveryFinder:
             event_context = self.em_infra_client.get_event_context_by_uuid(uuid=str(em_infra_uuid))
             self.db_manager.update_delivery_description(em_infra_uuid=em_infra_uuid, description=event_context.omschrijving)
 
-        while True:
-            delivery_db = self.db_manager.get_a_delivery_without_davie_uuid()
-            if delivery_db is None:
-                logging.info('No more deliveries found without davie_uuid, continue with getting DAVIE uuid.')
-                break
-            delivery = self.davie_client.find_delivery_by_search_parameters(
-                search_parameters=ZoekTerm(vrijeZoekterm=delivery_db.referentie))
-            if delivery.dossierNummer in self.allowed_dossiers:
-                self.db_manager.update_delivery_davie_uuid(em_infra_uuid=delivery_db.uuid_em_infra,
-                                                           davie_uuid=delivery.id)
-                self.db_manager.update_delivery_status(davie_uuid=delivery.id, status=delivery.status)
-                logging.info(f'Fetched all attributes of delivery {delivery_db.referentie}.')
-            else:
-                self.db_manager.delete_delivery_by_uuid(delivery_db.uuid_em_infra)
+        # while True:
+        #     delivery_db = self.db_manager.get_a_delivery_without_davie_uuid()
+        #     if delivery_db is None:
+        #         logging.info('No more deliveries found without davie_uuid, continue with getting DAVIE uuid.')
+        #         break
+        #     delivery = self.davie_client.find_delivery_by_search_parameters(
+        #         search_parameters=ZoekTerm(vrijeZoekterm=delivery_db.referentie))
+        #     if delivery.dossierNummer in self.allowed_dossiers:
+        #         self.db_manager.update_delivery_davie_uuid(em_infra_uuid=delivery_db.uuid_em_infra,
+        #                                                    davie_uuid=delivery.id)
+        #         self.db_manager.update_delivery_status(davie_uuid=delivery.id, status=delivery.status)
+        #         logging.info(f'Fetched all attributes of delivery {delivery_db.referentie}.')
+        #     else:
+        #         self.db_manager.delete_delivery_by_uuid(delivery_db.uuid_em_infra)
 
     @classmethod
     def sleep(cls, seconds: int):
@@ -185,9 +185,10 @@ class DeliveryFinder:
             else:
                 self.db_manager.add_delivery(context_id)
 
-            self.db_manager.upsert_assets_delivery(delivery_em_infra_uuid=context_id, asset_timestamp_dict=assets)
-
-        self.get_additional_attributes_of_deliveries() # optimize by putting this before upsert and check if the delivery still exists
+            self.get_additional_attributes_of_deliveries()
+            if self.db_manager.get_a_delivery_by_em_infra_uuid(em_infra_uuid=context_id) is not None:
+                # only insert assets if the delivery is a correct one
+                self.db_manager.upsert_assets_delivery(delivery_em_infra_uuid=context_id, asset_timestamp_dict=assets)
 
         self.db_manager.set_state_variable('feedproxy_page', feed_page_number)
         self.db_manager.set_state_variable('feedproxy_event_id', event_id)

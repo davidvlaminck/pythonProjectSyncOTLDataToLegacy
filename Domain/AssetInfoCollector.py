@@ -18,19 +18,10 @@ from pandas import DataFrame, concat
 
 
 class AssetInfoCollector:
-    def __init__(self, settings_path: Path, auth_type: AuthType, env: Environment):
-        self.em_infra_importer = EMInfraRestClient(self.create_requester_with_settings(
-            settings_path=settings_path, auth_type=auth_type, env=env))
-        self.emson_importer = EMsonImporter(self.create_requester_with_settings(
-            settings_path=settings_path, auth_type=auth_type, env=env))
+    def __init__(self, em_infra_rest_client: EMInfraRestClient, emson_importer: EMsonImporter):
+        self.em_infra_importer = em_infra_rest_client
+        self.emson_importer = emson_importer
         self.collection = AssetCollection()
-
-    @classmethod
-    def create_requester_with_settings(cls, settings_path: Path, auth_type: AuthType, env: Environment
-                                       ) -> AbstractRequester:
-        with open(settings_path) as settings_file:
-            settings = json.load(settings_file)
-        return RequesterFactory.create_requester(settings=settings, auth_type=auth_type, env=env)
 
     def get_assets_by_uuids(self, uuids: [str]) -> Generator[dict, None, None]:
         return self.em_infra_importer.get_objects_from_oslo_search_endpoint_using_iterator(resource='assets',
@@ -548,7 +539,11 @@ class AssetInfoCollector:
 
         lichtpunthoogte = toestel.attr_dict.get('VerlichtingstoestelLED.lichtpuntHoogte')
         if lichtpunthoogte is not None:
-            lichtpunthoogte = int(lichtpunthoogte[76:])
+            lichtpunthoogte = lichtpunthoogte[76:].replace('-', '.')
+            try:
+                lichtpunthoogte = float(lichtpunthoogte)
+            except:
+                logging.error(f'could not convert {lichtpunthoogte}')
 
         lumen_pakket_LED = toestel.attr_dict.get('VerlichtingstoestelLED.lumenOutput')
         if lumen_pakket_LED is not None:

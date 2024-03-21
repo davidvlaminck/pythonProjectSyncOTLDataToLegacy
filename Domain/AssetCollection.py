@@ -20,7 +20,10 @@ class AssetCollection:
 
     def add_node(self, d: dict) -> None:
         uuid = d['uuid']
-        self.check_if_exists(uuid)
+        try:
+            self.check_if_exists(uuid)
+        except ObjectAlreadyExistsError:
+            return
 
         short_uri = full_uri_to_short_type(d['typeURI'])
 

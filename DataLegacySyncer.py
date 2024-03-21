@@ -1,4 +1,5 @@
 import json
+from itertools import batched
 from pathlib import Path
 
 from API.AbstractRequester import AbstractRequester
@@ -7,6 +8,7 @@ from API.EMInfraRestClient import EMInfraRestClient
 from API.EMsonImporter import EMsonImporter
 from API.RequesterFactory import RequesterFactory
 from Database.DbManager import DbManager
+from Domain.AssetInfoCollector import AssetInfoCollector
 from Domain.DeliveryFinder import DeliveryFinder
 from Domain.Enums import AuthType, Environment
 
@@ -37,13 +39,39 @@ class DataLegacySyncer:
 
         delivery_finder.find_deliveries_to_sync()
 
+    def collect_and_create_reports(self):
+        asset_info_collector = AssetInfoCollector(em_infra_rest_client=self.em_infra_client, emson_importer=None)
+
+        asset_uuids = self.db_manager.get_asset_uuids_from_final_deliveries()
+
+        # work in batches of 100 asset_uuids and store it in uuids
+        for index, uuids in enumerate(batched(asset_uuids, 10000)):
+            print('collecting asset info')
+            asset_info_collector.start_collecting_from_starting_uuids_using_pattern(
+                starting_uuids=uuids,
+                pattern=[('uuids', 'of', 'a'),
+                     ('a', 'type_of', ['onderdeel#VerlichtingstoestelLED']),
+                     ('a', '-[r1]-', 'b'),
+                     ('b', 'type_of', ['onderdeel#WVLichtmast', 'onderdeel#WVConsole', 'onderdeel#Armatuurcontroller']),
+                     ('b', '-[r2]->', 'c'),
+                     ('a', '-[r2]->', 'c'),
+                     ('c', 'type_of', ['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole',
+                                       'lgc:installatie#VPBevestig']),
+                     ('r1', 'type_of', ['onderdeel#Bevestiging']),
+                     ('r2', 'type_of', ['onderdeel#HoortBij'])])
+            print('collected asset info')
+            df = asset_info_collector.start_creating_report(aanlevering_id='xxx', aanlevering_naam='xxx')
+            df.to_excel(f'Reports/report_{index}.xlsx')
+            print('done writing report')
 
     def poll_aanleveringen(self):
         pass
+
     # poll often to check for status 'Goedgekeurd'
 
     def use_aanlevering_to_generate_report(self):
         pass
+
     # 3) use validated aanlevering
     #     - [ ] find all assets that were changed in that aanlevering (wait for EM-3200 or using emson endpoint)
     #     - [x] collect all related asset information using the asset info collector algorithm
