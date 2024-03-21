@@ -5,3 +5,4 @@
 /UnitTests/.pytest_cache
 /UnitTests/__pycache__
 /UnitTests/htmlcov
+Reports/

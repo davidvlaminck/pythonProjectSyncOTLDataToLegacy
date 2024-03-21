@@ -97,5 +97,9 @@ class DbManager:
 
     def get_asset_uuids_from_final_deliveries(self):
         with self.session_maker.begin() as session:
-            result = [str(s) for s in session.scalars(select(DeliveryAsset.uuid_asset)).all()]  # TODO add filter
-            return result
+            return [str(s) for s in session.scalars(select(DeliveryAsset.uuid_asset)).all()]  # TODO add filter
+
+    def get_deliveries_by_asset_uuid(self, asset_uuid: str) -> [Delivery]:
+        with self.session_maker.begin() as session:
+            query = session.query(DeliveryAsset).filter(DeliveryAsset.uuid_asset == UUID(asset_uuid))
+            return [a.delivery for a in query.all()]
