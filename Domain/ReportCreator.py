@@ -611,6 +611,7 @@ class ReportCreator:
             d['RAL_kleur'] = legacy_drager.attr_dict.get('lgc:VPLMast.ralKleurVplmast')
             d['aantal_armen'] = legacy_drager.attr_dict.get('lgc:VPLMast.aantalArmen')
             d['armlengte'] = legacy_drager.attr_dict.get('lgc:VPLMast.armlengte')
+            d['paalhoogte'] = legacy_drager.attr_dict.get('lgc:VPLMast.paalhoogte')
             d['serienummer_armatuurcontroller_1'] = legacy_drager.attr_dict.get(
                 'lgc:VPLMast.serienummerArmatuurcontroller1')
             d['serienummer_armatuurcontroller_2'] = legacy_drager.attr_dict.get(
@@ -703,6 +704,17 @@ class ReportCreator:
             if armlengte is not None:
                 armlengte = armlengte[77:].replace('.', ',')
             d['armlengte'] = armlengte
+
+            paalhoogte = drager.attr_dict.get('Lichtmast.masthoogte')
+            if paalhoogte is not None:
+                standaard_hoogte = paalhoogte.get('DtuLichtmastMasthoogte.standaardHoogte')
+                if standaard_hoogte is None:
+                    raise NotImplementedError(f'{drager.attr_dict.get('AIMNaamObject.naam', '')} '
+                                              f'heeft geen standaardhoogte')
+                standaard_hoogte = standaard_hoogte[75:].replace('.', ',')
+            d['paalhoogte'] = standaard_hoogte
+
+
 
             d['RAL_kleur'] = drager.attr_dict.get('Lichtmast.kleur')
             for index in range(1, len(toestellen) + 1):

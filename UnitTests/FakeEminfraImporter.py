@@ -84,7 +84,10 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         "AIMToestand.toestand": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlAIMToestand/in-gebruik",
         "Lichtmast.kleur": "7038",
         "WVLichtmast.aantalArmen": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLichtmastAantArmen/4",
-        "WVLichtmast.armlengte": "https://wegenenverkeer.data.vlaanderen.be/doc/concept/KlWvLichtmastArmlengte/1.5"
+        "WVLichtmast.armlengte": "https://wegenenverkeer.data.vlaanderen.be/doc/concept/KlWvLichtmastArmlengte/1.5",
+        'Lichtmast.masthoogte': {"DtuLichtmastMasthoogte.standaardHoogte":
+            "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlLichtmastMasthoogte/12.00"
+        }
     }
     asset_5 = {
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVConsole",
@@ -165,6 +168,7 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         'lgc:EMObject.verlichtingstype': 'hoofdbaan',
         'lgc:VPLMast.aantalArmen': '4',
         'lgc:VPLMast.armlengte': '1,5',
+        'lgc:VPLMast.paalhoogte': '12,00',
     }
     asset_9 = {
         "@type": "https://lgc.data.wegenenverkeer.be/ns/installatie#VPConsole",
