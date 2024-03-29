@@ -83,7 +83,8 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         ],
         "AIMToestand.toestand": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlAIMToestand/in-gebruik",
         "Lichtmast.kleur": "7038",
-        "WVLichtmast.aantalArmen": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLichtmastAantArmen/4"
+        "WVLichtmast.aantalArmen": "https://wegenenverkeer.data.vlaanderen.be/id/concept/KlWvLichtmastAantArmen/4",
+        "WVLichtmast.armlengte": "https://wegenenverkeer.data.vlaanderen.be/doc/concept/KlWvLichtmastArmlengte/1.5"
     }
     asset_5 = {
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVConsole",
@@ -162,7 +163,8 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         'lgc:EMObject.verlichtingstoestelMerkEnType': 'Schreder Ampera',
         'lgc:EMObject.verlichtingstoestelSysteemvermogen': 100,
         'lgc:EMObject.verlichtingstype': 'hoofdbaan',
-        'lgc:VPLMast.aantalArmen': '4'
+        'lgc:VPLMast.aantalArmen': '4',
+        'lgc:VPLMast.armlengte': '1,5',
     }
     asset_9 = {
         "@type": "https://lgc.data.wegenenverkeer.be/ns/installatie#VPConsole",
