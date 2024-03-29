@@ -609,6 +609,7 @@ class ReportCreator:
         if legacy_drager.short_type == 'lgc:installatie#VPLMast':
             d['drager_buiten_gebruik'] = legacy_drager.attr_dict.get('lgc:VPLMast.lichtmastBuitenGebruik')
             d['RAL_kleur'] = legacy_drager.attr_dict.get('lgc:VPLMast.ralKleurVplmast')
+            d['aantal_armen'] = legacy_drager.attr_dict.get('lgc:VPLMast.aantalArmen')
             d['serienummer_armatuurcontroller_1'] = legacy_drager.attr_dict.get(
                 'lgc:VPLMast.serienummerArmatuurcontroller1')
             d['serienummer_armatuurcontroller_2'] = legacy_drager.attr_dict.get(
@@ -692,6 +693,11 @@ class ReportCreator:
 
         }
         if drager.short_type == 'onderdeel#WVLichtmast':
+            aantal_armen = drager.attr_dict.get('WVLichtmast.aantalArmen')
+            if aantal_armen is not None:
+                aantal_armen = aantal_armen[76:]
+            d['aantal_armen'] = aantal_armen
+
             d['RAL_kleur'] = drager.attr_dict.get('Lichtmast.kleur')
             for index in range(1, len(toestellen) + 1):
                 ac = cls.get_armatuur_controller_by_index(armatuur_controllers=armatuur_controllers, index=index)

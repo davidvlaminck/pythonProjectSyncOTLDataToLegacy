@@ -341,7 +341,7 @@ def test_get_attribute_dict_from_drager():
     armatuur_controllers = collector.collection.get_node_objects_by_types(['onderdeel#Armatuurcontroller'])
 
     d_1 = ReportCreator.get_attribute_dict_from_otl_assets(drager=drager, toestellen=list(toestellen),
-                                                                armatuur_controllers=list(armatuur_controllers))
+                                                           armatuur_controllers=list(armatuur_controllers))
 
     d_expected = {
         'contractnummer_levering_LED': '123456',
