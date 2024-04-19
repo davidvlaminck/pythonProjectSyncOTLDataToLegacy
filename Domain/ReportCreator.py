@@ -620,6 +620,14 @@ class ReportCreator:
                 'lgc:VPLMast.serienummerArmatuurcontroller3')
             d['serienummer_armatuurcontroller_4'] = legacy_drager.attr_dict.get(
                 'lgc:VPLMast.serienummerArmatuurcontroller4')
+            d['merk_en_type_armatuurcontroller_1'] = legacy_drager.attr_dict.get(
+                'lgc:VPLMast.merkEnTypeArmatuurcontroller1')
+            d['merk_en_type_armatuurcontroller_2'] = legacy_drager.attr_dict.get(
+                'lgc:VPLMast.merkEnTypeArmatuurcontroller2')
+            d['merk_en_type_armatuurcontroller_3'] = legacy_drager.attr_dict.get(
+                'lgc:VPLMast.merkEnTypeArmatuurcontroller3')
+            d['merk_en_type_armatuurcontroller_4'] = legacy_drager.attr_dict.get(
+                'lgc:VPLMast.merkEnTypeArmatuurcontroller4')
         elif legacy_drager.short_type == 'lgc:installatie#VPConsole':
             d['drager_buiten_gebruik'] = legacy_drager.attr_dict.get('lgc:VPConsole.consoleBuitenGebruik')
             d['RAL_kleur'] = legacy_drager.attr_dict.get('lgc:VPConsole.ralKleurVpconsole')  # TODO RAL VVOP?
@@ -714,14 +722,13 @@ class ReportCreator:
                 standaard_hoogte = standaard_hoogte[75:].replace('.', ',')
             d['paalhoogte'] = standaard_hoogte
 
-
-
             d['RAL_kleur'] = drager.attr_dict.get('Lichtmast.kleur')
             for index in range(1, len(toestellen) + 1):
                 ac = cls.get_armatuur_controller_by_index(armatuur_controllers=armatuur_controllers, index=index)
                 if ac is None:
                     continue
                 d[f'serienummer_armatuurcontroller_{index}'] = ac.attr_dict.get('Armatuurcontroller.serienummer', None)
+                d[f'merk_en_type_armatuurcontroller_{index}'] = cls.get_merk_en_model_ac(ac)
         return d
 
         # TODO
@@ -872,3 +879,12 @@ class ReportCreator:
         if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
             return False
         return True
+
+    @classmethod
+    def get_merk_en_model_ac(cls, ac: NodeInfoObject) -> str | None:
+        merk = ac.attr_dict.get('Armatuurcontroller.merk')
+        modelnaam = ac.attr_dict.get('Armatuurcontroller.modelnaam')
+        merk_en_type = None
+        if merk is not None and modelnaam is not None:
+            merk_en_type = f'{merk} {modelnaam}'
+        return merk_en_type

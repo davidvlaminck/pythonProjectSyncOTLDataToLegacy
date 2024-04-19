@@ -111,7 +111,9 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000006-"
         },
         "AIMObject.typeURI": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller",
-        "Armatuurcontroller.serienummer": '1234561'
+        "Armatuurcontroller.serienummer": '1234561',
+        "Armatuurcontroller.merk": 'merk 1',
+        "Armatuurcontroller.modelnaam": 'model 1'
     }
     asset_7 = {
         "@type": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller",
@@ -123,6 +125,8 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000007-"
         },
         "AIMObject.typeURI": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller",
+        "Armatuurcontroller.merk": 'merk 1',
+        "Armatuurcontroller.modelnaam": 'model 1'
     }
     asset_8 = {
         "@type": "https://lgc.data.wegenenverkeer.be/ns/installatie#VPLMast",
@@ -162,6 +166,10 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
         'lgc:VPLMast.serienummerArmatuurcontroller2': '1234562',
         'lgc:VPLMast.serienummerArmatuurcontroller3': '1234563',
         'lgc:VPLMast.serienummerArmatuurcontroller4': '1234564',
+        'lgc:VPLMast.merkEnTypeArmatuurcontroller1': 'merk 1 model 1',
+        'lgc:VPLMast.merkEnTypeArmatuurcontroller2': 'merk 2 model 2',
+        'lgc:VPLMast.merkEnTypeArmatuurcontroller3': 'merk 3 model 3',
+        'lgc:VPLMast.merkEnTypeArmatuurcontroller4': 'merk 4 model 4',
         'lgc:EMObject.verlichtingsniveauLed': 'M3',
         'lgc:EMObject.verlichtingstoestelMerkEnType': 'Schreder Ampera',
         'lgc:EMObject.verlichtingstoestelSysteemvermogen': 100,
@@ -375,7 +383,9 @@ def fake_get_objects_from_oslo_search_endpoint_using_iterator(resource: str, cur
             "DtcIdentificator.identificator": "00000000-0000-0000-0000-000000000026-"
         },
         "AIMObject.typeURI": "https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller",
-        "Armatuurcontroller.serienummer": '1234562'
+        "Armatuurcontroller.serienummer": '1234562',
+        "Armatuurcontroller.merk": 'merk 2',
+        "Armatuurcontroller.modelnaam": 'model 2'
     }
 
     relatie_31 = {
