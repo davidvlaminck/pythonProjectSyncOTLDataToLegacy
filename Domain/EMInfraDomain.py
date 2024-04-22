@@ -3,6 +3,8 @@ from typing import Optional, Sequence, Union, List
 
 from pydantic import BaseModel, Field
 
+from Domain.Enums import Toestand
+
 
 class Link(BaseModel):
     href: Optional[str] = None
@@ -154,3 +156,27 @@ class ListUpdateDTOKenmerkEigenschapValueUpdateDTO(BaseModel):
 
 class EigenschapDTOList(BaseModel):
     data: Optional[Sequence[EigenschapDTO]] = None
+
+
+class InfraObjectDTO(BaseModel):
+    links: Optional[Sequence[Link]] = None
+    uuid: Optional[str] = None
+    naam: Optional[str] = None
+    createdOn: Optional[str] = None
+    modifiedOn: Optional[str] = None
+
+
+class InstallatieDTO(InfraObjectDTO):
+    commentaar: Optional[str] = None
+    parent: Optional[InfraObjectDTO] = None
+    toestand: Optional[Toestand] = None
+    actief: bool = None
+
+
+class InstallatieUpdateDTO(BaseModel):
+    actief: bool = None
+    commentaar: Optional[str] = None
+    naam: Optional[str] = None
+    toestand: Toestand = None
+
+    

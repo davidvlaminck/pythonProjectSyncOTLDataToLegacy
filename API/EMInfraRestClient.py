@@ -4,7 +4,7 @@ from typing import Generator
 from requests import Response
 
 from API.AbstractRequester import AbstractRequester
-from Domain.EMInfraDomain import FeedProxyPage, EventContextDTO
+from Domain.EMInfraDomain import FeedProxyPage, EventContextDTO, InstallatieDTO, InstallatieUpdateDTO
 from Domain.ZoekParameterOTL import ZoekParameterOTL
 
 
@@ -12,6 +12,34 @@ class EMInfraRestClient:
     def __init__(self, requester: AbstractRequester):
         self.requester = requester
         self.requester.first_part_url += 'eminfra/'
+
+    def get_installatie_by_id(self, id: str) -> InstallatieDTO:
+        response = self.requester.get(
+            url=f'core/api/installaties/{id}')
+        if response.status_code != 200:
+            print(response)
+            raise RuntimeError(response.content.decode())
+
+        response_string = response.content.decode()
+        return InstallatieDTO.parse_raw(response_string)
+
+    def put_installatie_by_id(self, id: str, changed_installatie: InstallatieUpdateDTO) -> bool:
+        response = self.requester.put(
+            url=f'core/api/installaties/{id}', json=changed_installatie.dict())
+        if response.status_code != 202:
+            print(response)
+            raise RuntimeError(response.content.decode())
+
+        return True
+
+    @staticmethod
+    def create_installatie_update_from_installatie(installatie: InstallatieDTO) -> InstallatieUpdateDTO:
+        return InstallatieUpdateDTO(
+            actief=installatie.actief,
+            commentaar=installatie.commentaar,
+            toestand=installatie.toestand,
+            naam=installatie.naam
+        )
 
     def get_objects_from_oslo_search_endpoint_using_iterator(
             self, resource: str,
