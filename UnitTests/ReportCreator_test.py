@@ -83,13 +83,13 @@ def test_start_creating_report():
              True,  # 'relatie_naar_armatuur_controller_1_aanwezig',
              # 'armatuur_controller_1_uuid', 'armatuur_controller_1_naam', 'armatuur_controller_1_naam_conform_conventie'
              '00000000-0000-0000-0000-000000000007', 'A0000.C02.WV1.AC1', True,
-             False,
-             False,
-             '',
-             False,
-             'uit-gebruik',
-             False,
-             '{\n'
+             False,  # legacy_drager_en_drager_binnen_5_meter
+             False,  # legacy_drager_en_drager_identieke_geometrie
+             '',  # update_legacy_drager_geometrie
+             False,  # legacy_drager_en_drager_gelijke_toestand
+             'uit-gebruik',  # update_legacy_drager_toestand
+             False,  # attributen_gelijk
+             '{\n'  # update_legacy_drager_attributen
              '    "aantal_te_verlichten_rijvakken_LED": null,\n'
              '    "datum_installatie_LED": null,\n'
              '    "kleurtemperatuur_LED": null,\n'

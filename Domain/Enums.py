@@ -48,3 +48,20 @@ class Toestand(str, Enum):
     VERWIJDERD = 'VERWIJDERD'
     OVERGEDRAGEN = 'OVERGEDRAGEN'
     UIT_GEBRUIK = 'UIT_GEBRUIK'
+
+
+class Bron(str, Enum):
+    MANUEEL = 'MANUEEL'
+    MEETTOESTEL = 'MEETTOESTEL'
+    AUTO = 'AUTO'
+
+
+class Precisie(str, Enum):
+    METER = 'METER'
+    PLUS_METER = 'PLUS_METER'
+
+
+class Formaat(str, Enum):
+    WGS84 = 'WGS84'
+    LAMBERT72 = 'LAMBERT72'
+

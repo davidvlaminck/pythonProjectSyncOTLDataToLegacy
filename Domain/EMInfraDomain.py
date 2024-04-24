@@ -3,7 +3,7 @@ from typing import Optional, Sequence, Union, List
 
 from pydantic import BaseModel, Field
 
-from Domain.Enums import Toestand
+from Domain.Enums import Toestand, Bron, Formaat, Precisie
 
 
 class Link(BaseModel):
@@ -11,17 +11,17 @@ class Link(BaseModel):
     rel: Optional[str] = None
 
 
-class EventContextDTO(BaseModel):
+class ResourceRefDTO(BaseModel):
+    links: Optional[Sequence[Link]] = None
+    uuid: Optional[str] = None
+
+
+class EventContextDTO(ResourceRefDTO):
     links: Optional[Sequence[Link]] = None
     uuid: Optional[str] = None
     omschrijving: Optional[str] = None
     createdOn: Optional[datetime] = None
     modifiedOn: Optional[datetime] = None
-
-
-class ResourceRefDTO(BaseModel):
-    links: Optional[Sequence[Link]] = None
-    uuid: Optional[str] = None
 
 
 class AggregateIdObject(BaseModel):
@@ -90,7 +90,7 @@ class FeedPage(BaseModel):
 
 
 class EigenschapTypedValueDTO(BaseModel):
-    type: Optional[str] = Field(alias='_type')
+    type: Optional[str] = Field(..., alias='_type')
     value: Optional[Union[object, Sequence[object]]] = None
 
 
@@ -101,7 +101,7 @@ class KenmerkEigenschapValueUpdateDTO(BaseModel):
 
 
 class DatatypeTypeDTO(BaseModel):
-    type: Optional[str] = Field(alias='_type')
+    type: Optional[str] = Field(..., alias='_type')
 
 
 class EigenschapTypeDTO(BaseModel):
@@ -118,7 +118,7 @@ class EigenschapTypeDTO(BaseModel):
 
 class EigenschapTypeDTOType(BaseModel):
     datatype: Optional[EigenschapTypeDTO] = None
-    type: Optional[str] = Field(alias='_type')
+    type: Optional[str] = Field(..., alias='_type')
 
 
 class EigenschapDTO(BaseModel):
@@ -132,12 +132,16 @@ class EigenschapDTO(BaseModel):
     type: Optional[EigenschapTypeDTOType] = None
 
 
-class KenmerkTypeDTO(BaseModel):
+class KenmerkTypeDTO(ResourceRefDTO):
     actief: Optional[bool] = None
-    links: Optional[Sequence[Link]] = None
-    uuid: Optional[str] = None
-    uri: Optional[str] = None
+    createdOn: Optional[str] = None
+    modifiedOn: Optional[str] = None
+    definitie: Optional[str] = None
+    korteUri: Optional[str] = None
+    predefined: Optional[bool] = None
     naam: Optional[str] = None
+    standard: Optional[bool] = None
+    uri: Optional[str] = None
 
 
 class KenmerkEigenschapValueDTO(BaseModel):
@@ -166,11 +170,28 @@ class InfraObjectDTO(BaseModel):
     modifiedOn: Optional[str] = None
 
 
-class InstallatieDTO(InfraObjectDTO):
+class AssetTypeDTO(ResourceRefDTO):
+    actief: Optional[bool] = None
+    afkorting: Optional[str] = None
+    createdOn: Optional[str] = None
+    modifiedOn: Optional[str] = None
+    definitie: Optional[str] = None
+    korteUri: Optional[str] = None
+    label: Optional[str] = None
+    naam: Optional[str] = None
+    uri: Optional[str] = None
+
+
+class AssetDTO(InfraObjectDTO):
     commentaar: Optional[str] = None
-    parent: Optional[InfraObjectDTO] = None
     toestand: Optional[Toestand] = None
-    actief: bool = None
+    actief: Optional[bool] = None
+    # kenmerken
+    type: Optional[AssetTypeDTO] = None
+
+
+class InstallatieDTO(AssetDTO):
+    parent: Optional[InfraObjectDTO] = None
 
 
 class InstallatieUpdateDTO(BaseModel):
@@ -179,4 +200,81 @@ class InstallatieUpdateDTO(BaseModel):
     naam: Optional[str] = None
     toestand: Toestand = None
 
-    
+
+class AssetRefDTO(ResourceRefDTO):
+    pass
+
+
+class LocatieRelatieDTO(BaseModel):
+    asset: AssetDTO = None
+
+
+class LocatieRelatieUpdateDTO(BaseModel):
+    asset: AssetRefDTO = None
+
+
+class CoordinatenDTO(BaseModel):
+    formaat: Formaat = None
+    x: float = None
+    y: float = None
+    z: float = None
+
+
+class AdresDTO(BaseModel):
+    coordinaten: Optional[CoordinatenDTO] = None
+    gemeente: Optional[str] = None
+    nummer: Optional[str] = None
+    bus: Optional[str] = None
+    label: Optional[str] = None
+    postcode: Optional[str] = None
+    provincie: Optional[str] = None
+    straat: Optional[str] = None
+
+
+class WeglocatieDTO(BaseModel):
+    coordinaten: Optional[CoordinatenDTO] = None
+    gemeente: Optional[str] = None
+    ident2: Optional[str] = None
+    ident8: Optional[str] = None
+    straatnaam: Optional[str] = None
+    referentiepaalAfstand: Optional[float] = None
+    referentiepaalOpschrift: Optional[float] = None
+
+
+class WegsegmentPuntLocatieDTO(BaseModel):
+    projectie: Optional[CoordinatenDTO] = None
+    afstand: Optional[float] = None
+    gidn: Optional[str] = None
+    oidn: Optional[int] = None
+    uidn: Optional[str] = None
+    opschrift: Optional[str] = None
+    verwijderd: Optional[bool] = None
+    wegnummer: Optional[str] = None
+
+
+class LocatieDTO(BaseModel):
+    adres: Optional[AdresDTO] = None
+    bron: Optional[Bron] = None
+    coordinaten: Optional[CoordinatenDTO] = None
+    geometrie: Optional[dict] = None  # incorrect shortcut
+    hernieuwdOp: Optional[str] = None
+    precisie: Optional[Precisie] = None
+    weglocatie: Optional[WeglocatieDTO] = None
+    wegsegmentPuntLocatie: Optional[WegsegmentPuntLocatieDTO] = None
+    type: Optional[str] = Field(..., alias='_type')
+
+
+class LocatieKenmerkUpdateLocatieDTO(BaseModel):
+    locatie: Optional[LocatieDTO] = None
+    relatie: Optional[LocatieRelatieUpdateDTO] = None
+
+
+class LocatieKenmerkDTO(BaseModel):
+    eigenschapWaarden: Optional[KenmerkEigenschapValueDTOList] = None
+    locatie: Optional[LocatieDTO] = None
+    relatie: Optional[LocatieRelatieDTO] = None
+    geometrie: Optional[str] = None
+    links: Optional[Sequence[Link]] = None
+    omschrijving: Optional[str] = None
+    type: Optional[KenmerkTypeDTO] = None
+
