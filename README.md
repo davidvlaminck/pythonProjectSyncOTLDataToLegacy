@@ -1,0 +1,1 @@
+1. Run main_david.py. This creates a SQLite db, that fills with all delivery data starting from a specific point in the feedproxy of assets. If needed edit the table 'state' to change the page and event it needs to start from.
