@@ -1,10 +1,11 @@
 import datetime
 from pathlib import Path
+from typing import Generator, Iterator
 from uuid import UUID
 
 import sqlalchemy
 from sqlalchemy import Table, select, update, delete
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, joinedload
 
 from Database.DatabaseModel import Base, State, Delivery, DeliveryAsset, Asset
 from Domain.Enums import AanleveringStatus
@@ -95,12 +96,14 @@ class DbManager:
                 ))
             session.commit()
 
-    def get_asset_uuids_from_specific_deliveries(self, delivery_references: [str]) -> [str]:
+    def get_asset_uuids_from_specific_deliveries(self, delivery_references: [str]) -> Iterator[str]:
         with self.session_maker.begin() as session:
             for d in delivery_references:
+                # filter such that the delivery reference starts with the given string
                 yield from [str(s) for s in session.scalars(
                     select(DeliveryAsset.uuid_asset).
-                    filter(DeliveryAsset.delivery.referentie.startswith(d))).all()]
+                    join(DeliveryAsset.delivery).
+                    where(Delivery.referentie.startswith(d))).all()]
 
     def get_asset_uuids_from_final_deliveries(self):
         with self.session_maker.begin() as session:
