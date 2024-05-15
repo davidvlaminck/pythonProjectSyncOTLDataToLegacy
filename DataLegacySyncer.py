@@ -40,10 +40,19 @@ class DataLegacySyncer:
 
         delivery_finder.find_deliveries_to_sync()
 
+    def collect_and_create_specific_reports(self, delivery_references: list[str]):
+        asset_info_collector = AssetInfoCollector(em_infra_rest_client=self.em_infra_client,
+                                                  emson_importer=self.emson_importer)
+        asset_uuids = list(self.db_manager.get_asset_uuids_from_specific_deliveries(
+            delivery_references=delivery_references))
+        self._collect_info_given_asset_uuids(asset_info_collector=asset_info_collector, asset_uuids=asset_uuids)
+        self._create_all_reports(asset_info_collector=asset_info_collector)
+
     def collect_and_create_reports(self):
         asset_info_collector = AssetInfoCollector(em_infra_rest_client=self.em_infra_client,
                                                   emson_importer=self.emson_importer)
-        self._collect_all_info(asset_info_collector=asset_info_collector)
+        asset_uuids = self.db_manager.get_asset_uuids_from_final_deliveries()
+        self._collect_info_given_asset_uuids(asset_info_collector=asset_info_collector, asset_uuids=asset_uuids)
         self._create_all_reports(asset_info_collector=asset_info_collector)
 
     def poll_aanleveringen(self):
@@ -57,10 +66,10 @@ class DataLegacySyncer:
     #     - [ ] update legacy data using the state report until everything is marked as done
     #     - [ ] update the status of the aanlevering in state db to 'verwerkt'
     
-    def _collect_all_info(self, asset_info_collector, batch_size: int = 10000):
+    @staticmethod
+    def _collect_info_given_asset_uuids(asset_info_collector: AssetInfoCollector, asset_uuids: list[str],
+                                        batch_size: int = 10000):
         # work in batches of <batch_size> asset_uuids
-
-        asset_uuids = self.db_manager.get_asset_uuids_from_final_deliveries()
         for uuids in batched(asset_uuids, batch_size):
             print('collecting asset info')
             asset_info_collector.start_collecting_from_starting_uuids_using_pattern(

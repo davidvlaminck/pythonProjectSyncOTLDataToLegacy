@@ -95,6 +95,13 @@ class DbManager:
                 ))
             session.commit()
 
+    def get_asset_uuids_from_specific_deliveries(self, delivery_references: [str]) -> [str]:
+        with self.session_maker.begin() as session:
+            for d in delivery_references:
+                yield from [str(s) for s in session.scalars(
+                    select(DeliveryAsset.uuid_asset).
+                    filter(DeliveryAsset.delivery.referentie.startswith(d))).all()]
+
     def get_asset_uuids_from_final_deliveries(self):
         with self.session_maker.begin() as session:
             return [str(s) for s in session.scalars(select(DeliveryAsset.uuid_asset)).all()]  # TODO add filter
