@@ -23,10 +23,13 @@ state_db_path = Path('/home/davidlinux/Documents/AWV/resources/SyncOTLDataToLega
 if __name__ == '__main__':
     #collector = AssetInfoCollector(settings_path=settings_path, auth_type=AuthType.JWT, env=Environment.PRD)
     
-    syncer = DataLegacySyncer(settings_path=settings_path, auth_type=AuthType.JWT, env=Environment.DEV,
+    syncer = DataLegacySyncer(settings_path=settings_path, auth_type=AuthType.JWT, env=Environment.PRD,
                               state_db_path=state_db_path)
-    ref = syncer.davie_client.find_delivery_by_reference('DA-2024-01340')
+    ref = syncer.davie_client.find_delivery_by_reference('DA-2024-06930 (iteratie 1)')
     print(ref)
+    ref = syncer.em_infra_client.get_delivery_from_context_string('DA-2024-06930 (iteratie 1)')
+    print(ref)
+
 
     # response = collector.emson_importer.requester.get(url='api/otl/assets')
     # decoded_string = response.content.decode()

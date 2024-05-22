@@ -17,8 +17,6 @@ class ResourceRefDTO(BaseModel):
 
 
 class EventContextDTO(ResourceRefDTO):
-    links: Optional[Sequence[Link]] = None
-    uuid: Optional[str] = None
     omschrijving: Optional[str] = None
     createdOn: Optional[datetime] = None
     modifiedOn: Optional[datetime] = None
@@ -278,3 +276,46 @@ class LocatieKenmerkDTO(BaseModel):
     omschrijving: Optional[str] = None
     type: Optional[KenmerkTypeDTO] = None
 
+
+class TermDTO(BaseModel):
+    logicalOp: Optional[str] = None
+    negate: Optional[bool] = False
+    operator: Optional[str] = None
+    property: Optional[str] = None
+    value: Optional[object] = None
+
+
+class ExpressionDTO(BaseModel):
+    logicalOp: Optional[str] = None
+    terms: Optional[list[TermDTO]] = None
+
+
+class SelectionDTO(BaseModel):
+    expressions: Optional[list[ExpressionDTO]] = None
+    settings: Optional[dict] = None
+
+
+class ExpansionsDTO(BaseModel):
+    fields: Optional[list[str]] = None
+
+
+class QueryDTO(BaseModel):
+    size: Optional[int] = None
+#    from_: Optional[int] = Field(alias='from')
+    fromCursor: Optional[str] = None
+    pagingMode: Optional[str] = None
+    orderByProperty: Optional[str] = None
+    orderByDirection: Optional[str] = None
+    selection: Optional[SelectionDTO] = None
+    expansions: Optional[ExpansionsDTO] = None
+    settings: Optional[dict] = None
+
+
+class EventContextDTOList(BaseModel):
+    data: Optional[Sequence[EventContextDTO]] = None
+    links: Optional[Sequence[Link]] = None
+    from_: Optional[int] = Field(alias='from')
+    size: Optional[int] = None
+    totalCount: Optional[int] = None
+    next: Optional[str] = None
+    previous: Optional[str] = None

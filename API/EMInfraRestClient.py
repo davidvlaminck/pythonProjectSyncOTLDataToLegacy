@@ -8,7 +8,7 @@ from API.AbstractRequester import AbstractRequester
 from Domain.EMInfraDomain import FeedProxyPage, EventContextDTO, InstallatieDTO, InstallatieUpdateDTO, LocatieDTO, \
     LocatieKenmerkDTO, LocatieKenmerkUpdateLocatieDTO, LocatieRelatieUpdateDTO, AssetRefDTO, \
     KenmerkEigenschapValueDTOList, ListUpdateDTOKenmerkEigenschapValueUpdateDTO, KenmerkEigenschapValueUpdateDTO, \
-    EigenschapTypedValueDTO
+    EigenschapTypedValueDTO, QueryDTO, SelectionDTO, ExpressionDTO, TermDTO, EventContextDTOList
 from Domain.ZoekParameterOTL import ZoekParameterOTL
 
 
@@ -283,3 +283,22 @@ class EMInfraRestClient:
         if isinstance(value, (int, float)):
             return 'number'
         raise NotImplementedError(f'no type defined for {value}')
+
+    def get_delivery_from_context_string(self, context_string: str):
+        search_query_dto = QueryDTO(
+            size=10, pagingMode='OFFSET',
+            selection=SelectionDTO(expressions=[ExpressionDTO(terms=[TermDTO(
+                property='omschrijving', value=context_string, operator='EQ')])])
+        )
+
+        json_data = search_query_dto.dict(by_alias=True)
+        response = self.requester.post(url='core/api/eventcontexts/search', json=json_data)
+        if response.status_code != 200:
+            print(response)
+            raise ProcessLookupError(response.content.decode())
+
+        response_string = response.content.decode("utf-8")
+        event_context_list = EventContextDTOList.parse_raw(response_string)
+
+        return event_context_list
+

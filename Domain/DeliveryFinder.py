@@ -129,6 +129,12 @@ class DeliveryFinder:
         return (proxy_feed_page.entries[0].id == event_id and
                 next((l for l in proxy_feed_page.links if l.rel == 'previous'), None) is None)
 
+    def find_events_by_delivery(self, context_string: str):
+        uuid = self.em_infra_client.get_delivery_from_context_string(context_string=context_string)
+        # get em-infra uuid by delivery context string
+        # get events from
+
+
     def find_events_with_context(self, current_feedproxy_event: str, current_feedproxy_page: str, 
                                  proxy_feed_page: FeedProxyPage, batch_page_size: int = 5
                                  ) -> tuple[list[ProxyEntryObject], str, str]:
