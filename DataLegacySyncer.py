@@ -128,3 +128,9 @@ class DataLegacySyncer:
         report_creator = ReportCreator(collection=asset_info_collector.collection, db_manager=self.db_manager)
         report_creator.create_all_reports()
 
+    def sync_specific_deliveries(self, context_strings: [str]):
+        delivery_finder = DeliveryFinder(em_infra_client=self.em_infra_client, davie_client=self.davie_client,
+                                         db_manager=self.db_manager)
+
+        delivery_finder.sync_specific_deliveries(context_strings=context_strings)
+

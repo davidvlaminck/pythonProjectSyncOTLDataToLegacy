@@ -1,6 +1,6 @@
 ﻿import json
 from datetime import datetime
-from typing import Generator
+from typing import Generator, Iterator
 
 from requests import Response
 
@@ -8,7 +8,7 @@ from API.AbstractRequester import AbstractRequester
 from Domain.EMInfraDomain import FeedProxyPage, EventContextDTO, InstallatieDTO, InstallatieUpdateDTO, LocatieDTO, \
     LocatieKenmerkDTO, LocatieKenmerkUpdateLocatieDTO, LocatieRelatieUpdateDTO, AssetRefDTO, \
     KenmerkEigenschapValueDTOList, ListUpdateDTOKenmerkEigenschapValueUpdateDTO, KenmerkEigenschapValueUpdateDTO, \
-    EigenschapTypedValueDTO, QueryDTO, SelectionDTO, ExpressionDTO, TermDTO, EventContextDTOList
+    EigenschapTypedValueDTO, QueryDTO, SelectionDTO, ExpressionDTO, TermDTO, EventContextDTOList, EventDTOList, EventDTO
 from Domain.ZoekParameterOTL import ZoekParameterOTL
 
 
@@ -284,11 +284,37 @@ class EMInfraRestClient:
             return 'number'
         raise NotImplementedError(f'no type defined for {value}')
 
+    def get_feed_events_by_eventcontext_id(self, context_id: str, size: int = 10) -> Iterator[EventDTO]:
+        search_query_dto = QueryDTO(
+            size=size, pagingMode='OFFSET',
+            selection=SelectionDTO(expressions=[ExpressionDTO(terms=[TermDTO(
+                property='contextId', value=context_id, operator='EQ')])])
+        )
+        count = 0
+        total_count = -1
+
+        while True:
+            json_data = search_query_dto.dict(by_alias=True)
+            response = self.requester.post(url='core/api/events/search', json=json_data)
+            if response.status_code != 200:
+                print(response)
+                raise ProcessLookupError(response.content.decode())
+
+            response_string = response.content.decode()
+            event_list = EventDTOList.model_validate_json(response_string)
+            yield from event_list.data
+            if total_count == -1:
+                total_count = event_list.totalCount
+            count += len(event_list.data)
+            if count >= total_count:
+                break
+            search_query_dto.from_ = count
+
     def get_delivery_from_context_string(self, context_string: str):
         search_query_dto = QueryDTO(
             size=10, pagingMode='OFFSET',
             selection=SelectionDTO(expressions=[ExpressionDTO(terms=[TermDTO(
-                property='omschrijving', value=context_string, operator='EQ')])])
+                property='omschrijving', value=context_string, operator='CONTAINS')])])
         )
 
         json_data = search_query_dto.dict(by_alias=True)
@@ -297,8 +323,5 @@ class EMInfraRestClient:
             print(response)
             raise ProcessLookupError(response.content.decode())
 
-        response_string = response.content.decode("utf-8")
-        event_context_list = EventContextDTOList.parse_raw(response_string)
-
-        return event_context_list
-
+        response_string = response.content.decode()
+        return EventContextDTOList.model_validate_json(response_string)

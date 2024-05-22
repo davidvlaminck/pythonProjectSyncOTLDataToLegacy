@@ -301,7 +301,7 @@ class ExpansionsDTO(BaseModel):
 
 class QueryDTO(BaseModel):
     size: Optional[int] = None
-#    from_: Optional[int] = Field(alias='from')
+    from_: Optional[int] = Field(alias='from', default=None)
     fromCursor: Optional[str] = None
     pagingMode: Optional[str] = None
     orderByProperty: Optional[str] = None
@@ -313,6 +313,30 @@ class QueryDTO(BaseModel):
 
 class EventContextDTOList(BaseModel):
     data: Optional[Sequence[EventContextDTO]] = None
+    links: Optional[Sequence[Link]] = None
+    from_: Optional[int] = Field(alias='from')
+    size: Optional[int] = None
+    totalCount: Optional[int] = None
+    next: Optional[str] = None
+    previous: Optional[str] = None
+
+
+class EventTypeDTO(BaseModel):
+    description: Optional[str] = None
+    name: Optional[str] = None
+
+
+class EventDTO(BaseModel):
+    createdOn: Optional[datetime] = None
+    determinedOn: Optional[datetime] = None
+    data: Optional[dict] = None
+    eventNumber: Optional[int] = None
+    links: Optional[Sequence[Link]] = None
+    type_: Optional[EventTypeDTO] = Field(alias='type')
+
+
+class EventDTOList(BaseModel):
+    data: Optional[Sequence[EventDTO]] = None
     links: Optional[Sequence[Link]] = None
     from_: Optional[int] = Field(alias='from')
     size: Optional[int] = None

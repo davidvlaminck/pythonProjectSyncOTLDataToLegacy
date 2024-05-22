@@ -129,11 +129,33 @@ class DeliveryFinder:
         return (proxy_feed_page.entries[0].id == event_id and
                 next((l for l in proxy_feed_page.links if l.rel == 'previous'), None) is None)
 
-    def find_events_by_delivery(self, context_string: str):
-        uuid = self.em_infra_client.get_delivery_from_context_string(context_string=context_string)
+    def sync_specific_deliveries(self, context_strings: [str]):
+        for context_string in context_strings:
+            self.find_asset_ids_by_delivery(context_string=context_string)
+
+    def find_asset_ids_by_delivery(self, context_string: str) -> set:
+        context_list = self.em_infra_client.get_delivery_from_context_string(context_string=context_string)
+        context_uuid = context_list.data[0].uuid
+        events = list(self.em_infra_client.get_feed_events_by_eventcontext_id(context_uuid))
+
+        event_dict = {}
+        for event in events:
+            aggregate_id = event.data['aggregateId']
+            if aggregate_id['_type'] in ('installatie', 'onderdeel'):
+                event_dict[event.data['aggregateId']['uuid']] = event.createdOn
+
+        if self.db_manager.get_a_delivery_by_em_infra_uuid(em_infra_uuid=context_uuid) is not None:
+            logging.info(f'No need to add delivery {context_uuid} to the database.')
+        else:
+            self.db_manager.add_delivery(context_uuid)
+
+        self.get_additional_attributes_of_deliveries()
+        if self.db_manager.get_a_delivery_by_em_infra_uuid(em_infra_uuid=context_uuid) is not None:
+            # only insert assets if the delivery is a correct one
+            self.db_manager.upsert_assets_delivery(delivery_em_infra_uuid=context_uuid, asset_timestamp_dict=event_dict)
+
         # get em-infra uuid by delivery context string
         # get events from
-
 
     def find_events_with_context(self, current_feedproxy_event: str, current_feedproxy_page: str, 
                                  proxy_feed_page: FeedProxyPage, batch_page_size: int = 5
@@ -172,7 +194,8 @@ class DeliveryFinder:
 
         return collected_events, current_feedproxy_page, current_feedproxy_event
 
-    def get_events_ready_to_process(self, events: list[ProxyEntryObject]) -> {str: {str: datetime.datetime}}:
+    @staticmethod
+    def get_events_ready_to_process(events: list[ProxyEntryObject]) -> {str: {str: datetime.datetime}}:
         # may be used to also add asset uuid and save those to the db as well
         event_dict = {}
         for event in events:
