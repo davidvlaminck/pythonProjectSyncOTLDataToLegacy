@@ -34,7 +34,8 @@ class ReportCreator:
         df = DataFrame()
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'drager_uuid', 'drager_naam', 'alles_ok',
-            'drager_naam_conform_conventie', 'relatie_naar_toestel', 'relatie_naar_legacy_drager', 'kleur_ingevuld']
+            'drager_naam_conform_conventie', 'relatie_naar_toestel', 'relatie_naar_legacy_drager',
+            'kleur_van_toepassing', 'kleur_ingevuld']
 
         for missing_column_name in all_column_names:
             df[missing_column_name] = None
@@ -88,8 +89,19 @@ class ReportCreator:
         alles_ok = record_dict['relatie_naar_legacy_drager'][0] and alles_ok
 
         if drager.short_type == 'onderdeel#WVLichtmast':
+            beschermlaag = drager.attr_dict.get('Lichtmast.beschermlaag', None)
+            if beschermlaag == 'https://wegenenverkeer.data.vlaanderen.be/id/concept/KlDraagConstrBeschermlaag/gegalvaniseerd':
+                record_dict['kleur_van_toepassing'] = [False]
+            else:
+                record_dict['kleur_van_toepassing'] = [True]
+
             record_dict['kleur_ingevuld'] = [(drager.attr_dict.get('Lichtmast.kleur', None) is not None)]
-            alles_ok = record_dict['kleur_ingevuld'][0] and alles_ok
+            if record_dict['kleur_van_toepassing'][0]:
+                kleur_ok = record_dict['kleur_ingevuld'][0]
+            else:
+                kleur_ok = True
+
+            alles_ok = kleur_ok and alles_ok
 
         record_dict['alles_ok'] = [alles_ok]
         return record_dict
