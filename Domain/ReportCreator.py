@@ -18,18 +18,104 @@ class ReportCreator:
 
     def create_all_reports(self):
         with ExcelWriter('Reports/report.xlsx') as writer:
-            df = self.start_creating_report_pov_legacy()
-            df.to_excel(writer, sheet_name='pov_legacy', index=False)
+            df_report_pov_legacy = self.start_creating_report_pov_legacy()
+            df_report_pov_legacy.to_excel(writer, sheet_name='pov_legacy', index=False)
             print('done writing report pov legacy')
-            df = self.start_creating_report_pov_toestel()
-            df.to_excel(writer, sheet_name='pov_toestel', index=False)
+            df_report_pov_toestel = self.start_creating_report_pov_toestel()
+            df_report_pov_toestel.to_excel(writer, sheet_name='pov_toestel', index=False)
             print('done writing report pov toestel')
-            df = self.start_creating_report_pov_armatuur_controller()
-            df.to_excel(writer, sheet_name='pov_ac', index=False)
+            df_report_pov_armatuur_controller = self.start_creating_report_pov_armatuur_controller()
+            df_report_pov_armatuur_controller.to_excel(writer, sheet_name='pov_ac', index=False)
             print('done writing report pov ac')
-            df = self.start_creating_report_pov_drager()
-            df.to_excel(writer, sheet_name='pov_drager', index=False)
+            df_report_pov_drager = self.start_creating_report_pov_drager()
+            df_report_pov_drager.to_excel(writer, sheet_name='pov_drager', index=False)
             print('done writing report pov drager')
+            df = self.start_creating_asset_data_drager()
+            df.to_excel(writer, sheet_name='asset_data_drager', index=False)
+            print('done writing asset data drager')
+
+            summary_dict = {
+                'pov_toestel_alles_ok': [len(df_report_pov_toestel['alles_ok']) == df_report_pov_toestel['alles_ok'].sum()],
+                'pov_drager_alles_ok': [
+                    len(df_report_pov_drager['alles_ok']) == df_report_pov_drager['alles_ok'].sum()],
+                'pov_armatuur_controller_alles_ok': [
+                    len(df_report_pov_armatuur_controller['alles_ok']) == df_report_pov_armatuur_controller['alles_ok'].sum()],
+            }
+            df_summary = DataFrame(summary_dict)
+            df_summary.to_excel(writer, sheet_name='Overzicht', index=False)
+
+
+    def start_creating_asset_data_drager(self) -> DataFrame:
+        df = DataFrame()
+        all_column_names = [
+            'aanlevering_id', 'aanlevering_naam', 'uuid', 'naam', 'toestand', 'aantalArmen', 'datumOprichtingObject',
+            'masttype', 'masthoogte', 'geometrie', 'kleur', 'beschermlaag', 'heeftStopcontact', 'armlengte',
+            'elekktrischeBeveiliging', 'dwarsdoorsnede']
+
+        for missing_column_name in all_column_names:
+            df[missing_column_name] = None
+
+        # get all dragers
+        dragers = self.collection.get_node_objects_by_types(['onderdeel#WVLichtmast', 'onderdeel#WVConsole'])
+
+        for drager in dragers:
+            if not drager.active:
+                continue
+            deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=drager.uuid)
+            if len(deliveries) == 0:
+                aanlevering_naam = ''
+                aanlevering_id = ''
+            else:
+                aanlevering_naam = '|'.join([d.referentie for d in deliveries])
+                aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
+
+            drager_uuid = drager.uuid
+            drager_naam = drager.attr_dict.get('AIMNaamObject.naam', '')
+            toestand = drager.attr_dict.get('AIMToestand.toestand', None)
+            if toestand is not None:
+                toestand = toestand[67:]
+            aantalArmen = drager.attr_dict.get('WVLichtmast.aantalArmen', None)
+            if aantalArmen is not None:
+                aantalArmen = aantalArmen[76:]
+            masttype = drager.attr_dict.get('Lichtmast.masttype', None)
+            if masttype is not None:
+                masttype = masttype[73:]
+            masthoogte = drager.attr_dict.get('Lichtmast.masthoogte', None)
+            if masthoogte is not None:
+                masthoogte = masthoogte.get('DtuLichtmastMasthoogte.standaardHoogte', None)
+            if masthoogte is not None:
+                masthoogte = masthoogte[75:]
+            beschermlaag = drager.attr_dict.get('Lichtmast.beschermlaag', None)
+            if beschermlaag is not None:
+                beschermlaag = beschermlaag[79:]
+            armlengte = drager.attr_dict.get('WVLichtmast.armlengte', None)
+            if armlengte is not None:
+                armlengte = armlengte[76:]
+            dwarsdoorsnede = drager.attr_dict.get('Lichtmast.dwarsdoorsnede', None)
+            if dwarsdoorsnede is not None:
+                dwarsdoorsnede = dwarsdoorsnede[86:]
+
+            current_ac_drager_dict = {
+                'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
+                'uuid': [drager_uuid], 'naam': [drager_naam],
+                'toestand': [toestand],
+                'aantalArmen': [aantalArmen],
+                'datumOprichtingObject': [drager.attr_dict.get('AIMObject.datumOprichtingObject', None)],
+                'masttype': [masttype   ],
+                'masthoogte': [masthoogte],
+                'geometrie': [drager.attr_dict.get('loc:Locatie.geometrie', None)],
+                'kleur': [drager.attr_dict.get('Lichtmast.kleur', None)],
+                'beschermlaag': [beschermlaag],
+                'heeftStopcontact': [drager.attr_dict.get('Lichtmast.heeftStopcontact', None)],
+                'armlengte': [armlengte],
+                'elekktrischeBeveiliging': [drager.attr_dict.get('EMDraagconstructie.elekktrischeBeveiliging', None)],
+                'dwarsdoorsnede': [dwarsdoorsnede],
+            }
+
+            df_current = DataFrame(current_ac_drager_dict)
+            df = concat([df, df_current])
+
+        return df.sort_values('naam')
 
     def start_creating_report_pov_drager(self) -> DataFrame:
         df = DataFrame()
