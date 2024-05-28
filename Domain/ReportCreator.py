@@ -3,7 +3,7 @@ import logging
 import math
 import re
 
-from pandas import DataFrame, concat
+from pandas import DataFrame, concat, ExcelWriter
 
 from Database.DbManager import DbManager
 from Domain.AssetCollection import AssetCollection
@@ -17,18 +17,19 @@ class ReportCreator:
         self.db_manager = db_manager
 
     def create_all_reports(self):
-        df = self.start_creating_report_pov_legacy()
-        df.to_excel('Reports/report_pov_legacy.xlsx')
-        print('done writing report pov legacy')
-        df = self.start_creating_report_pov_toestel()
-        df.to_excel('Reports/report_pov_toestel.xlsx')
-        print('done writing report pov toestel')
-        df = self.start_creating_report_pov_armatuur_controller()
-        df.to_excel('Reports/report_pov_ac.xlsx')
-        print('done writing report pov ac')
-        df = self.start_creating_report_pov_drager()
-        df.to_excel('Reports/report_pov_drager.xlsx')
-        print('done writing report pov drager')
+        with ExcelWriter('Reports/report.xlsx') as writer:
+            df = self.start_creating_report_pov_legacy()
+            df.to_excel(writer, sheet_name='pov_legacy', index=False)
+            print('done writing report pov legacy')
+            df = self.start_creating_report_pov_toestel()
+            df.to_excel(writer, sheet_name='pov_toestel', index=False)
+            print('done writing report pov toestel')
+            df = self.start_creating_report_pov_armatuur_controller()
+            df.to_excel(writer, sheet_name='pov_ac', index=False)
+            print('done writing report pov ac')
+            df = self.start_creating_report_pov_drager()
+            df.to_excel(writer, sheet_name='pov_drager', index=False)
+            print('done writing report pov drager')
 
     def start_creating_report_pov_drager(self) -> DataFrame:
         df = DataFrame()
