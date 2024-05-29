@@ -180,6 +180,11 @@ class EMInfraRestClient:
         if not update_dict:
             return update_dto
 
+        armlengte = update_dict.get('armlengte', None)
+        if armlengte == 'niet-van-toepassing':
+            armlengte = 'niet van toepassing'
+            update_dict['armlengte'] = armlengte
+
         kenmerk_uuid = cls.kenmerk_uuids[short_uri]
 
         for key, value in update_dict.items():
