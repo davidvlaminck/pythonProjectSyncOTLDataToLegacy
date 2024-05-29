@@ -2,8 +2,9 @@ import json
 import logging
 import math
 import re
+from pathlib import Path
 
-from pandas import DataFrame, concat, ExcelWriter
+from pandas import DataFrame, concat, ExcelWriter, read_excel
 
 from Database.DbManager import DbManager
 from Domain.AssetCollection import AssetCollection
@@ -515,6 +516,8 @@ class ReportCreator:
             record_dict['legacy_drager_en_drager_binnen_5_meter'] = [distance <= 5.0]
             record_dict['legacy_drager_en_drager_identieke_geometrie'] = [0.0 < distance <= 0.01]
             record_dict['update_legacy_drager_geometrie'] = ''
+            if distance > 5.0:
+                record_dict['update_legacy_drager_geometrie'] = [drager.attr_dict]
 
             # toestand
             legacy_drager_toestand = lgc_drager.attr_dict.get('AIMToestand.toestand')
@@ -774,13 +777,13 @@ class ReportCreator:
 
         verlichtingsniveau = toestel.attr_dict.get('VerlichtingstoestelLED.verlichtingsNiveau')
         if verlichtingsniveau is not None:
-            verlichtingsniveau = verlichtingsniveau[71:]
+            verlichtingsniveau = verlichtingsniveau[71:].upper()
 
         merk = toestel.attr_dict.get('Verlichtingstoestel.merk')
         modelnaam = toestel.attr_dict.get('Verlichtingstoestel.modelnaam')
         merk_en_type = None
         if merk is not None and modelnaam is not None:
-            merk = merk[79:]
+            merk = merk[79:].title()
             modelnaam = modelnaam[84:].title()
             merk_en_type = f'{merk} {modelnaam}'
 
@@ -809,8 +812,10 @@ class ReportCreator:
 
             armlengte = drager.attr_dict.get('WVLichtmast.armlengte')
             if armlengte is not None:
-                armlengte = armlengte[77:].replace('.', ',')
-            d['armlengte'] = armlengte
+                armlengte = armlengte[76:].replace('.', ',')
+            if armlengte == 'niet-van-toepassing':
+                armlengte = 'niet van toepassing'
+            d['armlengte'] = [armlengte]
 
             paalhoogte = drager.attr_dict.get('Lichtmast.masthoogte')
             if paalhoogte is not None:
@@ -845,9 +850,9 @@ class ReportCreator:
         # TODO compare legacy with otl drager and create a dict that's the difference of those two
         update_dict = {}
         for key, value in drager_dict.items():
-            if key not in legacy_drager_dict:
+            if key not in legacy_drager_dict and value is not None:
                 update_dict[key] = value
-            elif value != legacy_drager_dict[key]:
+            elif value != legacy_drager_dict[key] and value is not None:
                 update_dict[key] = value
         return update_dict
 
@@ -987,3 +992,42 @@ class ReportCreator:
         if merk is not None and modelnaam is not None:
             merk_en_type = f'{merk} {modelnaam}'
         return merk_en_type
+
+    def process_report(self, report_path: Path, em_infra_client):
+        df = read_excel(report_path, 'pov_legacy')
+
+        for index, row in df.iterrows():
+            uuid = row['legacy_drager_uuid']
+            installatie = em_infra_client.get_installatie_by_id(uuid)
+            print(installatie)
+
+            if not row['legacy_drager_en_drager_gelijke_toestand']:
+                print('update toestand')
+                installatie_update = em_infra_client.create_installatie_update_from_installatie(installatie)
+                installatie_update.toestand = row['update_legacy_drager_toestand']
+                em_infra_client.put_installatie_by_id(id=uuid, changed_installatie=installatie_update)
+
+            if not row['legacy_drager_en_drager_binnen_5_meter']:
+                print('update geometrie TODO')
+                # update geometrie TODO
+                raise NotImplementedError('update geometrie TODO')
+        # locatie = syncer.em_infra_client.get_locatie_by_installatie_id(uuid)
+        # print(locatie)
+        # locatie_update = syncer.em_infra_client.create_locatie_kenmerk_update_from_locatie_kenmerk(locatie)
+        # locatie_update.locatie.coordinaten.x += 1
+        # locatie_update.locatie.coordinaten.y += 1
+        #
+        # syncer.em_infra_client.put_locatie_kenmerk_update_by_id(id=uuid,
+        #                                                         locatie_kenmerk_update=locatie_update)
+
+
+            if not row['attributen_gelijk']:
+                print('update attributen')
+                eig = em_infra_client.get_eigenschapwaarden_by_id(uuid)
+                print(eig)
+
+                update_dict = json.loads(row['update_legacy_drager_attributen'])
+
+                update_eig_dto = em_infra_client.create_update_eigenschappen_from_update_dict(
+                    update_dict=update_dict, short_uri='lgc:installatie#VPLMast')
+                em_infra_client.patch_eigenschapwaarden(uuid, update_eig_dto)

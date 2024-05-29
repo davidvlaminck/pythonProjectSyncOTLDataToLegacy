@@ -134,3 +134,7 @@ class DataLegacySyncer:
 
         delivery_finder.sync_specific_deliveries(context_strings=context_strings)
 
+    def process_report(self, report_path: Path = Path('Reports/report.xlsx')):
+        report_creator = ReportCreator(collection=None, db_manager=self.db_manager)
+        report_creator.process_report(report_path=report_path, em_infra_client=self.em_infra_client)
+
