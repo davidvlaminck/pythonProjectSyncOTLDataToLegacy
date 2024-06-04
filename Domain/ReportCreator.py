@@ -372,7 +372,8 @@ class ReportCreator:
         df = DataFrame()
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'ac_uuid', 'ac_naam', 'alles_ok',
-            'ac_naam_conform_conventie', 'relatie_naar_toestel', 'serienummer_ingevuld']
+            'ac_naam_conform_conventie', 'relatie_naar_toestel', 'serienummer', 'serienummer_ingevuld',
+            'serienummer_conform', 'serienummer_uniek']
 
         for missing_column_name in all_column_names:
             df[missing_column_name] = None
@@ -404,6 +405,11 @@ class ReportCreator:
             df_current = DataFrame(record_dict)
             df = concat([df, df_current])
 
+        df['serienummer_uniek'] = df.duplicated(subset=['serienummer'], keep=False)
+        df['serienummer_uniek'] = ~df['serienummer_uniek'] # reverse
+        df['alles_ok'] = df['alles_ok'] & df['serienummer_uniek']
+        #df = df.drop('serienummer', axis=1)
+
         return df.sort_values('ac_naam')
 
     def get_report_record_for_one_armatuur_controller(self, armatuur_controller: NodeInfoObject,
@@ -421,9 +427,15 @@ class ReportCreator:
         record_dict['relatie_naar_toestel'] = [(len(toestellen) > 0)]
         alles_ok = record_dict['relatie_naar_toestel'][0] and alles_ok
 
-        record_dict['serienummer_ingevuld'] = [
-            (armatuur_controller.attr_dict.get('Armatuurcontroller.serienummer', None) is not None)]
+        serienummer = armatuur_controller.attr_dict.get('Armatuurcontroller.serienummer', None)
+        record_dict['serienummer'] = [serienummer]
+        record_dict['serienummer_ingevuld'] = [(serienummer is not None)]
         alles_ok = record_dict['serienummer_ingevuld'][0] and alles_ok
+
+        # SLC-G3-2022-38999 example for pattern
+        serienummer_conform = re.match(r'SLC-G3-202\d-[\d]{1,5}', serienummer) is not None
+        record_dict['serienummer_conform'] = [serienummer_conform]
+        alles_ok = serienummer_conform and alles_ok
 
         record_dict['alles_ok'] = [alles_ok]
         return record_dict
