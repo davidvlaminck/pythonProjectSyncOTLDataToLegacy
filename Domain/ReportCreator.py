@@ -45,13 +45,58 @@ class ReportCreator:
             df_summary = DataFrame(summary_dict)
             df_summary.to_excel(writer, sheet_name='Overzicht', index=False)
 
+# Armatuurcontroller
+# https://wegenenverkeer.data.vlaanderen.be/ns/implementatieelement#AIMObject.assetId	2529
+# https://wegenenverkeer.data.vlaanderen.be/ns/implementatieelement#AIMObject.datumOprichtingObject	2410
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller.merk	2361
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller.serienummer	2309
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller.modelnaam	2294
+# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#FirmwareObject.firmwareversie	712
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller.ipAdres	657
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller.isDummydot	349
+#
+
+# toestelLED
+# https://wegenenverkeer.data.vlaanderen.be/ns/implementatieelement#AIMObject.assetId	4447
+# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#Verlichtingstoestel.modelnaam	3283
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.kleurTemperatuur	3240
+# https://wegenenverkeer.data.vlaanderen.be/ns/implementatieelement#AIMObject.datumOprichtingObject	2988
+# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#Verlichtingstoestel.merk	2711
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.lumenOutput	2527
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.protector	2422
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.lichtpuntHoogte	2395
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.lichtkleur	2362
+# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#Verlichtingstoestel.systeemvermogen	2334
+# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#VerlichtingstoestelConnector.besturingsconnector	2307
+# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#Verlichtingstoestel.verlichtGebied	2290
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.aantalTeVerlichtenRijstroken	2212
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.overhang	2090
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.heeftAntiVandalisme	1838
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.verlichtingsNiveau	1803
+# https://wegenenverkeer.data.vlaanderen.be/ns/implementatieelement#AIMObject.theoretischeLevensduur	1755
+# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#Verlichtingstoestel.stroomkringnummer	1733
+# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#Verlichtingstoestel.heeftAansluitkastGeintegreerd	1722
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.isFaunavriendelijk	1719
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.kleurArmatuur	1697
+# https://wegenenverkeer.data.vlaanderen.be/ns/implementatieelement#AIMObject.bestekPostNummer	517
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.tussenafstandLED	470
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.isLijnvormig	380
+
 
     def start_creating_asset_data_drager(self) -> DataFrame:
         df = DataFrame()
         all_column_names = [
-            'aanlevering_id', 'aanlevering_naam', 'uuid', 'naam', 'toestand', 'aantalArmen', 'datumOprichtingObject',
-            'masttype', 'masthoogte', 'geometrie', 'kleur', 'beschermlaag', 'heeftStopcontact', 'armlengte',
+            'aanlevering_id', 'aanlevering_naam', 'uuid', 'naam', 'geometrie', 'toestand', 'aantalArmen', 'datumOprichtingObject',
+            'masttype', 'masthoogte', 'kleur', 'beschermlaag', 'heeftStopcontact', 'armlengte',
             'elekktrischeBeveiliging', 'dwarsdoorsnede']
+        
+
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Lichtmast.leverancier	921
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Lichtmast.kleur	784
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast.bevestigingToestellen	391
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Lichtmast.normeringBotsvriendelijk	359
+# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Lichtmast.heeftAntiVandalismeBeugel	51
+# https://wegenenverkeer.data.vlaanderen.be/ns/implementatieelement#AIMObject.theoretischeLevensduur	3
 
         for missing_column_name in all_column_names:
             df[missing_column_name] = None
