@@ -32,71 +32,189 @@ class ReportCreator:
             df_report_pov_drager.to_excel(writer, sheet_name='pov_drager', index=False)
             print('done writing report pov drager')
             df = self.start_creating_asset_data_drager()
-            df.to_excel(writer, sheet_name='asset_data_drager', index=False)
+            df.to_excel(writer, sheet_name='asset_data_otl_drager', index=False)
             print('done writing asset data drager')
+            df = self.start_creating_asset_data_toestel()
+            df.to_excel(writer, sheet_name='asset_data_toestel', index=False)
+            print('done writing asset data toestel')
+            df = self.start_creating_asset_data_ac()
+            df.to_excel(writer, sheet_name='asset_data_ac', index=False)
+            print('done writing asset data ac')
 
             summary_dict = {
-                'pov_toestel_alles_ok': [len(df_report_pov_toestel['alles_ok']) == df_report_pov_toestel['alles_ok'].sum()],
+                'pov_toestel_alles_ok': [
+                    len(df_report_pov_toestel['alles_ok']) == df_report_pov_toestel['alles_ok'].sum()],
                 'pov_drager_alles_ok': [
                     len(df_report_pov_drager['alles_ok']) == df_report_pov_drager['alles_ok'].sum()],
                 'pov_armatuur_controller_alles_ok': [
-                    len(df_report_pov_armatuur_controller['alles_ok']) == df_report_pov_armatuur_controller['alles_ok'].sum()],
+                    len(df_report_pov_armatuur_controller['alles_ok']) == df_report_pov_armatuur_controller[
+                        'alles_ok'].sum()],
             }
             df_summary = DataFrame(summary_dict)
             df_summary.to_excel(writer, sheet_name='Overzicht', index=False)
 
-# Armatuurcontroller
-# https://wegenenverkeer.data.vlaanderen.be/ns/implementatieelement#AIMObject.assetId	2529
-# https://wegenenverkeer.data.vlaanderen.be/ns/implementatieelement#AIMObject.datumOprichtingObject	2410
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller.merk	2361
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller.serienummer	2309
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller.modelnaam	2294
-# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#FirmwareObject.firmwareversie	712
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller.ipAdres	657
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Armatuurcontroller.isDummydot	349
-#
+    def start_creating_asset_data_ac(self) -> DataFrame:
+        df = DataFrame()
+        all_column_names = [
+            'aanlevering_id', 'aanlevering_naam', 'uuid', 'naam', 'toestand', 'geometrie', 'datumOprichtingObject',
+            'merk', 'serienummer', 'modelnaam', 'firmwareversie', 'ipAdres', 'isDummydot']
 
-# toestelLED
-# https://wegenenverkeer.data.vlaanderen.be/ns/implementatieelement#AIMObject.assetId	4447
-# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#Verlichtingstoestel.modelnaam	3283
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.kleurTemperatuur	3240
-# https://wegenenverkeer.data.vlaanderen.be/ns/implementatieelement#AIMObject.datumOprichtingObject	2988
-# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#Verlichtingstoestel.merk	2711
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.lumenOutput	2527
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.protector	2422
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.lichtpuntHoogte	2395
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.lichtkleur	2362
-# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#Verlichtingstoestel.systeemvermogen	2334
-# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#VerlichtingstoestelConnector.besturingsconnector	2307
-# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#Verlichtingstoestel.verlichtGebied	2290
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.aantalTeVerlichtenRijstroken	2212
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.overhang	2090
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.heeftAntiVandalisme	1838
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.verlichtingsNiveau	1803
-# https://wegenenverkeer.data.vlaanderen.be/ns/implementatieelement#AIMObject.theoretischeLevensduur	1755
-# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#Verlichtingstoestel.stroomkringnummer	1733
-# https://wegenenverkeer.data.vlaanderen.be/ns/abstracten#Verlichtingstoestel.heeftAansluitkastGeintegreerd	1722
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.isFaunavriendelijk	1719
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.kleurArmatuur	1697
-# https://wegenenverkeer.data.vlaanderen.be/ns/implementatieelement#AIMObject.bestekPostNummer	517
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.tussenafstandLED	470
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#VerlichtingstoestelLED.isLijnvormig	380
+        for missing_column_name in all_column_names:
+            df[missing_column_name] = None
 
+        # get all ac's
+        acs = self.collection.get_node_objects_by_types(['onderdeel#Armatuurcontroller'])
+
+        for ac in acs:
+            if not ac.active:
+                continue
+            deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=ac.uuid)
+            if len(deliveries) == 0:
+                aanlevering_naam = ''
+                aanlevering_id = ''
+            else:
+                aanlevering_naam = '|'.join([d.referentie for d in deliveries])
+                aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
+
+            toestel_uuid = ac.uuid
+            toestel_naam = ac.attr_dict.get('AIMNaamObject.naam', '')
+            toestand = ac.attr_dict.get('AIMToestand.toestand', None)
+            if toestand is not None:
+                toestand = toestand[67:]
+
+            current_toestel_dict = {
+                'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
+                'uuid': [toestel_uuid], 'naam': [toestel_naam],
+                'toestand': [toestand],
+                'datumOprichtingObject': [ac.attr_dict.get('AIMObject.datumOprichtingObject', None)],
+                'geometrie': [ac.attr_dict.get('loc:Locatie.geometrie', None)],
+                'merk': [ac.attr_dict.get('Armatuurcontroller.merk', None)],
+                'serienummer': [ac.attr_dict.get('Armatuurcontroller.serienummer', None)],
+                'modelnaam': [ac.attr_dict.get('Armatuurcontroller.modelnaam', None)],
+                'firmwareversie': [ac.attr_dict.get('FirmwareObject.firmwareversie', None)],
+                'ipAdres': [ac.attr_dict.get('Armatuurcontroller.ipAdres', None)],
+                'isDummydot': [ac.attr_dict.get('Armatuurcontroller.isDummydot', None)]
+            }
+
+            df_current = DataFrame(current_toestel_dict)
+            df = concat([df, df_current])
+
+        return df.sort_values('naam')
+
+    def start_creating_asset_data_toestel(self) -> DataFrame:
+        df = DataFrame()
+        all_column_names = [
+            'aanlevering_id', 'aanlevering_naam', 'uuid', 'naam', 'toestand', 'geometrie', 'datumOprichtingObject',
+            'modelnaam', 'kleurTemperatuur', 'merk', 'lumenOutput', 'protector', 'lichtpuntHoogte', 'lichtkleur',
+            'systeemvermogen', 'besturingsconnector', 'verlichtGebied', 'aantalTeVerlichtenRijstroken', 'overhang',
+            'heeftAntiVandalisme', 'verlichtingsNiveau', 'theoretischeLevensduur', 'stroomkringnummer',
+            'heeftAansluitkastGeintegreerd', 'isFaunavriendelijk', 'kleurArmatuur', 'tussenafstandLED',
+            'isLijnvormig']
+
+        for missing_column_name in all_column_names:
+            df[missing_column_name] = None
+
+        # get all toestellen
+        toestellen = self.collection.get_node_objects_by_types(['onderdeel#VerlichtingstoestelLED'])
+
+        for toestel in toestellen:
+            if not toestel.active:
+                continue
+            deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=toestel.uuid)
+            if len(deliveries) == 0:
+                aanlevering_naam = ''
+                aanlevering_id = ''
+            else:
+                aanlevering_naam = '|'.join([d.referentie for d in deliveries])
+                aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
+
+            toestel_uuid = toestel.uuid
+            toestel_naam = toestel.attr_dict.get('AIMNaamObject.naam', '')
+            toestand = toestel.attr_dict.get('AIMToestand.toestand', None)
+            if toestand is not None:
+                toestand = toestand[67:]
+            modelnaam = toestel.attr_dict.get('Verlichtingstoestel.modelnaam', None)
+            if modelnaam is not None:
+                modelnaam = modelnaam[84:]
+            kleurTemperatuur = toestel.attr_dict.get('VerlichtingstoestelLED.kleurTemperatuur', None)
+            if kleurTemperatuur is not None:
+                kleurTemperatuur = kleurTemperatuur[70:]
+            merk = toestel.attr_dict.get('Verlichtingstoestel.merk', None)
+            if merk is not None:
+                merk = merk[79:]
+            lumenOutput = toestel.attr_dict.get('VerlichtingstoestelLED.lumenOutput', None)
+            if lumenOutput is not None:
+                lumenOutput = lumenOutput[67:]
+            protector = toestel.attr_dict.get('VerlichtingstoestelLED.protector', None)
+            if protector is not None:
+                protector = protector[70:]
+            lichtpuntHoogte = toestel.attr_dict.get('VerlichtingstoestelLED.lichtpuntHoogte', None)
+            if lichtpuntHoogte is not None:
+                lichtpuntHoogte = lichtpuntHoogte[76:]
+            lichtkleur = toestel.attr_dict.get('VerlichtingstoestelLED.lichtkleur', None)
+            if lichtkleur is not None:
+                lichtkleur = lichtkleur[71:]
+            besturingsconnector = toestel.attr_dict.get('VerlichtingstoestelConnector.besturingsconnector', None)
+            if besturingsconnector is not None:
+                besturingsconnector = besturingsconnector[103:]
+            verlichtGebied = toestel.attr_dict.get('Verlichtingstoestel.verlichtGebied', None)
+            if verlichtGebied is not None:
+                verlichtGebied = verlichtGebied[89:]
+            aantalTeVerlichtenRijstroken = toestel.attr_dict.get('VerlichtingstoestelLED.aantalTeVerlichtenRijstroken', None)
+            if aantalTeVerlichtenRijstroken is not None:
+                aantalTeVerlichtenRijstroken = aantalTeVerlichtenRijstroken[89:]
+            overhang = toestel.attr_dict.get('VerlichtingstoestelLED.overhang', None)
+            if overhang is not None:
+                overhang = overhang[69:]
+            verlichtingsNiveau = toestel.attr_dict.get('VerlichtingstoestelLED.verlichtingsNiveau', None)
+            if verlichtingsNiveau is not None:
+                verlichtingsNiveau = verlichtingsNiveau[71:]
+            kleurArmatuur = toestel.attr_dict.get('VerlichtingstoestelLED.kleurArmatuur', None)
+            if kleurArmatuur is not None:
+                kleurArmatuur = kleurArmatuur[69:]
+
+            current_toestel_dict = {
+                'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
+                'uuid': [toestel_uuid], 'naam': [toestel_naam],
+                'toestand': [toestand],
+                'datumOprichtingObject': [toestel.attr_dict.get('AIMObject.datumOprichtingObject', None)],
+                'geometrie': [toestel.attr_dict.get('loc:Locatie.geometrie', None)],
+                'modelnaam': [modelnaam],
+                'kleurTemperatuur': [kleurTemperatuur],
+                'merk': [merk],
+                'lumenOutput': [lumenOutput],
+                'protector': [protector],
+                'lichtpuntHoogte': [lichtpuntHoogte],
+                'lichtkleur': [lichtkleur],
+                'systeemvermogen': [toestel.attr_dict.get('Verlichtingstoestel.systeemvermogen', None)],
+                'besturingsconnector': [besturingsconnector],
+                'verlichtGebied': [verlichtGebied],
+                'aantalTeVerlichtenRijstroken': [aantalTeVerlichtenRijstroken],
+                'overhang': [overhang],
+                'heeftAntiVandalisme': [toestel.attr_dict.get('VerlichtingstoestelLED.heeftAntiVandalisme', None)],
+                'verlichtingsNiveau': [verlichtingsNiveau],
+                'theoretischeLevensduur': [toestel.attr_dict.get('AIMObject.theoretischeLevensduur', None)],
+                'stroomkringnummer': [toestel.attr_dict.get('Verlichtingstoestel.stroomkringnummer', None)],
+                'heeftAansluitkastGeintegreerd': [
+                    toestel.attr_dict.get('Verlichtingstoestel.heeftAansluitkastGeintegreerd', None)],
+                'isFaunavriendelijk': [toestel.attr_dict.get('VerlichtingstoestelLED.isFaunavriendelijk', None)],
+                'kleurArmatuur': [kleurArmatuur],
+                'tussenafstandLED': [toestel.attr_dict.get('VerlichtingstoestelLED.tussenafstandLED', None)],
+                'isLijnvormig': [toestel.attr_dict.get('VerlichtingstoestelLED.isLijnvormig', None)]
+            }
+
+            df_current = DataFrame(current_toestel_dict)
+            df = concat([df, df_current])
+
+        return df.sort_values('naam')
 
     def start_creating_asset_data_drager(self) -> DataFrame:
         df = DataFrame()
         all_column_names = [
-            'aanlevering_id', 'aanlevering_naam', 'uuid', 'naam', 'geometrie', 'toestand', 'aantalArmen', 'datumOprichtingObject',
-            'masttype', 'masthoogte', 'kleur', 'beschermlaag', 'heeftStopcontact', 'armlengte',
-            'elekktrischeBeveiliging', 'dwarsdoorsnede']
-        
-
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Lichtmast.leverancier	921
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Lichtmast.kleur	784
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#WVLichtmast.bevestigingToestellen	391
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Lichtmast.normeringBotsvriendelijk	359
-# https://wegenenverkeer.data.vlaanderen.be/ns/onderdeel#Lichtmast.heeftAntiVandalismeBeugel	51
-# https://wegenenverkeer.data.vlaanderen.be/ns/implementatieelement#AIMObject.theoretischeLevensduur	3
+            'aanlevering_id', 'aanlevering_naam', 'uuid', 'naam', 'toestand', 'geometrie', 'datumOprichtingObject',
+            'aantalArmen', 'masttype', 'masthoogte', 'kleur', 'beschermlaag', 'heeftStopcontact', 'armlengte',
+            'elekktrischeBeveiliging', 'dwarsdoorsnede', 'leverancier', 'bevestigingToestellen',
+            'normeringBotsvriendelijk', 'heeftAntiVandalismeBeugel', 'theoretischeLevensduur']
 
         for missing_column_name in all_column_names:
             df[missing_column_name] = None
@@ -140,14 +258,20 @@ class ReportCreator:
             dwarsdoorsnede = drager.attr_dict.get('Lichtmast.dwarsdoorsnede', None)
             if dwarsdoorsnede is not None:
                 dwarsdoorsnede = dwarsdoorsnede[86:]
+            normeringBotsvriendelijk = drager.attr_dict.get('Lichtmast.normeringBotsvriendelijk', None)
+            if normeringBotsvriendelijk is not None:
+                normeringBotsvriendelijk = normeringBotsvriendelijk[78:]
+            leverancier = drager.attr_dict.get('Lichtmast.leverancier', None)
+            if leverancier is not None:
+                leverancier = leverancier[76:]
 
-            current_ac_drager_dict = {
+            current_drager_dict = {
                 'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
                 'uuid': [drager_uuid], 'naam': [drager_naam],
                 'toestand': [toestand],
                 'aantalArmen': [aantalArmen],
                 'datumOprichtingObject': [drager.attr_dict.get('AIMObject.datumOprichtingObject', None)],
-                'masttype': [masttype   ],
+                'masttype': [masttype],
                 'masthoogte': [masthoogte],
                 'geometrie': [drager.attr_dict.get('loc:Locatie.geometrie', None)],
                 'kleur': [drager.attr_dict.get('Lichtmast.kleur', None)],
@@ -156,9 +280,14 @@ class ReportCreator:
                 'armlengte': [armlengte],
                 'elekktrischeBeveiliging': [drager.attr_dict.get('EMDraagconstructie.elekktrischeBeveiliging', None)],
                 'dwarsdoorsnede': [dwarsdoorsnede],
+                'theoretischeLevensduur': [drager.attr_dict.get('AIMObject.theoretischeLevensduur', None)],
+                'leverancier': [leverancier],
+                'bevestigingToestellen': [drager.attr_dict.get('WVLichtmast.bevestigingToestellen', None)],
+                'normeringBotsvriendelijk': [normeringBotsvriendelijk],
+                'heeftAntiVandalismeBeugel': [drager.attr_dict.get('Lichtmast.heeftAntiVandalismeBeugel', None)],
             }
 
-            df_current = DataFrame(current_ac_drager_dict)
+            df_current = DataFrame(current_drager_dict)
             df = concat([df, df_current])
 
         return df.sort_values('naam')
@@ -1056,15 +1185,14 @@ class ReportCreator:
                 print('update geometrie TODO')
                 # update geometrie TODO
                 raise NotImplementedError('update geometrie TODO')
-        # locatie = syncer.em_infra_client.get_locatie_by_installatie_id(uuid)
-        # print(locatie)
-        # locatie_update = syncer.em_infra_client.create_locatie_kenmerk_update_from_locatie_kenmerk(locatie)
-        # locatie_update.locatie.coordinaten.x += 1
-        # locatie_update.locatie.coordinaten.y += 1
-        #
-        # syncer.em_infra_client.put_locatie_kenmerk_update_by_id(id=uuid,
-        #                                                         locatie_kenmerk_update=locatie_update)
-
+            # locatie = syncer.em_infra_client.get_locatie_by_installatie_id(uuid)
+            # print(locatie)
+            # locatie_update = syncer.em_infra_client.create_locatie_kenmerk_update_from_locatie_kenmerk(locatie)
+            # locatie_update.locatie.coordinaten.x += 1
+            # locatie_update.locatie.coordinaten.y += 1
+            #
+            # syncer.em_infra_client.put_locatie_kenmerk_update_by_id(id=uuid,
+            #                                                         locatie_kenmerk_update=locatie_update)
 
             if not row['attributen_gelijk']:
                 print('update attributen')
