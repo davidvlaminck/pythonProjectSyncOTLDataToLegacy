@@ -40,13 +40,22 @@ class DataLegacySyncer:
 
         delivery_finder.find_deliveries_to_sync()
 
-    def collect_and_create_specific_reports(self, delivery_references: list[str]):
-        asset_info_collector = AssetInfoCollector(em_infra_rest_client=self.em_infra_client,
-                                                  emson_importer=self.emson_importer)
-        asset_uuids = list(self.db_manager.get_asset_uuids_from_specific_deliveries(
-            delivery_references=delivery_references))
-        self._collect_info_given_asset_uuids(asset_info_collector=asset_info_collector, asset_uuids=asset_uuids)
-        self._create_all_reports(asset_info_collector=asset_info_collector)
+    def collect_and_create_specific_reports(self, delivery_references: list[str], combine_single_report: bool = False):
+        if combine_single_report:
+            asset_info_collector = AssetInfoCollector(em_infra_rest_client=self.em_infra_client,
+                                                      emson_importer=self.emson_importer)
+            asset_uuids = list(self.db_manager.get_asset_uuids_from_specific_deliveries(
+                delivery_references=delivery_references))
+            self._collect_info_given_asset_uuids(asset_info_collector=asset_info_collector, asset_uuids=asset_uuids)
+            self._create_all_reports(asset_info_collector=asset_info_collector)
+        else:
+            for delivery_reference in delivery_references:
+                asset_info_collector = AssetInfoCollector(em_infra_rest_client=self.em_infra_client,
+                                                          emson_importer=self.emson_importer)
+                asset_uuids = list(self.db_manager.get_asset_uuids_from_specific_deliveries(
+                    delivery_references=[delivery_reference]))
+                self._collect_info_given_asset_uuids(asset_info_collector=asset_info_collector, asset_uuids=asset_uuids)
+                self._create_all_reports(asset_info_collector=asset_info_collector)
 
     def collect_and_create_reports(self):
         asset_info_collector = AssetInfoCollector(em_infra_rest_client=self.em_infra_client,

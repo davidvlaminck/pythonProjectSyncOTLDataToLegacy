@@ -2,6 +2,7 @@ import json
 import logging
 import math
 import re
+from datetime import datetime
 from pathlib import Path
 
 from pandas import DataFrame, concat, ExcelWriter, read_excel
@@ -18,7 +19,15 @@ class ReportCreator:
         self.db_manager = db_manager
 
     def create_all_reports(self):
-        with ExcelWriter('Reports/report.xlsx') as writer:
+        df_report_pov_legacy = self.start_creating_report_pov_legacy()
+        try:
+            excel_name = df_report_pov_legacy['legacy_drager_naampad'].iloc[0]
+        except IndexError:
+            now = datetime.now()
+            excel_name = f'Report_unnamed_{now.strftime("%Y%m%d_%H%M%S")}'
+        if excel_name is not None and '/' in excel_name:
+            excel_name = excel_name.split('/')[0]
+        with ExcelWriter(f'Reports/{excel_name}.xlsx') as writer:
             df_report_pov_legacy = self.start_creating_report_pov_legacy()
             df_report_pov_legacy.to_excel(writer, sheet_name='pov_legacy', index=False)
             print('done writing report pov legacy')
@@ -433,7 +442,10 @@ class ReportCreator:
         alles_ok = record_dict['serienummer_ingevuld'][0] and alles_ok
 
         # SLC-G3-2022-38999 example for pattern
-        serienummer_conform = re.match(r'SLC-G3-202\d-[\d]{1,5}', serienummer) is not None
+        if serienummer is None:
+            serienummer_conform = False
+        else:
+            serienummer_conform = re.match(r'SLC-G3-202\d-[\d]{1,5}', serienummer) is not None
         record_dict['serienummer_conform'] = [serienummer_conform]
         alles_ok = serienummer_conform and alles_ok
 
@@ -876,6 +888,7 @@ class ReportCreator:
 
     @classmethod
     def get_attribute_dict_from_legacy_drager(cls, legacy_drager: NodeInfoObject) -> dict:
+        #  TODO lamptype
         d = {
             'aantal_te_verlichten_rijvakken_LED': legacy_drager.attr_dict.get(
                 'lgc:EMObject.aantalTeVerlichtenRijvakkenLed'),
@@ -930,6 +943,7 @@ class ReportCreator:
     @classmethod
     def get_attribute_dict_from_otl_assets(cls, drager: NodeInfoObject, toestellen: [NodeInfoObject],
                                            armatuur_controllers: [NodeInfoObject]) -> dict:
+        #  TODO lamptype op drager
         toestel = cls.get_toestel_by_index(toestellen=toestellen, index=1)
         if toestel is None:
             return {'error': 'toestel 1 kon niet worden gevonden'}
