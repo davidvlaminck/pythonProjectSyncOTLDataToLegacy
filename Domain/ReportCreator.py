@@ -888,7 +888,6 @@ class ReportCreator:
 
     @classmethod
     def get_attribute_dict_from_legacy_drager(cls, legacy_drager: NodeInfoObject) -> dict:
-        #  TODO lamptype
         d = {
             'aantal_te_verlichten_rijvakken_LED': legacy_drager.attr_dict.get(
                 'lgc:EMObject.aantalTeVerlichtenRijvakkenLed'),
@@ -896,6 +895,7 @@ class ReportCreator:
             'contractnummer_levering_LED': legacy_drager.attr_dict.get('lgc:EMObject.contractnummerLeveringLed'),
             'datum_installatie_LED': legacy_drager.attr_dict.get('lgc:EMObject.datumInstallatieLed'),
             'kleurtemperatuur_LED': legacy_drager.attr_dict.get('lgc:EMObject.kleurtemperatuurLed'),
+            'lamp_type': legacy_drager.attr_dict.get('lgc:EMObject.lampType'),
             'LED_verlichting': legacy_drager.attr_dict.get('lgc:EMObject.ledVerlichting'),
             'lichtpunthoogte_tov_rijweg': legacy_drager.attr_dict.get('lgc:EMObject.lichtpunthoogteTovRijweg'),
             'lumen_pakket_LED': legacy_drager.attr_dict.get('lgc:EMObject.lumenPakketLed'),
@@ -943,7 +943,6 @@ class ReportCreator:
     @classmethod
     def get_attribute_dict_from_otl_assets(cls, drager: NodeInfoObject, toestellen: [NodeInfoObject],
                                            armatuur_controllers: [NodeInfoObject]) -> dict:
-        #  TODO lamptype op drager
         toestel = cls.get_toestel_by_index(toestellen=toestellen, index=1)
         if toestel is None:
             return {'error': 'toestel 1 kon niet worden gevonden'}
@@ -993,6 +992,7 @@ class ReportCreator:
             'aantal_te_verlichten_rijvakken_LED': aantal_te_verlichten_rijvakken,
             'datum_installatie_LED': datum_installatie_LED,
             'kleurtemperatuur_LED': kleurtemperatuur_LED,
+            'lamp_type': 'LED',
             'LED_verlichting': True,
             'lichtpunthoogte_tov_rijweg': lichtpunthoogte,
             'lumen_pakket_LED': lumen_pakket_LED,
@@ -1024,7 +1024,9 @@ class ReportCreator:
                     raise NotImplementedError(f'{drager.attr_dict.get('AIMNaamObject.naam', '')} '
                                               f'heeft geen standaardhoogte')
                 standaard_hoogte = standaard_hoogte[75:].replace('.', ',')
-            d['paalhoogte'] = standaard_hoogte
+                d['paalhoogte'] = standaard_hoogte
+            else:
+                d['paalhoogte'] = None
 
             d['RAL_kleur'] = drager.attr_dict.get('Lichtmast.kleur')
             for index in range(1, len(toestellen) + 1):
