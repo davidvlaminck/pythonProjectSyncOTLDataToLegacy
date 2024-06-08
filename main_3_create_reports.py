@@ -14,12 +14,11 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 handler.setFormatter(formatter)
 root.addHandler(handler)
 
-settings_path = Path(r'C:\Users\vlaminda\Documents\resources\settings_SyncOTLDataToLegacy.json')
-state_db_path = Path(r'C:\Users\vlaminda\Documents\resources\SyncOTLDataToLegacy_state.db')
+
+settings_path = Path('/home/davidlinux/Documents/AWV/resources/settings_SyncOTLDataToLegacy.json')
+state_db_path = Path('/home/davidlinux/Documents/AWV/resources/SyncOTLDataToLegacy_state.db')
 
 if __name__ == '__main__':
-    # collector = AssetInfoCollector(settings_path=settings_path, auth_type=AuthType.JWT, env=Environment.PRD)
-
     syncer = DataLegacySyncer(settings_path=settings_path, auth_type=AuthType.JWT, env=Environment.PRD,
                               state_db_path=state_db_path)
-    syncer.process_report()
+    syncer.collect_and_create_specific_reports(['DA-2024-14615'])

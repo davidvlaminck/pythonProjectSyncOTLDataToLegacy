@@ -16,21 +16,18 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 handler.setFormatter(formatter)
 root.addHandler(handler)
 
-
 settings_path = Path('/home/davidlinux/Documents/AWV/resources/settings_SyncOTLDataToLegacy.json')
 state_db_path = Path('/home/davidlinux/Documents/AWV/resources/SyncOTLDataToLegacy_state.db')
 
 if __name__ == '__main__':
-    #collector = AssetInfoCollector(settings_path=settings_path, auth_type=AuthType.JWT, env=Environment.PRD)
-    
+    # collector = AssetInfoCollector(settings_path=settings_path, auth_type=AuthType.JWT, env=Environment.PRD)
+
     syncer = DataLegacySyncer(settings_path=settings_path, auth_type=AuthType.JWT, env=Environment.PRD,
                               state_db_path=state_db_path)
     # ref = syncer.davie_client.find_delivery_by_reference('DA-2024-06930 (iteratie 1)')
     # print(ref)
-    ref = syncer.sync_specific_deliveries(['DA-2023-02227', 'DA-2024-06025', 'DA-2023-02034', 'DA-2023-02037'])
+    ref = syncer.sync_specific_deliveries(['DA-2023-02080', 'DA-2023-02231', 'DA-2024-14615'])
     print(ref)
-
-
 
     # response = collector.emson_importer.requester.get(url='api/otl/assets')
     # decoded_string = response.content.decode()
@@ -40,4 +37,3 @@ if __name__ == '__main__':
     #
     # for asset in collector.get_assets_by_uuids(uuids=["e0346d27-3dd8-413c-8f9c-8dad4963da8a"]):
     #     print(asset)
-
