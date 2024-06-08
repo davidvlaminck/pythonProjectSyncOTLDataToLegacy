@@ -5,6 +5,9 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+from openpyxl.formatting.rule import CellIsRule
+from openpyxl.reader.excel import load_workbook
+from openpyxl.styles import PatternFill, Font
 from pandas import DataFrame, concat, ExcelWriter, read_excel
 
 from Database.DbManager import DbManager
@@ -27,7 +30,7 @@ class ReportCreator:
             excel_name = f'Report_unnamed_{now.strftime("%Y%m%d_%H%M%S")}'
         if excel_name is not None and '/' in excel_name:
             excel_name = excel_name.split('/')[0]
-        with ExcelWriter(f'Reports/{excel_name}.xlsx') as writer:
+        with ExcelWriter(path=f'Reports/{excel_name}.xlsx') as writer:
             df_report_pov_legacy = self.start_creating_report_pov_legacy()
             df_report_pov_legacy.to_excel(writer, sheet_name='pov_legacy', index=False)
             print('done writing report pov legacy')
@@ -61,6 +64,25 @@ class ReportCreator:
             }
             df_summary = DataFrame(summary_dict)
             df_summary.to_excel(writer, sheet_name='Overzicht', index=False)
+
+        sheet_dict = {
+            'pov_legacy': [f'F2:V{len(df_report_pov_legacy) + 1}', f'X2:X{len(df_report_pov_legacy) + 1}', f'Z2:Z{len(df_report_pov_legacy) + 1}'],
+            'pov_toestel': [f'E2:S{len(df_report_pov_toestel)+1}'],
+            'pov_ac': [f'E2:K{len(df_report_pov_armatuur_controller) + 1}'],
+            'pov_drager': [f'E2:J{len(df_report_pov_drager) + 1}'],
+            'Overzicht': [f'A2:C2'],
+        }
+
+        red_fill = PatternFill(start_color='F4CCCC', end_color='F4CCCC', fill_type='solid')
+        red_font = Font(size=11, color='FF0000')
+        workbook = load_workbook(f'Reports/{excel_name}.xlsx')
+        for sheet_name, ranges in sheet_dict.items():
+            sheet = workbook[sheet_name]
+            for range in ranges:
+                sheet.conditional_formatting.add(range_string=range, cfRule=CellIsRule(
+                    operator='equal', formula=[0], stopIfTrue=True, fill=red_fill, font=red_font))
+
+        workbook.save(f'Reports/{excel_name}.xlsx')
 
     def start_creating_asset_data_ac(self) -> DataFrame:
         df = DataFrame()
@@ -793,7 +815,16 @@ class ReportCreator:
     def get_lichtpunt_nummer_from_naampad(cls, naampad: str) -> str:
         if naampad is None or not naampad or '/' not in naampad:
             return ''
-        return naampad.split('/')[2]
+        lichtpunt_nummer = naampad.split('/')[2]
+        if not lichtpunt_nummer[:1].isdigit():
+            return lichtpunt_nummer
+        inst_nr = re.search(r'[1-9][\d]*$', naampad.split('/')[0]).group()
+        if inst_nr is None:
+            return lichtpunt_nummer
+        if lichtpunt_nummer.startswith(inst_nr):
+            return lichtpunt_nummer[len(inst_nr):]
+        return lichtpunt_nummer
+
 
     @classmethod
     def get_lichtpunt_nummer_from_toestel_name(cls, toestel_name: str) -> str:
