@@ -445,7 +445,7 @@ class ReportCreator:
         if serienummer is None:
             serienummer_conform = False
         else:
-            serienummer_conform = re.match(r'SLC-G3-202\d-[\d]{1,5}', serienummer) is not None
+            serienummer_conform = re.match(r'SLC-G3-20[12]\d-[\d]{1,5}', serienummer) is not None
         record_dict['serienummer_conform'] = [serienummer_conform]
         alles_ok = serienummer_conform and alles_ok
 
