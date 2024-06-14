@@ -84,16 +84,30 @@ class DataLegacySyncer:
             asset_info_collector.start_collecting_from_starting_uuids_using_pattern(
                 starting_uuids=uuids,
                 pattern=[('uuids', 'of', 'a'),
-                         ('a', 'type_of', ['onderdeel#VerlichtingstoestelLED']),
+                         ('a', 'type_of', ['VerlichtingstoestelLED']),
                          ('a', '-[r1]-', 'b'),
-                         ('b', 'type_of',
-                          ['onderdeel#WVLichtmast', 'onderdeel#WVConsole', 'onderdeel#Armatuurcontroller']),
-                         ('b', '-[r2]->', 'c'),
-                         ('a', '-[r2]->', 'c'),
-                         ('c', 'type_of', ['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole',
-                                           'lgc:installatie#VPBevestig']),
+                         ('b', 'type_of', ['onderdeel#WVLichtmast', 'onderdeel#WVConsole']),
                          ('r1', 'type_of', ['onderdeel#Bevestiging']),
-                         ('r2', 'type_of', ['onderdeel#HoortBij'])])
+                         ('a', '-[r1]-', 'c'),
+                         ('c', 'type_of', ['onderdeel#Armatuurcontroller']),
+                         ('a', '-[r2]-', 'd'),
+                         ('d', 'type_of', ['onderdeel#LEDDriver']),
+                         ('r2', 'type_of', ['onderdeel#Bevestiging', 'onderdeel#Sturing']),
+                         ('c', '-[r3]->', 'd'),
+                         ('r3', 'type_of', ['onderdeel#VoedtAangestuurd']),
+                         ('e', '-[r3]->', 'c'),
+                         ('e', 'type_of', ['onderdeel#Montagekast']),
+                         ('b', '-[r1]-', 'e'),
+                         ('b', '-[r4]->', 'f'),
+                         ('a', '-[r4]->', 'f'),
+                         ('f', 'type_of', ['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole',
+                                           'lgc:installatie#VPBevestig']),
+                         ('r4', 'type_of', ['onderdeel#HoortBij']),
+                         ('c', '-[r5]-', 'g'),
+                         ('g', 'type_of', ['onderdeel#Segmentcontroller']),
+                         ('r5', 'type_of', ['onderdeel#Sturing']),
+                         ('g', '-[r4]-', 'h'),
+                         ('h', 'type_of', ['lgc:installatie#SegC'])])
             print('collected asset info starting from onderdeel#VerlichtingstoestelLED')
 
         for uuids in batched(asset_uuids, batch_size):
@@ -103,14 +117,37 @@ class DataLegacySyncer:
                 pattern=[('uuids', 'of', 'a'),
                          ('a', 'type_of', ['onderdeel#Armatuurcontroller']),
                          ('a', '-[r1]-', 'b'),
-                         ('b', 'type_of', ['onderdeel#VerlichtingstoestelLED'])])
+                         ('b', 'type_of', ['onderdeel#VerlichtingstoestelLED']),
+                         ('r1', 'type_of', ['onderdeel#Bevestiging']),
+                         ('a', '-[r2]->', 'c'),
+                         ('c', 'type_of', ['onderdeel#LEDDriver']),
+                         ('e', '-[r2]->', 'a'),
+                         ('e', 'type_of', ['onderdeel#Montagekast']),
+                         ('r2', 'type_of', ['onderdeel#VoedtAangestuurd']),
+                         ('a', '-[r3]-', 'd'),
+                         ('d', 'type_of', ['onderdeel#Segmentcontroller']),
+                         ('r3', 'type_of', ['onderdeel#Sturing']),
+                         ('b', '-[r4]-', 'c'),
+                         ('r4', 'type_of', ['onderdeel#Bevestiging', 'onderdeel#Sturing']),
+                         ('d', '-[r5]->', 'f'),
+                         ('f', 'type_of', ['lgc:installatie#SegC']),
+                         ('r5', 'type_of', ['onderdeel#HoortBij']),
+                         ('b', '-[r1]-', 'g'),
+                         ('e', '-[r1]-', 'g'),
+                         ('g', 'type_of', ['onderdeel#WVLichtmast', 'onderdeel#WVConsole']),
+
+                         ('b', '-[r5]->', 'h'),
+                         ('g', '-[r5]->', 'h'),
+                         ('h', 'type_of', ['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole',
+                                           'lgc:installatie#VPBevestig'])])
+
             print('collected asset info starting from Armatuurcontroller')
 
         for uuids in batched(asset_uuids, batch_size):
             print('collecting asset info')
             asset_info_collector.start_collecting_from_starting_uuids_using_pattern(
                 starting_uuids=uuids,
-                pattern=[('uuids', 'of', 'a'),
+                pattern=[('uuids', 'of', 'a'),  # TODO recreate
                          ('a', 'type_of', ['onderdeel#WVLichtmast', 'onderdeel#WVConsole']),
                          ('a', '-[r1]-', 'b'),
                          ('b', 'type_of', ['onderdeel#VerlichtingstoestelLED']),
@@ -124,7 +161,7 @@ class DataLegacySyncer:
             print('collecting asset info')
             asset_info_collector.start_collecting_from_starting_uuids_using_pattern(
                 starting_uuids=uuids,
-                pattern=[('uuids', 'of', 'a'),
+                pattern=[('uuids', 'of', 'a'),  # TODO recreate
                          ('a', 'type_of', ['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole',
                                            'lgc:installatie#VPBevestig']),
                          ('a', '<-[r1]-', 'b'),

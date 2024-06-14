@@ -66,10 +66,12 @@ class ReportCreator:
             df_summary.to_excel(writer, sheet_name='Overzicht', index=False)
 
         sheet_dict = {
-            'pov_legacy': [f'F2:V{len(df_report_pov_legacy) + 2}', f'X2:X{len(df_report_pov_legacy) + 2}', f'Z2:Z{len(df_report_pov_legacy) + 2}'],
-            'pov_toestel': [f'E2:S{len(df_report_pov_toestel)+2}'],
-            'pov_ac': [f'E2:K{len(df_report_pov_armatuur_controller) + 2}'],
-            'pov_drager': [f'E2:J{len(df_report_pov_drager) + 2}'],
+            'pov_legacy': [f'F2:V{max(len(df_report_pov_legacy) + 1, 2)}',
+                           f'X2:X{max(len(df_report_pov_legacy) + 1, 2)}',
+                           f'Z2:Z{max(len(df_report_pov_legacy) + 1, 2)}'],
+            'pov_toestel': [f'E2:S{max(len(df_report_pov_toestel)+1, 2)}'],
+            'pov_ac': [f'E2:K{max(len(df_report_pov_armatuur_controller) + 1, 2)}'],
+            'pov_drager': [f'E2:J{max(len(df_report_pov_drager) + 1, 2)}'],
             'Overzicht': [f'A2:C2'],
         }
 
