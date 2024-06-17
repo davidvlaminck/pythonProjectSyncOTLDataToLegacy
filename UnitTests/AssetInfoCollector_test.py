@@ -126,6 +126,52 @@ def test_start_collecting_from_starting_uuids_using_pattern_giving_uuids_of_c():
         'onderdeel#WVLichtmast': {'00000000-0000-0000-0000-000000000004'}}
 
 
+def test_start_collecting_from_starting_uuids_using_pattern_giving_uuids_of_d_multiple_types():
+    fake_requester = Mock(spec=AbstractRequester)
+    fake_requester.first_part_url = ''
+    AssetInfoCollector.create_requester_with_settings = Mock(return_value=fake_requester)
+    collector = AssetInfoCollector(em_infra_rest_client=Mock(), emson_importer=Mock())
+    collector.em_infra_importer = fake_em_infra_importer
+
+    collector.start_collecting_from_starting_uuids_using_pattern(
+        starting_uuids=['00000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000007'],
+        pattern=[('uuids', 'of', 'd'),
+                 ('a', 'type_of', ['onderdeel#VerlichtingstoestelLED']),
+                 ('a', '-[r1]-', 'b'),
+                 ('b', 'type_of', ['onderdeel#WVLichtmast']),
+                 ('b', 'type_of', ['onderdeel#WVConsole']),
+                 ('a', '-[r1]-', 'd'),
+                 ('d', 'type_of', ['onderdeel#Armatuurcontroller']),
+                 ('b', '-[r2]->', 'c'),
+                 ('c', 'type_of', ['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole']),
+                 ('r1', 'type_of', ['onderdeel#Bevestiging']),
+                 ('r2', 'type_of', ['onderdeel#HoortBij'])])
+
+    assert collector.collection.short_uri_dict == {
+        'lgc:installatie#VPConsole': {'00000000-0000-0000-0000-000000000009'},
+        'lgc:installatie#VPLMast': {'00000000-0000-0000-0000-000000000008'},
+        'onderdeel#Armatuurcontroller': {'00000000-0000-0000-0000-000000000006',
+                                         '00000000-0000-0000-0000-000000000007',
+                                         '00000000-0000-0000-0000-000000000026'},
+        'onderdeel#Bevestiging': {'000000000002-Bevestigin-000000000004',
+                                  '000000000002-Bevestigin-000000000026',
+                                  '000000000003-Bevestigin-000000000007',
+                                  '000000000005-Bevestigin-000000000003',
+                                  '000000000006-Bevestigin-000000000002',
+                                  '000000000022-Bevestigin-000000000004',
+                                  '000000000023-Bevestigin-000000000004',
+                                  '000000000024-Bevestigin-000000000004'},
+        'onderdeel#HoortBij': {'000000000004--HoortBij--000000000008',
+                               '000000000005--HoortBij--000000000009'},
+        'onderdeel#VerlichtingstoestelLED': {'00000000-0000-0000-0000-000000000002',
+                                             '00000000-0000-0000-0000-000000000003',
+                                             '00000000-0000-0000-0000-000000000022',
+                                             '00000000-0000-0000-0000-000000000023',
+                                             '00000000-0000-0000-0000-000000000024'},
+        'onderdeel#WVConsole': {'00000000-0000-0000-0000-000000000005'},
+        'onderdeel#WVLichtmast': {'00000000-0000-0000-0000-000000000004'}}
+
+
 def test_start_collecting_from_starting_uuids_using_pattern_giving_uuids_of_d():
     fake_requester = Mock(spec=AbstractRequester)
     fake_requester.first_part_url = ''

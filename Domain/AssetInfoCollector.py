@@ -91,7 +91,10 @@ class AssetInfoCollector:
 
                     new_matching_objects.append(relation_pattern[2])
 
-                    type_of_obj = next((t[2] for t in type_of_patterns if t[0] == relation_pattern[0]), None)
+                    type_of_obj_l = [t[2] for t in type_of_patterns if t[0] == relation_pattern[0]]
+                    type_of_obj = []
+                    for l in type_of_obj_l:
+                        type_of_obj.extend(l)
                     if type_of_obj is None:
                         raise ValueError(f'No type_of pattern found for object {relation_pattern[0]}')
 
