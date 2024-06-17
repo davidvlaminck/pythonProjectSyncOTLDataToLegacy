@@ -1228,11 +1228,15 @@ class ReportCreator:
             merk_en_type = f'{merk} {modelnaam}'
         return merk_en_type
 
-    def process_report(self, report_path: Path, em_infra_client):
+    def process_report(self, report_path: Path, em_infra_client, installatie_nummer: str = None):
         df = read_excel(report_path, 'pov_legacy')
 
         for index, row in df.iterrows():
             uuid = row['legacy_drager_uuid']
+            if installatie_nummer is not None:
+                naampad = row['legacy_drager_naampad']
+                if not naampad.startswith(installatie_nummer):
+                    continue
             installatie = em_infra_client.get_installatie_by_id(uuid)
             print(installatie)
 
