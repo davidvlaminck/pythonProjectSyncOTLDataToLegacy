@@ -22,4 +22,4 @@ if __name__ == '__main__':
 
     syncer = DataLegacySyncer(settings_path=settings_path, auth_type=AuthType.JWT, env=Environment.PRD,
                               state_db_path=state_db_path)
-    syncer.process_report(report_path=Path('Reports/WO682.xlsx'))
+    syncer.process_report(report_path=Path('Reports/WO0376.xlsx'), installatie_nummer='WO0376')
