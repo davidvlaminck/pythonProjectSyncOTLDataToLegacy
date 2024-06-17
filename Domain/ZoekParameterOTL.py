@@ -17,3 +17,10 @@ class ZoekParameterOTL:
             },
             'filters': self.filter_dict
         }
+
+    def to_dict_emson(self):
+        return {
+            "size": self.size,
+            "fromCursor": self.from_cursor,
+            'filters': self.filter_dict
+        }
