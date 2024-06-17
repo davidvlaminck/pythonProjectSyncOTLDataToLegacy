@@ -739,7 +739,8 @@ class ReportCreator:
             record_dict['legacy_drager_en_drager_identieke_geometrie'] = [0.0 < distance <= 0.01]
             record_dict['update_legacy_drager_geometrie'] = ''
             if distance > 5.0:
-                record_dict['update_legacy_drager_geometrie'] = [drager.attr_dict]
+                x, y = self.get_drager_x_y(drager=drager)
+                record_dict['update_legacy_drager_geometrie'] = [f'{x}|{y}']
 
             # toestand
             legacy_drager_toestand = lgc_drager.attr_dict.get('AIMToestand.toestand')
@@ -1249,23 +1250,19 @@ class ReportCreator:
                 em_infra_client.put_installatie_by_id(id=uuid, changed_installatie=installatie_update)
 
             if not row['legacy_drager_en_drager_binnen_5_meter']:
-                print('update geometrie TODO')
-                # update geometrie TODO
-                raise NotImplementedError('update geometrie TODO')
-            # locatie = syncer.em_infra_client.get_locatie_by_installatie_id(uuid)
-            # print(locatie)
-            # locatie_update = syncer.em_infra_client.create_locatie_kenmerk_update_from_locatie_kenmerk(locatie)
-            # locatie_update.locatie.coordinaten.x += 1
-            # locatie_update.locatie.coordinaten.y += 1
-            #
-            # syncer.em_infra_client.put_locatie_kenmerk_update_by_id(id=uuid,
-            #                                                         locatie_kenmerk_update=locatie_update)
+                print('update geometrie')
+                x, y = row['update_legacy_drager_geometrie'].split('|')
+
+                locatie = em_infra_client.get_locatie_by_installatie_id(uuid)
+                print(locatie)
+                locatie_update = em_infra_client.create_locatie_kenmerk_update_from_locatie_kenmerk(locatie)
+                locatie_update.locatie.coordinaten.x = x
+                locatie_update.locatie.coordinaten.y = y
+
+                em_infra_client.put_locatie_kenmerk_update_by_id(id=uuid, locatie_kenmerk_update=locatie_update)
 
             if not row['attributen_gelijk']:
                 print('update attributen')
-                eig = em_infra_client.get_eigenschapwaarden_by_id(uuid)
-                print(eig)
-
                 update_dict = json.loads(row['update_legacy_drager_attributen'])
 
                 update_eig_dto = em_infra_client.create_update_eigenschappen_from_update_dict(
