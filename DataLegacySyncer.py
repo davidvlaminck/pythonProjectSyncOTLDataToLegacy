@@ -147,28 +147,59 @@ class DataLegacySyncer:
             print('collecting asset info')
             asset_info_collector.start_collecting_from_starting_uuids_using_pattern(
                 starting_uuids=uuids,
-                pattern=[('uuids', 'of', 'a'),  # TODO recreate
+                pattern=[('uuids', 'of', 'a'),
                          ('a', 'type_of', ['onderdeel#WVLichtmast', 'onderdeel#WVConsole']),
                          ('a', '-[r1]-', 'b'),
+                         ('a', '-[r1]-', 'd'),
                          ('b', 'type_of', ['onderdeel#VerlichtingstoestelLED']),
+                         ('d', 'type_of', ['onderdeel#Montagekast']),
                          ('a', '-[r2]->', 'c'),
                          ('c', 'type_of', ['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole']),
                          ('r1', 'type_of', ['onderdeel#Bevestiging']),
-                         ('r2', 'type_of', ['onderdeel#HoortBij'])])
+                         ('r2', 'type_of', ['onderdeel#HoortBij']),
+                         ('b', '-[r1]-', 'e'),
+                         ('b', '-[r1]-', 'f'),
+                         ('e', 'type_of', ['onderdeel#LEDDriver']),
+                         ('f', 'type_of', ['onderdeel#Armatuurcontroller']),
+                         ('d', '-[r3]->', 'f'),
+                         ('f', '-[r3]->', 'e'),
+                         ('r3', 'type_of', ['onderdeel#VoedtAangestuurd']),
+                         ('f', '-[r4]-', 'g'),
+                         ('g', 'type_of', ['onderdeel#Segmentcontroller']),
+                         ('r4', 'type_of', ['onderdeel#Sturing']),
+                         ('g', '-[r2]->', 'h'),
+                         ('h', 'type_of', ['lgc:installatie#SegC'])])
             print('collected asset info starting from OTL drager')
 
         for uuids in batched(asset_uuids, batch_size):
             print('collecting asset info')
             asset_info_collector.start_collecting_from_starting_uuids_using_pattern(
                 starting_uuids=uuids,
-                pattern=[('uuids', 'of', 'a'),  # TODO recreate
+                pattern=[('uuids', 'of', 'a'),
                          ('a', 'type_of', ['lgc:installatie#VPLMast', 'lgc:installatie#VPConsole',
                                            'lgc:installatie#VPBevestig']),
                          ('a', '<-[r1]-', 'b'),
-                         ('b', 'type_of', ['onderdeel#WVLichtmast', 'onderdeel#WVConsole', 
-                                           'onderdeel#VerlichtingstoestelLED']),
-                         ('r1', 'type_of', ['onderdeel#HoortBij'])])
-            print('collected asset info starting from legacy drager')
+                         ('a', '<-[r1]-', 'e'),
+                         ('b', 'type_of', ['onderdeel#WVLichtmast', 'onderdeel#WVConsole']),
+                         ('e', 'type_of', ['onderdeel#VerlichtingstoestelLED']),
+                         ('r1', 'type_of', ['onderdeel#HoortBij']),
+                         ('c', 'type_of', ['lgc:installatie#SegC']),
+                         ('c', '<-[r1]-', 'd'),
+                         ('d', 'type_of', ['onderdeel#Segmentcontroller']),
+                         ('b', '-[r2]-', 'e'),
+                         ('b', '-[r2]-', 'f'),
+                         ('f', 'type_of', ['onderdeel#Montagekast']),
+                         ('r2', 'type_of', ['onderdeel#Bevestiging']),
+                         ('e', '-[r2]-', 'g'),
+                         ('e', '-[r2]-', 'h'),
+                         ('g', 'type_of', ['onderdeel#LEDDriver']),
+                         ('h', 'type_of', ['onderdeel#Armatuurcontroller']),
+                         ('f', '-[r3]->', 'h'),
+                         ('h', '-[r3]->', 'g'),
+                         ('r3', 'type_of', ['onderdeel#VoedtAangestuurd']),
+                         ('h', '-[r4]-', 'd'),
+                         ('r4', 'type_of', ['onderdeel#Sturing'])])
+            print('collected asset info starting from legacy assets')
 
     def _create_all_reports(self, asset_info_collector):
         report_creator = ReportCreator(collection=asset_info_collector.collection, db_manager=self.db_manager)
