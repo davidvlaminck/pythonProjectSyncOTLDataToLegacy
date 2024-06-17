@@ -1017,6 +1017,8 @@ class ReportCreator:
         if merk is not None and modelnaam is not None:
             merk = merk[79:].title()
             modelnaam = modelnaam[84:].title()
+            if modelnaam == 'Lumi-Street':
+                modelnaam = 'Lumistreet'
             merk_en_type = f'{merk} {modelnaam}'
 
         verlichtingstype = cls.get_verlichtingstype(toestellen)
