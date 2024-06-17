@@ -190,13 +190,25 @@ class EMInfraRestClient:
         for key, value in update_dict.items():
             eigenschap_uuid = cls.get_eigenschap_uuid(key=key, short_uri=short_uri)
             type_value = cls.get_type_from_value(value)
-            update_dto.data.append(
-                KenmerkEigenschapValueUpdateDTO(
-                    eigenschap=AssetRefDTO(uuid=eigenschap_uuid),
-                    kenmerkType=AssetRefDTO(uuid=kenmerk_uuid),
-                    typedValue=EigenschapTypedValueDTO(value=value, _type=type_value)
+            if type_value == 'list':
+                typed_value = [EigenschapTypedValueDTO(value=el, _type=cls.get_type_from_value(el))
+                               for el in value]
+                update_dto.data.append(
+                    KenmerkEigenschapValueUpdateDTO(
+                        eigenschap=AssetRefDTO(uuid=eigenschap_uuid),
+                        kenmerkType=AssetRefDTO(uuid=kenmerk_uuid),
+                        typedValue=EigenschapTypedValueDTO(value=typed_value, _type='list')
+                    )
                 )
-            )
+
+            else:    
+                update_dto.data.append(
+                    KenmerkEigenschapValueUpdateDTO(
+                        eigenschap=AssetRefDTO(uuid=eigenschap_uuid),
+                        kenmerkType=AssetRefDTO(uuid=kenmerk_uuid),
+                        typedValue=EigenschapTypedValueDTO(value=value, _type=type_value)
+                    )
+                )
 
         return update_dto
 
@@ -209,6 +221,7 @@ class EMInfraRestClient:
         'datum_installatie_LED': 'ed270590-4b11-421d-b921-36034323a9a9',
         'kleurtemperatuur_LED': 'e0d154ec-1184-41c3-897d-33064fff73f6',
         'LED_verlichting': 'e7ad2d9f-45f3-4e4a-be98-51d71e19c28b',
+        'lamp_type': '070149cc-55f4-491f-a034-21e832e3a9e5',
         'drager_buiten_gebruik': '568b3afb-9f5b-4840-ad0f-d7319a3239b7',  # vplmast
         'lichtpunthoogte_tov_rijweg': 'abbe9222-38ea-47f5-ac9b-cc48b77a7d86',
         'lumen_pakket_LED': '218f8269-21eb-445a-9c77-acb3faf6c3ba',
@@ -236,6 +249,7 @@ class EMInfraRestClient:
         'datum_installatie_LED': 'ed270590-4b11-421d-b921-36034323a9a9',
         'kleurtemperatuur_LED': 'e0d154ec-1184-41c3-897d-33064fff73f6',
         'LED_verlichting': 'e7ad2d9f-45f3-4e4a-be98-51d71e19c28b',
+        'lamp_type': '070149cc-55f4-491f-a034-21e832e3a9e5',
         'lichtpunthoogte_tov_rijweg': 'abbe9222-38ea-47f5-ac9b-cc48b77a7d86',
         'lumen_pakket_LED': '218f8269-21eb-445a-9c77-acb3faf6c3ba',
         'overhang_LED': '179d835d-b981-4a72-a93e-08f0c914b448',
@@ -255,6 +269,7 @@ class EMInfraRestClient:
         'datum_installatie_LED': 'ed270590-4b11-421d-b921-36034323a9a9',
         'kleurtemperatuur_LED': 'e0d154ec-1184-41c3-897d-33064fff73f6',
         'LED_verlichting': 'e7ad2d9f-45f3-4e4a-be98-51d71e19c28b',
+        'lamp_type': '070149cc-55f4-491f-a034-21e832e3a9e5',
         'lichtpunthoogte_tov_rijweg': 'abbe9222-38ea-47f5-ac9b-cc48b77a7d86',
         'lumen_pakket_LED': '218f8269-21eb-445a-9c77-acb3faf6c3ba',
         'overhang_LED': '179d835d-b981-4a72-a93e-08f0c914b448',
@@ -277,6 +292,8 @@ class EMInfraRestClient:
 
     @classmethod
     def get_type_from_value(cls, value: object) -> str:
+        if isinstance(value, list):
+            return 'list'
         if isinstance(value, str):
             try:
                 dt = datetime.strptime(value, '%Y-%m-%d')
