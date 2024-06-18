@@ -85,9 +85,15 @@ class ReportCreator:
         workbook = load_workbook(f'Reports/{excel_name}.xlsx')
         for sheet_name, ranges in sheet_dict.items():
             sheet = workbook[sheet_name]
-            for range in ranges:
-                sheet.conditional_formatting.add(range_string=range, cfRule=CellIsRule(
+            for range_str in ranges:
+                sheet.conditional_formatting.add(range_string=range_str, cfRule=CellIsRule(
                     operator='equal', formula=[0], stopIfTrue=True, fill=red_fill, font=red_font))
+
+        # move summary sheet to the front
+        sheets = workbook._sheets
+        index_summary = len(sheets) - 1
+        summary_sheet = sheets.pop(index_summary)
+        sheets.insert(0, summary_sheet)
 
         workbook.save(f'Reports/{excel_name}.xlsx')
 
