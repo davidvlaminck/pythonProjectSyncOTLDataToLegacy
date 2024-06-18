@@ -58,6 +58,9 @@ class ReportCreator:
             df = self.start_creating_asset_data_leddriver(installatie_nummer=installatie_nummer)
             df.to_excel(writer, sheet_name='asset_data_leddriver', index=False)
             print('done writing asset data leddriver')
+            df = self.start_creating_asset_data_montagekast(installatie_nummer=installatie_nummer)
+            df.to_excel(writer, sheet_name='asset_data_montagekast', index=False)
+            print('done writing asset data montagekast')
             summary_dict = {
                 'pov_toestel_alles_ok': [
                     len(df_report_pov_toestel['alles_ok']) == df_report_pov_toestel['alles_ok'].sum()],
@@ -88,6 +91,8 @@ class ReportCreator:
             for range_str in ranges:
                 sheet.conditional_formatting.add(range_string=range_str, cfRule=CellIsRule(
                     operator='equal', formula=[0], stopIfTrue=True, fill=red_fill, font=red_font))
+                sheet.conditional_formatting.add(range_string=range_str, cfRule=CellIsRule(
+                    operator='equal', formula=['FALSE'], stopIfTrue=True, fill=red_fill, font=red_font))
 
         # move summary sheet to the front
         sheets = workbook._sheets
@@ -96,6 +101,7 @@ class ReportCreator:
         sheets.insert(0, summary_sheet)
 
         workbook.save(f'Reports/{excel_name}.xlsx')
+        print(f'done writing file {excel_name}.xlsx')
 
     def start_creating_asset_data_leddriver(self, installatie_nummer: str = None) -> DataFrame:
         df = DataFrame()
@@ -154,6 +160,71 @@ class ReportCreator:
                 'merk': [merk],
                 'modelnaam': [modelnaam],
                 'protocol': [protocol],
+            }
+
+            df_current = DataFrame(current_toestel_dict)
+            df = concat([df, df_current])
+
+        return df.sort_values('naam')
+
+    def start_creating_asset_data_montagekast(self, installatie_nummer: str = None) -> DataFrame:
+        df = DataFrame()
+        all_column_names = [
+            'aanlevering_id', 'aanlevering_naam', 'uuid', 'naam', 'toestand', 'geometrie', 'datumOprichtingObject',
+            'opstelhoogte', 'verfraaid', 'afmeting', 'heeftVerlichting', 'kastmateriaal', 'ipKlasse']
+
+        for missing_column_name in all_column_names:
+            df[missing_column_name] = None
+
+        # get all kasten
+        kasten = self.collection.get_node_objects_by_types(['onderdeel#Montagekast'])
+
+        for kast in kasten:
+            if not kast.active:
+                continue
+
+            kast_naam = kast.attr_dict.get('AIMNaamObject.naam', '')
+            if installatie_nummer is not None and not kast_naam.startswith(installatie_nummer):
+                continue
+
+            deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=kast.uuid)
+            if len(deliveries) == 0:
+                aanlevering_naam = ''
+                aanlevering_id = ''
+            else:
+                aanlevering_naam = '|'.join([d.referentie for d in deliveries])
+                aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
+
+            kast_uuid = kast.uuid
+
+            toestand = kast.attr_dict.get('AIMToestand.toestand', None)
+            if toestand is not None:
+                toestand = toestand[67:]
+
+            verfraaid = kast.attr_dict.get('Buitenkast.verfraaid', None)
+            if verfraaid is not None:
+                verfraaid = verfraaid[76:]
+
+            kastmateriaal = kast.attr_dict.get('Kast.kastmateriaal', None)
+            if kastmateriaal is not None:
+                kastmateriaal = kastmateriaal[69:]
+
+            ipKlasse = kast.attr_dict.get('Buitenkast.ipKlasse', None)
+            if ipKlasse is not None:
+                ipKlasse = ipKlasse[81:]
+
+            current_toestel_dict = {
+                'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
+                'uuid': [kast_uuid], 'naam': [kast_naam],
+                'toestand': [toestand],
+                'datumOprichtingObject': [kast.attr_dict.get('AIMObject.datumOprichtingObject', None)],
+                'geometrie': [kast.attr_dict.get('loc:Locatie.geometrie', None)],
+                'opstelhoogte': [kast.attr_dict.get('Montagekast.opstelhoogte', None)],
+                'verfraaid': [verfraaid],
+                'afmeting': [kast.attr_dict.get('Kast.afmeting', None)],
+                'heeftVerlichting': [kast.attr_dict.get('Kast.heeftVerlichting', None)],
+                'kastmateriaal': [kastmateriaal],
+                'ipKlasse': [ipKlasse],
             }
 
             df_current = DataFrame(current_toestel_dict)
