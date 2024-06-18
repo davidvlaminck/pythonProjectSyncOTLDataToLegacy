@@ -106,7 +106,7 @@ class ReportCreator:
                 continue
 
             toestel_naam = ac.attr_dict.get('AIMNaamObject.naam', '')
-            if not toestel_naam.startswith(installatie_nummer):
+            if installatie_nummer is not None and not toestel_naam.startswith(installatie_nummer):
                 continue
 
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=ac.uuid)
@@ -160,7 +160,7 @@ class ReportCreator:
                 continue
 
             toestel_naam = segm_c.attr_dict.get('AIMNaamObject.naam', '')
-            if not toestel_naam.startswith(installatie_nummer):
+            if installatie_nummer is not None and not toestel_naam.startswith(installatie_nummer):
                 continue
 
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=segm_c.uuid)
@@ -219,7 +219,7 @@ class ReportCreator:
                 continue
 
             toestel_naam = toestel.attr_dict.get('AIMNaamObject.naam', '')
-            if not toestel_naam.startswith(installatie_nummer):
+            if installatie_nummer is not None and not toestel_naam.startswith(installatie_nummer):
                 continue
 
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=toestel.uuid)
@@ -328,7 +328,7 @@ class ReportCreator:
                 continue
 
             drager_naam = drager.attr_dict.get('AIMNaamObject.naam', '')
-            if not drager_naam.startswith(installatie_nummer):
+            if installatie_nummer is not None and not drager_naam.startswith(installatie_nummer):
                 continue
 
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=drager.uuid)
@@ -416,7 +416,7 @@ class ReportCreator:
                 continue
 
             drager_naam = drager.attr_dict.get('AIMNaamObject.naam', '')
-            if not drager_naam.startswith(installatie_nummer):
+            if installatie_nummer is not None and not drager_naam.startswith(installatie_nummer):
                 continue
 
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=drager.uuid)
@@ -497,7 +497,7 @@ class ReportCreator:
                 continue
 
             ac_naam = ac.attr_dict.get('AIMNaamObject.naam', '')
-            if not ac_naam.startswith(installatie_nummer):
+            if installatie_nummer is not None and not ac_naam.startswith(installatie_nummer):
                 continue
 
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=ac.uuid)
@@ -580,7 +580,7 @@ class ReportCreator:
                 continue
 
             toestel_naam = toestel.attr_dict.get('AIMNaamObject.naam', '')
-            if not toestel_naam.startswith(installatie_nummer):
+            if installatie_nummer is not None and not toestel_naam.startswith(installatie_nummer):
                 continue
 
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=toestel.uuid)
@@ -710,7 +710,7 @@ class ReportCreator:
                 continue
 
             legacy_drager_naampad = drager.attr_dict.get('NaampadObject.naampad', '')
-            if not legacy_drager_naampad.startswith(installatie_nummer):
+            if installatie_nummer is not None and not legacy_drager_naampad.startswith(installatie_nummer):
                 continue
 
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=drager.uuid)
