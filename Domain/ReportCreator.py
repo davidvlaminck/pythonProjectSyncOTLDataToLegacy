@@ -55,7 +55,9 @@ class ReportCreator:
             df = self.start_creating_asset_data_segment_controller(installatie_nummer=installatie_nummer)
             df.to_excel(writer, sheet_name='asset_data_segm_c', index=False)
             print('done writing asset data segment controller')
-
+            df = self.start_creating_asset_data_leddriver(installatie_nummer=installatie_nummer)
+            df.to_excel(writer, sheet_name='asset_data_leddriver', index=False)
+            print('done writing asset data leddriver')
             summary_dict = {
                 'pov_toestel_alles_ok': [
                     len(df_report_pov_toestel['alles_ok']) == df_report_pov_toestel['alles_ok'].sum()],
@@ -88,6 +90,70 @@ class ReportCreator:
                     operator='equal', formula=[0], stopIfTrue=True, fill=red_fill, font=red_font))
 
         workbook.save(f'Reports/{excel_name}.xlsx')
+
+    def start_creating_asset_data_leddriver(self, installatie_nummer: str = None) -> DataFrame:
+        df = DataFrame()
+        all_column_names = [
+            'aanlevering_id', 'aanlevering_naam', 'uuid', 'naam', 'toestand', 'geometrie', 'datumOprichtingObject',
+            'maximaalVermogen', 'maximaleAanstuurstroom', 'merk', 'modelnaam', 'protocol']
+
+        for missing_column_name in all_column_names:
+            df[missing_column_name] = None
+
+        # get all ac's
+        drivers = self.collection.get_node_objects_by_types(['onderdeel#LEDDriver'])
+
+        for driver in drivers:
+            if not driver.active:
+                continue
+
+            driver_naam = driver.attr_dict.get('AIMNaamObject.naam', '')
+            if installatie_nummer is not None and not driver_naam.startswith(installatie_nummer):
+                continue
+
+            deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=driver.uuid)
+            if len(deliveries) == 0:
+                aanlevering_naam = ''
+                aanlevering_id = ''
+            else:
+                aanlevering_naam = '|'.join([d.referentie for d in deliveries])
+                aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
+
+            driver_uuid = driver.uuid
+
+            toestand = driver.attr_dict.get('AIMToestand.toestand', None)
+            if toestand is not None:
+                toestand = toestand[67:]
+
+            merk = driver.attr_dict.get('LEDDriver.merk', None)
+            if merk is not None:
+                merk = merk[69:]
+
+            modelnaam = driver.attr_dict.get('LEDDriver.modelnaam', None)
+            if modelnaam is not None:
+                modelnaam = modelnaam[74:]
+
+            protocol = driver.attr_dict.get('LEDDriver.protocol', None)
+            if protocol is not None:
+                protocol = protocol[73:]
+
+            current_toestel_dict = {
+                'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
+                'uuid': [driver_uuid], 'naam': [driver_naam],
+                'toestand': [toestand],
+                'datumOprichtingObject': [driver.attr_dict.get('AIMObject.datumOprichtingObject', None)],
+                'geometrie': [driver.attr_dict.get('loc:Locatie.geometrie', None)],
+                'maximaalVermogen': [driver.attr_dict.get('LEDDriver.maximaalVermogen', None)],
+                'maximaleAanstuurstroom': [driver.attr_dict.get('LEDDriver.maximaleAanstuurstroom', None)],
+                'merk': [merk],
+                'modelnaam': [modelnaam],
+                'protocol': [protocol],
+            }
+
+            df_current = DataFrame(current_toestel_dict)
+            df = concat([df, df_current])
+
+        return df.sort_values('naam')
 
     def start_creating_asset_data_ac(self, installatie_nummer: str = None) -> DataFrame:
         df = DataFrame()
@@ -177,15 +243,27 @@ class ReportCreator:
             if toestand is not None:
                 toestand = toestand[67:]
 
+            merknaam = segm_c.attr_dict.get('Segmentcontroller.merknaam', None)
+            if merknaam is not None:
+                merknaam = merknaam[77:]
+
+            modelnaam = segm_c.attr_dict.get('Segmentcontroller.modelnaam', None)
+            if modelnaam is not None:
+                modelnaam = modelnaam[83:]
+
+            beveiligingssleutel = segm_c.attr_dict.get('Segmentcontroller.beveiligingssleutel', None)
+            if beveiligingssleutel is not None:
+                beveiligingssleutel = beveiligingssleutel[86:]
+
             current_segm_c_dict = {
                 'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
                 'uuid': [segm_c_uuid], 'naam': [toestel_naam],
                 'toestand': [toestand],
                 'datumOprichtingObject': [segm_c.attr_dict.get('AIMObject.datumOprichtingObject', None)],
                 'geometrie': [segm_c.attr_dict.get('loc:Locatie.geometrie', None)],
-                'beveiligingssleutel': [segm_c.attr_dict.get('Segmentcontroller.beveiligingssleutel', None)],
-                'merknaam': [segm_c.attr_dict.get('Segmentcontroller.merknaam', None)],
-                'modelnaam': [segm_c.attr_dict.get('Segmentcontroller.modelnaam', None)],
+                'beveiligingssleutel': [beveiligingssleutel],
+                'merknaam': [merknaam],
+                'modelnaam': [modelnaam],
                 'batchnummer': [segm_c.attr_dict.get('Controller.batchnummer', None)],
                 'dNSNaam': [segm_c.attr_dict.get('Controller.dNSNaam', None)],
                 'firmwareversie': [segm_c.attr_dict.get('Controller.firmwareversie', None)],
