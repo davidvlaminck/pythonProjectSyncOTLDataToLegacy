@@ -51,7 +51,10 @@ class ReportCreator:
             print('done writing asset data toestel')
             df = self.start_creating_asset_data_ac(installatie_nummer=installatie_nummer)
             df.to_excel(writer, sheet_name='asset_data_ac', index=False)
-            print('done writing asset data ac')
+            print('done writing asset data armatuur controller')
+            df = self.start_creating_asset_data_segment_controller(installatie_nummer=installatie_nummer)
+            df.to_excel(writer, sheet_name='asset_data_segm_c', index=False)
+            print('done writing asset data segment controller')
 
             summary_dict = {
                 'pov_toestel_alles_ok': [
@@ -135,6 +138,62 @@ class ReportCreator:
             }
 
             df_current = DataFrame(current_toestel_dict)
+            df = concat([df, df_current])
+
+        return df.sort_values('naam')
+
+    def start_creating_asset_data_segment_controller(self, installatie_nummer: str = None) -> DataFrame:
+        df = DataFrame()
+        all_column_names = [
+            'aanlevering_id', 'aanlevering_naam', 'uuid', 'naam', 'toestand', 'geometrie', 'datumOprichtingObject',
+            'beveiligingssleutel', 'merknaam', 'modelnaam', 'batchnummer', 'dNSNaam', 'firmwareversie',
+            'iPAdres', 'serienummer']
+
+        for missing_column_name in all_column_names:
+            df[missing_column_name] = None
+
+        # get all ac's
+        segm_cs = self.collection.get_node_objects_by_types(['onderdeel#Segmentcontroller'])
+
+        for segm_c in segm_cs:
+            if not segm_c.active:
+                continue
+
+            toestel_naam = segm_c.attr_dict.get('AIMNaamObject.naam', '')
+            if not toestel_naam.startswith(installatie_nummer):
+                continue
+
+            deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=ac.uuid)
+            if len(deliveries) == 0:
+                aanlevering_naam = ''
+                aanlevering_id = ''
+            else:
+                aanlevering_naam = '|'.join([d.referentie for d in deliveries])
+                aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
+
+            segm_c_uuid = segm_c.uuid
+
+            toestand = segm_c.attr_dict.get('AIMToestand.toestand', None)
+            if toestand is not None:
+                toestand = toestand[67:]
+
+            current_segm_c_dict = {
+                'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
+                'uuid': [segm_c_uuid], 'naam': [toestel_naam],
+                'toestand': [toestand],
+                'datumOprichtingObject': [segm_c.attr_dict.get('AIMObject.datumOprichtingObject', None)],
+                'geometrie': [segm_c.attr_dict.get('loc:Locatie.geometrie', None)],
+                'beveiligingssleutel': [segm_c.attr_dict.get('Segmentcontroller.beveiligingssleutel', None)],
+                'merknaam': [segm_c.attr_dict.get('Segmentcontroller.merknaam', None)],
+                'modelnaam': [segm_c.attr_dict.get('Segmentcontroller.modelnaam', None)],
+                'batchnummer': [segm_c.attr_dict.get('Controller.batchnummer', None)],
+                'dNSNaam': [segm_c.attr_dict.get('Controller.dNSNaam', None)],
+                'firmwareversie': [segm_c.attr_dict.get('Controller.firmwareversie', None)],
+                'iPAdres': [segm_c.attr_dict.get('Controller.iPAdres', None)],
+                'serienummer': [segm_c.attr_dict.get('Controller.serienummer', None)]
+            }
+
+            df_current = DataFrame(current_segm_c_dict)
             df = concat([df, df_current])
 
         return df.sort_values('naam')
