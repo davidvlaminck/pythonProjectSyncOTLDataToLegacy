@@ -163,7 +163,7 @@ class ReportCreator:
             if not toestel_naam.startswith(installatie_nummer):
                 continue
 
-            deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=ac.uuid)
+            deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=segm_c.uuid)
             if len(deliveries) == 0:
                 aanlevering_naam = ''
                 aanlevering_id = ''
