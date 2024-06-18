@@ -21,4 +21,4 @@ state_db_path = Path('/home/davidlinux/Documents/AWV/resources/SyncOTLDataToLega
 if __name__ == '__main__':
     syncer = DataLegacySyncer(settings_path=settings_path, auth_type=AuthType.JWT, env=Environment.PRD,
                               state_db_path=state_db_path)
-    syncer.collect_and_create_specific_reports(['DA-2024-14615'])
+    syncer.collect_and_create_specific_reports(['DA-2024-15552'], installatie_nummer='WW0457')

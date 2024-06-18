@@ -40,14 +40,15 @@ class DataLegacySyncer:
 
         delivery_finder.find_deliveries_to_sync()
 
-    def collect_and_create_specific_reports(self, delivery_references: list[str], combine_single_report: bool = False):
+    def collect_and_create_specific_reports(self, delivery_references: list[str], combine_single_report: bool = False,
+                                            installatie_nummer: str = None):
         if combine_single_report:
             asset_info_collector = AssetInfoCollector(em_infra_rest_client=self.em_infra_client,
                                                       emson_importer=self.emson_importer)
             asset_uuids = list(self.db_manager.get_asset_uuids_from_specific_deliveries(
                 delivery_references=delivery_references))
             self._collect_info_given_asset_uuids(asset_info_collector=asset_info_collector, asset_uuids=asset_uuids)
-            self._create_all_reports(asset_info_collector=asset_info_collector)
+            self._create_all_reports(asset_info_collector=asset_info_collector, installatie_nummer=installatie_nummer)
         else:
             for delivery_reference in delivery_references:
                 asset_info_collector = AssetInfoCollector(em_infra_rest_client=self.em_infra_client,
@@ -55,7 +56,8 @@ class DataLegacySyncer:
                 asset_uuids = list(self.db_manager.get_asset_uuids_from_specific_deliveries(
                     delivery_references=[delivery_reference]))
                 self._collect_info_given_asset_uuids(asset_info_collector=asset_info_collector, asset_uuids=asset_uuids)
-                self._create_all_reports(asset_info_collector=asset_info_collector)
+                self._create_all_reports(asset_info_collector=asset_info_collector,
+                                         installatie_nummer=installatie_nummer)
 
     def collect_and_create_reports(self):
         asset_info_collector = AssetInfoCollector(em_infra_rest_client=self.em_infra_client,
@@ -201,9 +203,9 @@ class DataLegacySyncer:
                          ('r4', 'type_of', ['onderdeel#Sturing'])])
             print('collected asset info starting from legacy assets')
 
-    def _create_all_reports(self, asset_info_collector):
+    def _create_all_reports(self, asset_info_collector, installatie_nummer: str = None):
         report_creator = ReportCreator(collection=asset_info_collector.collection, db_manager=self.db_manager)
-        report_creator.create_all_reports()
+        report_creator.create_all_reports(installatie_nummer=installatie_nummer)
 
     def sync_specific_deliveries(self, context_strings: [str]):
         delivery_finder = DeliveryFinder(em_infra_client=self.em_infra_client, davie_client=self.davie_client,

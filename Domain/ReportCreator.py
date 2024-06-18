@@ -21,8 +21,8 @@ class ReportCreator:
         self.collection = collection
         self.db_manager = db_manager
 
-    def create_all_reports(self):
-        df_report_pov_legacy = self.start_creating_report_pov_legacy()
+    def create_all_reports(self, installatie_nummer: str = None):
+        df_report_pov_legacy = self.start_creating_report_pov_legacy(installatie_nummer=installatie_nummer)
         try:
             excel_name = df_report_pov_legacy['legacy_drager_naampad'].iloc[0]
         except IndexError:
@@ -31,25 +31,25 @@ class ReportCreator:
         if excel_name is not None and '/' in excel_name:
             excel_name = excel_name.split('/')[0]
         with ExcelWriter(path=f'Reports/{excel_name}.xlsx') as writer:
-            df_report_pov_legacy = self.start_creating_report_pov_legacy()
             df_report_pov_legacy.to_excel(writer, sheet_name='pov_legacy', index=False)
             print('done writing report pov legacy')
-            df_report_pov_toestel = self.start_creating_report_pov_toestel()
+            df_report_pov_toestel = self.start_creating_report_pov_toestel(installatie_nummer=installatie_nummer)
             df_report_pov_toestel.to_excel(writer, sheet_name='pov_toestel', index=False)
             print('done writing report pov toestel')
-            df_report_pov_armatuur_controller = self.start_creating_report_pov_armatuur_controller()
+            df_report_pov_armatuur_controller = self.start_creating_report_pov_armatuur_controller(
+                installatie_nummer=installatie_nummer)
             df_report_pov_armatuur_controller.to_excel(writer, sheet_name='pov_ac', index=False)
             print('done writing report pov ac')
-            df_report_pov_drager = self.start_creating_report_pov_drager()
+            df_report_pov_drager = self.start_creating_report_pov_drager(installatie_nummer=installatie_nummer)
             df_report_pov_drager.to_excel(writer, sheet_name='pov_drager', index=False)
             print('done writing report pov drager')
-            df = self.start_creating_asset_data_drager()
+            df = self.start_creating_asset_data_drager(installatie_nummer=installatie_nummer)
             df.to_excel(writer, sheet_name='asset_data_otl_drager', index=False)
             print('done writing asset data drager')
-            df = self.start_creating_asset_data_toestel()
+            df = self.start_creating_asset_data_toestel(installatie_nummer=installatie_nummer)
             df.to_excel(writer, sheet_name='asset_data_toestel', index=False)
             print('done writing asset data toestel')
-            df = self.start_creating_asset_data_ac()
+            df = self.start_creating_asset_data_ac(installatie_nummer=installatie_nummer)
             df.to_excel(writer, sheet_name='asset_data_ac', index=False)
             print('done writing asset data ac')
 
@@ -86,7 +86,7 @@ class ReportCreator:
 
         workbook.save(f'Reports/{excel_name}.xlsx')
 
-    def start_creating_asset_data_ac(self) -> DataFrame:
+    def start_creating_asset_data_ac(self, installatie_nummer: str = None) -> DataFrame:
         df = DataFrame()
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'uuid', 'naam', 'toestand', 'geometrie', 'datumOprichtingObject',
@@ -101,6 +101,11 @@ class ReportCreator:
         for ac in acs:
             if not ac.active:
                 continue
+
+            toestel_naam = ac.attr_dict.get('AIMNaamObject.naam', '')
+            if not toestel_naam.startswith(installatie_nummer):
+                continue
+
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=ac.uuid)
             if len(deliveries) == 0:
                 aanlevering_naam = ''
@@ -110,7 +115,7 @@ class ReportCreator:
                 aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
 
             toestel_uuid = ac.uuid
-            toestel_naam = ac.attr_dict.get('AIMNaamObject.naam', '')
+
             toestand = ac.attr_dict.get('AIMToestand.toestand', None)
             if toestand is not None:
                 toestand = toestand[67:]
@@ -134,7 +139,7 @@ class ReportCreator:
 
         return df.sort_values('naam')
 
-    def start_creating_asset_data_toestel(self) -> DataFrame:
+    def start_creating_asset_data_toestel(self, installatie_nummer: str = None) -> DataFrame:
         df = DataFrame()
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'uuid', 'naam', 'toestand', 'geometrie', 'datumOprichtingObject',
@@ -153,6 +158,11 @@ class ReportCreator:
         for toestel in toestellen:
             if not toestel.active:
                 continue
+
+            toestel_naam = toestel.attr_dict.get('AIMNaamObject.naam', '')
+            if not toestel_naam.startswith(installatie_nummer):
+                continue
+
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=toestel.uuid)
             if len(deliveries) == 0:
                 aanlevering_naam = ''
@@ -162,7 +172,6 @@ class ReportCreator:
                 aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
 
             toestel_uuid = toestel.uuid
-            toestel_naam = toestel.attr_dict.get('AIMNaamObject.naam', '')
             toestand = toestel.attr_dict.get('AIMToestand.toestand', None)
             if toestand is not None:
                 toestand = toestand[67:]
@@ -241,7 +250,7 @@ class ReportCreator:
 
         return df.sort_values('naam')
 
-    def start_creating_asset_data_drager(self) -> DataFrame:
+    def start_creating_asset_data_drager(self, installatie_nummer: str = None) -> DataFrame:
         df = DataFrame()
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'uuid', 'naam', 'toestand', 'geometrie', 'datumOprichtingObject',
@@ -258,6 +267,11 @@ class ReportCreator:
         for drager in dragers:
             if not drager.active:
                 continue
+
+            drager_naam = drager.attr_dict.get('AIMNaamObject.naam', '')
+            if not drager_naam.startswith(installatie_nummer):
+                continue
+
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=drager.uuid)
             if len(deliveries) == 0:
                 aanlevering_naam = ''
@@ -267,7 +281,7 @@ class ReportCreator:
                 aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
 
             drager_uuid = drager.uuid
-            drager_naam = drager.attr_dict.get('AIMNaamObject.naam', '')
+
             toestand = drager.attr_dict.get('AIMToestand.toestand', None)
             if toestand is not None:
                 toestand = toestand[67:]
@@ -325,7 +339,7 @@ class ReportCreator:
 
         return df.sort_values('naam')
 
-    def start_creating_report_pov_drager(self) -> DataFrame:
+    def start_creating_report_pov_drager(self, installatie_nummer: str = None) -> DataFrame:
         df = DataFrame()
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'drager_uuid', 'drager_naam', 'alles_ok',
@@ -341,6 +355,11 @@ class ReportCreator:
         for drager in dragers:
             if not drager.active:
                 continue
+
+            drager_naam = drager.attr_dict.get('AIMNaamObject.naam', '')
+            if not drager_naam.startswith(installatie_nummer):
+                continue
+
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=drager.uuid)
             if len(deliveries) == 0:
                 aanlevering_naam = ''
@@ -350,7 +369,7 @@ class ReportCreator:
                 aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
 
             drager_uuid = drager.uuid
-            drager_naam = drager.attr_dict.get('AIMNaamObject.naam', '')
+
 
             current_ac_drager_dict = {
                 'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
@@ -401,7 +420,7 @@ class ReportCreator:
         record_dict['alles_ok'] = [alles_ok]
         return record_dict
 
-    def start_creating_report_pov_armatuur_controller(self) -> DataFrame:
+    def start_creating_report_pov_armatuur_controller(self, installatie_nummer: str = None) -> DataFrame:
         df = DataFrame()
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'ac_uuid', 'ac_naam', 'alles_ok',
@@ -417,6 +436,11 @@ class ReportCreator:
         for ac in armatuur_controllers:
             if not ac.active:
                 continue
+
+            ac_naam = ac.attr_dict.get('AIMNaamObject.naam', '')
+            if not ac_naam.startswith(installatie_nummer):
+                continue
+
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=ac.uuid)
             if len(deliveries) == 0:
                 aanlevering_naam = ''
@@ -476,7 +500,7 @@ class ReportCreator:
         record_dict['alles_ok'] = [alles_ok]
         return record_dict
 
-    def start_creating_report_pov_toestel(self) -> DataFrame:
+    def start_creating_report_pov_toestel(self, installatie_nummer: str = None) -> DataFrame:
         df = DataFrame()
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'toestel_uuid', 'toestel_naam', 'alles_ok',
@@ -495,6 +519,11 @@ class ReportCreator:
         for toestel in toestellen:
             if not toestel.active:
                 continue
+
+            toestel_naam = toestel.attr_dict.get('AIMNaamObject.naam', '')
+            if not toestel_naam.startswith(installatie_nummer):
+                continue
+
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=toestel.uuid)
             if len(deliveries) == 0:
                 aanlevering_naam = ''
@@ -504,7 +533,7 @@ class ReportCreator:
                 aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
 
             toestel_uuid = toestel.uuid
-            toestel_naam = toestel.attr_dict.get('AIMNaamObject.naam', '')
+
 
             current_toestel_drager_dict = {
                 'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
@@ -586,7 +615,7 @@ class ReportCreator:
         record_dict['alles_ok'] = [alles_ok]
         return record_dict
 
-    def start_creating_report_pov_legacy(self) -> DataFrame:
+    def start_creating_report_pov_legacy(self, installatie_nummer: str = None) -> DataFrame:
         df = DataFrame()
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'legacy_drager_uuid', 'legacy_drager_type',
@@ -620,6 +649,11 @@ class ReportCreator:
         for drager in dragers:
             if not drager.active:
                 continue
+
+            legacy_drager_naampad = drager.attr_dict.get('NaampadObject.naampad', '')
+            if not legacy_drager_naampad.startswith(installatie_nummer):
+                continue
+
             deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=drager.uuid)
             if len(deliveries) == 0:
                 aanlevering_naam = ''
@@ -628,7 +662,6 @@ class ReportCreator:
                 aanlevering_naam = '|'.join([d.referentie for d in deliveries])
                 aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
             legacy_drager_uuid = drager.uuid
-            legacy_drager_naampad = drager.attr_dict.get('NaampadObject.naampad', '')
             legacy_drager_type = drager.short_type.split('#')[-1]
             current_lgc_drager_dict = {
                 'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
