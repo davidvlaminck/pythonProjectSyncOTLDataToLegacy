@@ -638,8 +638,8 @@ class ReportCreator:
         df = DataFrame()
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'ac_uuid', 'ac_naam', 'alles_ok',
-            'ac_naam_conform_conventie', 'relatie_naar_toestel', 'serienummer', 'serienummer_ingevuld',
-            'serienummer_conform', 'serienummer_uniek']
+            'ac_naam_conform_conventie', 'relatie_naar_toestel', 'relatie_naar_segmentcontroller', 'serienummer',
+            'serienummer_ingevuld', 'serienummer_conform', 'serienummer_uniek']
 
         for missing_column_name in all_column_names:
             df[missing_column_name] = None
@@ -695,8 +695,14 @@ class ReportCreator:
         toestellen = list(self.collection.traverse_graph(
             start_uuid=ac_uuid, relation_types=['Bevestiging'], allowed_directions=[Direction.NONE],
             return_type='info_object', filtered_node_types=['onderdeel#VerlichtingstoestelLED']))
-        record_dict['relatie_naar_toestel'] = [(len(toestellen) > 0)]
+        record_dict['relatie_naar_toestel'] = [(len(toestellen) == 1)]
         alles_ok = record_dict['relatie_naar_toestel'][0] and alles_ok
+
+        segm_controllers = list(self.collection.traverse_graph(
+            start_uuid=ac_uuid, relation_types=['Sturing'], allowed_directions=[Direction.NONE],
+            return_type='info_object', filtered_node_types=['onderdeel#Segmentcontroller']))
+        record_dict['relatie_naar_segmentcontroller'] = [(len(segm_controllers) == 1)]
+        alles_ok = record_dict['relatie_naar_segmentcontroller'][0] and alles_ok
 
         serienummer = armatuur_controller.attr_dict.get('Armatuurcontroller.serienummer', None)
         record_dict['serienummer'] = [serienummer]
