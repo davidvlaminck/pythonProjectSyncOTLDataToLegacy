@@ -646,7 +646,7 @@ class ReportCreator:
         df = DataFrame()
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'segc_uuid', 'segc_naam', 'alles_ok',
-            'segc_naam_conform_conventie', 'relatie_naar_armatuur_controller', 'relatie_naar_legacy_segmentcontroller',
+            'segmc_naam_conform_conventie', 'relatie_naar_armatuur_controller', 'relatie_naar_legacy_segmentcontroller',
             'serienummer', 'serienummer_ingevuld', 'serienummer_conform']
         for missing_column_name in all_column_names:
             df[missing_column_name] = None
@@ -676,10 +676,22 @@ class ReportCreator:
                 'segc_uuid': [segmc_uuid], 'segc_naam': [segmc_naam],
             }
 
-            df_current = DataFrame(current_segmc_dict)
+            record_dict = self.get_report_record_for_segment_controller(segment_controller=segmc,
+                                                                             record_dict=current_segmc_dict)
+            df_current = DataFrame(record_dict)
             df = concat([df, df_current])
 
         return df.sort_values('segc_naam')
+
+    def get_report_record_for_one_armatuur_controller(self, armatuur_controller: NodeInfoObject,
+                                                      record_dict: dict) -> dict:
+        ac_uuid = armatuur_controller.uuid
+        ac_naam = armatuur_controller.attr_dict.get('AIMNaamObject.naam', '')
+
+        record_dict['ac_naam_conform_conventie'] = [self.is_conform_name_convention_armatuur_controller_no_reference(
+            ac_naam=ac_naam)]
+        alles_ok = record_dict['ac_naam_conform_conventie'][0]
+
 
     def start_creating_report_pov_armatuur_controller(self, installatie_nummer: str = None) -> DataFrame:
         df = DataFrame()
@@ -1510,7 +1522,8 @@ class ReportCreator:
             return False
         return True
 
-    def is_conform_name_convention_armatuur_controller_no_reference(self, ac_naam: str) -> bool:
+    @staticmethod
+    def is_conform_name_convention_armatuur_controller_no_reference(ac_naam: str) -> bool:
         if '.' not in ac_naam:
             return False
         parts = ac_naam.split('.')
@@ -1521,6 +1534,25 @@ class ReportCreator:
         if parts[2][0:2] != 'WV':
             return False
         if parts[3][0:2] != 'AC':
+            return False
+        if not parts[3][2:1].isdigit():
+            return False
+        return True
+
+    @staticmethod
+    def is_conform_name_convention_segment_controller_no_reference(segmc_naam: str) -> bool:
+        if '.' not in segmc_naam:
+            return False
+        parts = segmc_naam.split('.')
+        if len(parts) != 4:
+            return False
+        if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
+            return False
+        if parts[2][0:2] != 'WV':
+            return False
+        if parts[3][0:2] != 'SC':
+            return False
+        if not parts[3][2:1].isdigit():
             return False
         return True
 
@@ -1580,3 +1612,39 @@ class ReportCreator:
                 update_eig_dto = em_infra_client.create_update_eigenschappen_from_update_dict(
                     update_dict=update_dict, short_uri='lgc:installatie#VPLMast')
                 em_infra_client.patch_eigenschapwaarden(uuid, update_eig_dto)
+
+    def get_report_record_for_segment_controller(self, segment_controller: NodeInfoObject, record_dict: dict) -> dict:
+        segmc_uuid = segment_controller.uuid
+        segmc_naam = segment_controller.attr_dict.get('AIMNaamObject.naam', '')
+
+        record_dict['segmc_naam_conform_conventie'] = [self.is_conform_name_convention_segment_controller_no_reference(
+            segmc_naam=segmc_naam)]
+        alles_ok = record_dict['segmc_naam_conform_conventie'][0]
+
+        legacy_segm = list(self.collection.traverse_graph(
+            start_uuid=segmc_uuid, relation_types=['HoortBij'], allowed_directions=[Direction.WITH],
+            return_type='info_object', filtered_node_types=['lgc:installatie#SegC']))
+        record_dict['relatie_naar_legacy_segmentcontroller'] = [(len(legacy_segm) == 1)]
+        alles_ok = record_dict['relatie_naar_legacy_segmentcontroller'][0] and alles_ok
+
+        arm_controllers = list(self.collection.traverse_graph(
+            start_uuid=segmc_uuid, relation_types=['Sturing'], allowed_directions=[Direction.NONE],
+            return_type='info_object', filtered_node_types=['onderdeel#Armatuurcontroller']))
+        record_dict['relatie_naar_armatuur_controller'] = [(len(arm_controllers) > 1)]
+        alles_ok = record_dict['relatie_naar_armatuur_controller'][0] and alles_ok
+
+        serienummer = segment_controller.attr_dict.get('Controller.serienummer', None)
+        record_dict['serienummer'] = [serienummer]
+        record_dict['serienummer_ingevuld'] = [(serienummer is not None)]
+        alles_ok = record_dict['serienummer_ingevuld'][0] and alles_ok
+
+        # SLC-G3-2022-999 example for pattern
+        if serienummer is None:
+            serienummer_conform = False
+        else:
+            serienummer_conform = re.match(r'APS-G3-20[12]\d-[\d]{3}', serienummer) is not None
+        record_dict['serienummer_conform'] = [serienummer_conform]
+        alles_ok = serienummer_conform and alles_ok
+
+        record_dict['alles_ok'] = [alles_ok]
+        return record_dict
