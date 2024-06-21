@@ -43,6 +43,10 @@ class ReportCreator:
             df_report_pov_drager = self.start_creating_report_pov_drager(installatie_nummer=installatie_nummer)
             df_report_pov_drager.to_excel(writer, sheet_name='pov_drager', index=False)
             print('done writing report pov drager')
+            df_report_pov_segment_controller = self.start_creating_report_pov_segment_controller(installatie_nummer=installatie_nummer)
+            df_report_pov_segment_controller.to_excel(writer, sheet_name='pov_segm_c', index=False)
+            print('done writing report pov segment controller')
+
             df = self.start_creating_asset_data_drager(installatie_nummer=installatie_nummer)
             df.to_excel(writer, sheet_name='asset_data_otl_drager', index=False)
             print('done writing asset data drager')
@@ -69,6 +73,9 @@ class ReportCreator:
                 'pov_armatuur_controller_alles_ok': [
                     len(df_report_pov_armatuur_controller['alles_ok']) == df_report_pov_armatuur_controller[
                         'alles_ok'].sum()],
+                'pov_segment_controller_alles_ok': [
+                    len(df_report_pov_segment_controller['alles_ok']) == df_report_pov_segment_controller[
+                        'alles_ok'].sum()],
             }
             df_summary = DataFrame(summary_dict)
             df_summary.to_excel(writer, sheet_name='Overzicht', index=False)
@@ -79,8 +86,9 @@ class ReportCreator:
                            f'Z2:Z{max(len(df_report_pov_legacy) + 1, 2)}'],
             'pov_toestel': [f'E2:S{max(len(df_report_pov_toestel)+1, 2)}'],
             'pov_ac': [f'E2:K{max(len(df_report_pov_armatuur_controller) + 1, 2)}'],
+            'pov_segm_c': [f'E2:K{max(len(df_report_pov_segment_controller) + 1, 2)}'],
             'pov_drager': [f'E2:J{max(len(df_report_pov_drager) + 1, 2)}'],
-            'Overzicht': [f'A2:C2'],
+            'Overzicht': [f'A2:D2'],
         }
 
         red_fill = PatternFill(start_color='F4CCCC', end_color='F4CCCC', fill_type='solid')
@@ -634,12 +642,52 @@ class ReportCreator:
         record_dict['alles_ok'] = [alles_ok]
         return record_dict
 
+    def start_creating_report_pov_segment_controller(self, installatie_nummer: str = None) -> DataFrame:
+        df = DataFrame()
+        all_column_names = [
+            'aanlevering_id', 'aanlevering_naam', 'segc_uuid', 'segc_naam', 'alles_ok',
+            'segc_naam_conform_conventie', 'relatie_naar_armatuur_controller', 'relatie_naar_legacy_segmentcontroller',
+            'serienummer', 'serienummer_ingevuld', 'serienummer_conform']
+        for missing_column_name in all_column_names:
+            df[missing_column_name] = None
+
+        segment_controllers = self.collection.get_node_objects_by_types(['onderdeel#Segmentcontroller'])
+
+        for segmc in segment_controllers:
+            if not segmc.active:
+                continue
+
+            segmc_naam = segmc.attr_dict.get('AIMNaamObject.naam', '')
+            if installatie_nummer is not None and not segmc_naam.startswith(installatie_nummer):
+                continue
+
+            deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=segmc.uuid)
+            if len(deliveries) == 0:
+                aanlevering_naam = ''
+                aanlevering_id = ''
+            else:
+                aanlevering_naam = '|'.join([d.referentie for d in deliveries])
+                aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
+
+            segmc_uuid = segmc.uuid
+
+            current_segmc_dict = {
+                'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
+                'segc_uuid': [segmc_uuid], 'segc_naam': [segmc_naam],
+            }
+
+            df_current = DataFrame(current_segmc_dict)
+            df = concat([df, df_current])
+
+        return df.sort_values('segc_naam')
+
     def start_creating_report_pov_armatuur_controller(self, installatie_nummer: str = None) -> DataFrame:
         df = DataFrame()
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'ac_uuid', 'ac_naam', 'alles_ok',
-            'ac_naam_conform_conventie', 'relatie_naar_toestel', 'relatie_naar_segmentcontroller', 'serienummer',
-            'serienummer_ingevuld', 'serienummer_conform', 'serienummer_uniek']
+            'ac_naam_conform_conventie', 'relatie_naar_toestel', 'relatie_naar_segmentcontroller',
+            'relatie_van_montagekast', 'relatie_naar_leddriver', 'serienummer', 'serienummer_ingevuld',
+            'serienummer_conform', 'serienummer_uniek']
 
         for missing_column_name in all_column_names:
             df[missing_column_name] = None
@@ -664,15 +712,14 @@ class ReportCreator:
                 aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
 
             ac_uuid = ac.uuid
-            ac_naam = ac.attr_dict.get('AIMNaamObject.naam', '')
 
-            current_ac_drager_dict = {
+            current_ac_dict = {
                 'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
                 'ac_uuid': [ac_uuid], 'ac_naam': [ac_naam],
             }
 
             record_dict = self.get_report_record_for_one_armatuur_controller(armatuur_controller=ac,
-                                                                             record_dict=current_ac_drager_dict)
+                                                                             record_dict=current_ac_dict)
             df_current = DataFrame(record_dict)
             df = concat([df, df_current])
 
@@ -703,6 +750,18 @@ class ReportCreator:
             return_type='info_object', filtered_node_types=['onderdeel#Segmentcontroller']))
         record_dict['relatie_naar_segmentcontroller'] = [(len(segm_controllers) == 1)]
         alles_ok = record_dict['relatie_naar_segmentcontroller'][0] and alles_ok
+
+        montagekasten = list(self.collection.traverse_graph(
+            start_uuid=ac_uuid, relation_types=['VoedtAangestuurd'], allowed_directions=[Direction.REVERSED],
+            return_type='info_object', filtered_node_types=['onderdeel#Montagekast']))
+        record_dict['relatie_van_montagekast'] = [(len(montagekasten) == 1)]
+        # not included in check
+
+        leddrivers = list(self.collection.traverse_graph(
+            start_uuid=ac_uuid, relation_types=['VoedtAangestuurd'], allowed_directions=[Direction.WITH],
+            return_type='info_object', filtered_node_types=['onderdeel#LEDDriver']))
+        record_dict['relatie_naar_leddriver'] = [(len(leddrivers) == 1)]
+        # not included in check
 
         serienummer = armatuur_controller.attr_dict.get('Armatuurcontroller.serienummer', None)
         record_dict['serienummer'] = [serienummer]
