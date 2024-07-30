@@ -1510,7 +1510,8 @@ class ReportCreator:
             if naam and naam[-1] == index_str:
                 return toestel
 
-    def is_conform_name_convention_toestel_no_reference(self, toestel_naam: str) -> bool:
+    @staticmethod
+    def is_conform_name_convention_toestel_no_reference(toestel_naam: str) -> bool:
         if '.' not in toestel_naam:
             return False
         parts = toestel_naam.split('.')
@@ -1531,14 +1532,14 @@ class ReportCreator:
             return False
         if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
             return False
-        if parts[2][0:2] != 'WV':
+        if parts[2][:2] != 'WV':
             return False
-        if parts[3][0:2] != 'AC':
+        if parts[3][:2] != 'AC':
             return False
-        if not parts[3][2:1].isdigit():
+        d = parts[3][2:]
+        if not parts[3][2:].isdigit():
             return False
         return True
-
     @staticmethod
     def is_conform_name_convention_segment_controller_no_reference(segmc_naam: str) -> bool:
         if '.' not in segmc_naam:
@@ -1548,15 +1549,16 @@ class ReportCreator:
             return False
         if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
             return False
-        if parts[2][0:2] != 'WV':
+        if parts[2][:2] != 'WV':
             return False
-        if parts[3][0:2] != 'SC':
+        if parts[3][:2] != 'SC':
             return False
-        if not parts[3][2:1].isdigit():
+        if not parts[3][2:].isdigit():
             return False
         return True
 
-    def is_conform_name_convention_drager_no_reference(self, drager_naam: str) -> bool:
+    @staticmethod
+    def is_conform_name_convention_drager_no_reference(drager_naam: str) -> bool:
         if '.' not in drager_naam:
             return False
         parts = drager_naam.split('.')
