@@ -40,6 +40,16 @@ class DataLegacySyncer:
 
         delivery_finder.find_deliveries_to_sync()
 
+    def collect_and_create_multiple_specific_reports(self, report_information_tuples: list[tuple[str, str]]):
+        for report_information in report_information_tuples:
+            asset_info_collector = AssetInfoCollector(em_infra_rest_client=self.em_infra_client,
+                                                      emson_importer=self.emson_importer)
+            asset_uuids = list(self.db_manager.get_asset_uuids_from_specific_deliveries(
+                delivery_references=[report_information[1]]))
+            self._collect_info_given_asset_uuids(asset_info_collector=asset_info_collector, asset_uuids=asset_uuids)
+            self._create_all_reports(asset_info_collector=asset_info_collector,
+                                     installatie_nummer=report_information[0])
+
     def collect_and_create_specific_reports(self, delivery_references: list[str], combine_single_report: bool = False,
                                             installatie_nummer: str = None):
         if combine_single_report:
