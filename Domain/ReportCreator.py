@@ -85,7 +85,7 @@ class ReportCreator:
                            f'X2:X{max(len(df_report_pov_legacy) + 1, 2)}',
                            f'Z2:Z{max(len(df_report_pov_legacy) + 1, 2)}'],
             'pov_toestel': [f'E2:S{max(len(df_report_pov_toestel)+1, 2)}'],
-            'pov_ac': [f'E2:K{max(len(df_report_pov_armatuur_controller) + 1, 2)}'],
+            'pov_ac': [f'E2:N{max(len(df_report_pov_armatuur_controller) + 1, 2)}'],
             'pov_segm_c': [f'E2:K{max(len(df_report_pov_segment_controller) + 1, 2)}'],
             'pov_drager': [f'E2:J{max(len(df_report_pov_drager) + 1, 2)}'],
             'Overzicht': [f'A2:D2'],
@@ -1540,20 +1540,19 @@ class ReportCreator:
         if not parts[3][2:].isdigit():
             return False
         return True
+
     @staticmethod
     def is_conform_name_convention_segment_controller_no_reference(segmc_naam: str) -> bool:
         if '.' not in segmc_naam:
             return False
         parts = segmc_naam.split('.')
-        if len(parts) != 4:
+        if len(parts) != 2:
             return False
         if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
             return False
-        if parts[2][:2] != 'WV':
+        if parts[1][:2] != 'SC':
             return False
-        if parts[3][:2] != 'SC':
-            return False
-        if not parts[3][2:].isdigit():
+        if not parts[1][2:].isdigit():
             return False
         return True
 
