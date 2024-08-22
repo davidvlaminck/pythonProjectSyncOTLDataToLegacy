@@ -683,16 +683,6 @@ class ReportCreator:
 
         return df.sort_values('segc_naam')
 
-    def get_report_record_for_one_armatuur_controller(self, armatuur_controller: NodeInfoObject,
-                                                      record_dict: dict) -> dict:
-        ac_uuid = armatuur_controller.uuid
-        ac_naam = armatuur_controller.attr_dict.get('AIMNaamObject.naam', '')
-
-        record_dict['ac_naam_conform_conventie'] = [self.is_conform_name_convention_armatuur_controller_no_reference(
-            ac_naam=ac_naam)]
-        alles_ok = record_dict['ac_naam_conform_conventie'][0]
-
-
     def start_creating_report_pov_armatuur_controller(self, installatie_nummer: str = None) -> DataFrame:
         df = DataFrame()
         all_column_names = [
