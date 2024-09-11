@@ -46,6 +46,12 @@ class ReportCreator:
             df_report_pov_segment_controller = self.start_creating_report_pov_segment_controller(installatie_nummer=installatie_nummer)
             df_report_pov_segment_controller.to_excel(writer, sheet_name='pov_segm_c', index=False)
             print('done writing report pov segment controller')
+            df_report_pov_montagekast = self.start_creating_report_pov_montagekast(installatie_nummer=installatie_nummer)
+            df_report_pov_montagekast.to_excel(writer, sheet_name='pov_montagekast', index=False)
+            print('done writing report pov montagekast')
+            df_report_pov_leddriver = self.start_creating_report_pov_leddriver(installatie_nummer=installatie_nummer)
+            df_report_pov_leddriver.to_excel(writer, sheet_name='pov_driver', index=False)
+            print('done writing report pov leddriver')
 
             df = self.start_creating_asset_data_drager(installatie_nummer=installatie_nummer)
             df.to_excel(writer, sheet_name='asset_data_otl_drager', index=False)
@@ -85,9 +91,12 @@ class ReportCreator:
                            f'X2:X{max(len(df_report_pov_legacy) + 1, 2)}',
                            f'Z2:Z{max(len(df_report_pov_legacy) + 1, 2)}'],
             'pov_toestel': [f'E2:S{max(len(df_report_pov_toestel)+1, 2)}'],
-            'pov_ac': [f'E2:N{max(len(df_report_pov_armatuur_controller) + 1, 2)}'],
+            'pov_ac': [f'E2:H{max(len(df_report_pov_armatuur_controller) + 1, 2)}',
+                       f'K2:N{max(len(df_report_pov_armatuur_controller) + 1, 2)}'],
             'pov_segm_c': [f'E2:K{max(len(df_report_pov_segment_controller) + 1, 2)}'],
             'pov_drager': [f'E2:J{max(len(df_report_pov_drager) + 1, 2)}'],
+            'pov_montagekast': [f'E2:H{max(len(df_report_pov_montagekast) + 1, 2)}'],
+            'pov_driver': [f'E2:I{max(len(df_report_pov_leddriver) + 1, 2)}'],
             'Overzicht': [f'A2:D2'],
         }
 
@@ -561,6 +570,85 @@ class ReportCreator:
 
         return df.sort_values('naam')
 
+    def start_creating_report_pov_montagekast(self, installatie_nummer: str = None) -> DataFrame:
+        df = DataFrame()
+        all_column_names = [
+            'aanlevering_id', 'aanlevering_naam', 'montagekast_uuid', 'montagekast_naam', 'alles_ok',
+            'montagekast_naam_conform_conventie', 'relatie_naar_drager', 'relatie_naar_armatuur_controller']
+
+        for missing_column_name in all_column_names:
+            df[missing_column_name] = None
+
+        # get all montagekasten
+        montagekasten = self.collection.get_node_objects_by_types(['onderdeel#Montagekast'])
+
+        for montagekast in montagekasten:
+            if not montagekast.active:
+                continue
+
+            montagekast_naam = montagekast.attr_dict.get('AIMNaamObject.naam', '')
+            if installatie_nummer is not None and not montagekast_naam.startswith(installatie_nummer):
+                continue
+
+            deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=montagekast.uuid)
+            if len(deliveries) == 0:
+                aanlevering_naam = ''
+                aanlevering_id = ''
+            else:
+                aanlevering_naam = '|'.join([d.referentie for d in deliveries])
+                aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
+
+            current_mk_dict = {
+                'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
+                'montagekast_uuid': [montagekast.uuid], 'montagekast_naam': [montagekast_naam],
+            }
+
+            record_dict = self.get_report_record_for_one_montagekast(montagekast=montagekast, record_dict=current_mk_dict)
+            df_current = DataFrame(record_dict)
+            df = concat([df, df_current])
+
+        return df.sort_values('montagekast_naam')
+
+    def start_creating_report_pov_leddriver(self, installatie_nummer: str = None) -> DataFrame:
+        df = DataFrame()
+        all_column_names = [
+            'aanlevering_id', 'aanlevering_naam', 'driver_uuid', 'driver_naam', 'alles_ok',
+            'driver_naam_conform_conventie', 'sturing_relatie_naar_toestel', 'bevestiging_relatie_naar_toestel',
+            'relatie_van_armatuur_controller']
+
+        for missing_column_name in all_column_names:
+            df[missing_column_name] = None
+
+        # get all leddrivers
+        leddrivers = self.collection.get_node_objects_by_types(['onderdeel#LEDDriver'])
+
+        for leddriver in leddrivers:
+            if not leddriver.active:
+                continue
+
+            leddriver_naam = leddriver.attr_dict.get('AIMNaamObject.naam', '')
+            if installatie_nummer is not None and not leddriver_naam.startswith(installatie_nummer):
+                continue
+
+            deliveries = self.db_manager.get_deliveries_by_asset_uuid(asset_uuid=leddriver.uuid)
+            if len(deliveries) == 0:
+                aanlevering_naam = ''
+                aanlevering_id = ''
+            else:
+                aanlevering_naam = '|'.join([d.referentie for d in deliveries])
+                aanlevering_id = '|'.join([d.uuid_davie for d in deliveries if d.uuid_davie is not None])
+
+            current_mk_dict = {
+                'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
+                'driver_uuid': [leddriver.uuid], 'driver_naam': [leddriver_naam],
+            }
+
+            record_dict = self.get_report_record_for_one_leddriver(leddriver=leddriver, record_dict=current_mk_dict)
+            df_current = DataFrame(record_dict)
+            df = concat([df, df_current])
+
+        return df.sort_values('driver_naam')
+
     def start_creating_report_pov_drager(self, installatie_nummer: str = None) -> DataFrame:
         df = DataFrame()
         all_column_names = [
@@ -592,7 +680,6 @@ class ReportCreator:
 
             drager_uuid = drager.uuid
 
-
             current_ac_drager_dict = {
                 'aanlevering_id': [aanlevering_id], 'aanlevering_naam': [aanlevering_naam],
                 'drager_uuid': [drager_uuid], 'drager_naam': [drager_naam],
@@ -603,6 +690,76 @@ class ReportCreator:
             df = concat([df, df_current])
 
         return df.sort_values('drager_naam')
+
+    def get_report_record_for_one_leddriver(self, leddriver: NodeInfoObject, record_dict: dict) -> dict:
+        leddriver_uuid = leddriver.uuid
+        leddriver_naam = leddriver.attr_dict.get('AIMNaamObject.naam', '')
+
+        alles_ok = True
+
+        toestellen = list(self.collection.traverse_graph(
+            start_uuid=leddriver_uuid, relation_types=['Sturing'], allowed_directions=[Direction.NONE],
+            return_type='info_object', filtered_node_types=['onderdeel#VerlichtingstoestelLED']))
+        record_dict['sturing_relatie_naar_toestel'] = [(len(toestellen) == 1)]
+        alles_ok = record_dict['sturing_relatie_naar_toestel'][0] and alles_ok
+
+        toestellen = list(self.collection.traverse_graph(
+            start_uuid=leddriver_uuid, relation_types=['Bevestiging'], allowed_directions=[Direction.NONE],
+            return_type='info_object', filtered_node_types=['onderdeel#VerlichtingstoestelLED']))
+        record_dict['bevestiging_relatie_naar_toestel'] = [(len(toestellen) == 1)]
+        alles_ok = record_dict['bevestiging_relatie_naar_toestel'][0] and alles_ok
+
+        armatuur_controllers = list(self.collection.traverse_graph(
+            start_uuid=leddriver_uuid, relation_types=['VoedtAangestuurd'], allowed_directions=[Direction.REVERSED],
+            return_type='info_object', filtered_node_types=['onderdeel#Armatuurcontroller']))
+        record_dict['relatie_van_armatuur_controller'] = [(len(armatuur_controllers) == 1)]
+        alles_ok = record_dict['relatie_van_armatuur_controller'][0] and alles_ok
+
+        if len(toestellen) == 1:
+            toestel = toestellen[0]
+            toestel_naam = toestel.attr_dict.get('AIMNaamObject.naam', '')
+            record_dict['driver_naam_conform_conventie'] = [
+                self.is_conform_name_convention_leddriver_with_reference(
+                    leddriver_naam=leddriver_naam, toestel_naam=toestel_naam)]
+        else:
+            record_dict['driver_naam_conform_conventie'] = [
+                self.is_conform_name_convention_leddriver_no_reference(leddriver_naam=leddriver_naam)]
+
+        alles_ok = record_dict['driver_naam_conform_conventie'][0] and alles_ok
+        record_dict['alles_ok'] = [alles_ok]
+        return record_dict
+
+    def get_report_record_for_one_montagekast(self, montagekast: NodeInfoObject, record_dict: dict) -> dict:
+        montagekast_uuid = montagekast.uuid
+        montagekast_naam = montagekast.attr_dict.get('AIMNaamObject.naam', '')
+
+        alles_ok = True
+
+        dragers = list(self.collection.traverse_graph(
+            start_uuid=montagekast_uuid, relation_types=['Bevestiging'], allowed_directions=[Direction.NONE],
+            return_type='info_object', filtered_node_types=['onderdeel#WVLichtmast']))
+        record_dict['relatie_naar_drager'] = [(len(dragers) == 1)]
+        alles_ok = record_dict['relatie_naar_drager'][0] and alles_ok
+
+        armatuur_controllers = list(self.collection.traverse_graph(
+            start_uuid=montagekast_uuid, relation_types=['VoedtAangestuurd'], allowed_directions=[Direction.WITH],
+            return_type='info_object', filtered_node_types=['onderdeel#Armatuurcontroller']))
+        record_dict['relatie_naar_armatuur_controller'] = [(len(armatuur_controllers) == 1)]
+        alles_ok = record_dict['relatie_naar_armatuur_controller'][0] and alles_ok
+
+        if len(dragers) == 1:
+            drager = dragers[0]
+            drager_naam = drager.attr_dict.get('AIMNaamObject.naam', '')
+            record_dict['montagekast_naam_conform_conventie'] = [
+                self.is_conform_name_convention_montagekast_with_reference(
+                    montagekast_naam=montagekast_naam, drager_naam=drager_naam)]
+        else:
+            record_dict['montagekast_naam_conform_conventie'] = [
+                self.is_conform_name_convention_montagekast_no_reference(montagekast_naam=montagekast_naam)]
+
+        alles_ok = record_dict['montagekast_naam_conform_conventie'][0] and alles_ok
+        record_dict['alles_ok'] = [alles_ok]
+        return record_dict
 
     def get_report_record_for_one_drager(self, drager: NodeInfoObject, record_dict: dict) -> dict:
         drager_uuid = drager.uuid
@@ -757,13 +914,13 @@ class ReportCreator:
             start_uuid=ac_uuid, relation_types=['VoedtAangestuurd'], allowed_directions=[Direction.REVERSED],
             return_type='info_object', filtered_node_types=['onderdeel#Montagekast']))
         record_dict['relatie_van_montagekast'] = [(len(montagekasten) == 1)]
-        # not included in check
+        # not included in check alles_ok
 
         leddrivers = list(self.collection.traverse_graph(
             start_uuid=ac_uuid, relation_types=['VoedtAangestuurd'], allowed_directions=[Direction.WITH],
             return_type='info_object', filtered_node_types=['onderdeel#LEDDriver']))
         record_dict['relatie_naar_leddriver'] = [(len(leddrivers) == 1)]
-        # not included in check
+        # not included in check alles_ok
 
         serienummer = armatuur_controller.attr_dict.get('Armatuurcontroller.serienummer', None)
         record_dict['serienummer'] = [serienummer]
@@ -1556,6 +1713,46 @@ class ReportCreator:
         if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
             return False
         return True
+
+    @staticmethod
+    def is_conform_name_convention_leddriver_no_reference(leddriver_naam: str) -> bool:
+        if '.' not in leddriver_naam:
+            return False
+        parts = leddriver_naam.split('.')
+        if len(parts) != 4:
+            return False
+        if parts[3] != 'LD1':
+            return False
+        if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
+            return False
+        return True
+
+    @staticmethod
+    def is_conform_name_convention_leddriver_with_reference(leddriver_naam: str, toestel_naam: str) -> bool:
+        parts = leddriver_naam.split('.')
+        if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
+            return False
+        return leddriver_naam == f'{toestel_naam}.LD1'
+
+    @staticmethod
+    def is_conform_name_convention_montagekast_no_reference(montagekast_naam: str) -> bool:
+        if '.' not in montagekast_naam:
+            return False
+        parts = montagekast_naam.split('.')
+        if len(parts) != 3:
+            return False
+        if parts[2] != 'MK1':
+            return False
+        if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
+            return False
+        return True
+
+    @staticmethod
+    def is_conform_name_convention_montagekast_with_reference(montagekast_naam: str, drager_naam: str) -> bool:
+        parts = montagekast_naam.split('.')
+        if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
+            return False
+        return montagekast_naam == f'{drager_naam}.MK1'
 
     @classmethod
     def get_merk_en_model_ac(cls, ac: NodeInfoObject) -> str | None:
