@@ -82,6 +82,10 @@ class ReportCreator:
                 'pov_segment_controller_alles_ok': [
                     len(df_report_pov_segment_controller['alles_ok']) == df_report_pov_segment_controller[
                         'alles_ok'].sum()],
+                'pov_leddriver_alles_ok': [
+                    len(df_report_pov_leddriver['alles_ok']) == df_report_pov_leddriver['alles_ok'].sum()],
+                'pov_montagekast_alles_ok': [
+                    len(df_report_pov_montagekast['alles_ok']) == df_report_pov_montagekast['alles_ok'].sum()],
             }
             df_summary = DataFrame(summary_dict)
             df_summary.to_excel(writer, sheet_name='Overzicht', index=False)
