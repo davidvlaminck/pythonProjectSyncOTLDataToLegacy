@@ -101,7 +101,7 @@ class ReportCreator:
             'pov_drager': [f'E2:J{max(len(df_report_pov_drager) + 1, 2)}'],
             'pov_montagekast': [f'E2:H{max(len(df_report_pov_montagekast) + 1, 2)}'],
             'pov_driver': [f'E2:I{max(len(df_report_pov_leddriver) + 1, 2)}'],
-            'Overzicht': [f'A2:D2'],
+            'Overzicht': [f'A2:F2'],
         }
 
         red_fill = PatternFill(start_color='F4CCCC', end_color='F4CCCC', fill_type='solid')

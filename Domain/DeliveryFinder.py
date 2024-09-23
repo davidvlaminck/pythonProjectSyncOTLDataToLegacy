@@ -100,6 +100,10 @@ class DeliveryFinder:
                 logging.info('No more deliveries found without reference, continue with getting DAVIE uuid.')
                 break
             event_context = self.em_infra_client.get_event_context_by_uuid(uuid=str(em_infra_uuid))
+            if event_context.omschrijving.startswith('bevestiging van lot '):
+                logging.info(f'Delivery {em_infra_uuid} is a lot confirmation, skipping.')
+                self.db_manager.delete_delivery_by_uuid(em_infra_uuid)
+                continue
             self.db_manager.update_delivery_description(em_infra_uuid=em_infra_uuid, description=event_context.omschrijving)
 
         # while True:
