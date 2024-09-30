@@ -90,30 +90,36 @@ class ReportCreator:
             df_summary = DataFrame(summary_dict)
             df_summary.to_excel(writer, sheet_name='Overzicht', index=False)
 
-        sheet_dict = {
-            'pov_legacy': [f'F2:V{max(len(df_report_pov_legacy) + 1, 2)}',
-                           f'X2:X{max(len(df_report_pov_legacy) + 1, 2)}',
-                           f'Z2:Z{max(len(df_report_pov_legacy) + 1, 2)}'],
-            'pov_toestel': [f'E2:S{max(len(df_report_pov_toestel)+1, 2)}'],
-            'pov_ac': [f'E2:H{max(len(df_report_pov_armatuur_controller) + 1, 2)}',
-                       f'K2:N{max(len(df_report_pov_armatuur_controller) + 1, 2)}'],
-            'pov_segm_c': [f'E2:K{max(len(df_report_pov_segment_controller) + 1, 2)}'],
-            'pov_drager': [f'E2:J{max(len(df_report_pov_drager) + 1, 2)}'],
-            'pov_montagekast': [f'E2:H{max(len(df_report_pov_montagekast) + 1, 2)}'],
-            'pov_driver': [f'E2:I{max(len(df_report_pov_leddriver) + 1, 2)}'],
-            'Overzicht': [f'A2:F2'],
-        }
-
         red_fill = PatternFill(start_color='F4CCCC', end_color='F4CCCC', fill_type='solid')
         red_font = Font(size=11, color='FF0000')
+        orange_fill = PatternFill(start_color='FFDBB6', end_color='FFDBB6', fill_type='solid')
+        orange_font = Font(size=11, color='EA7500')
+
+        sheet_dict = {
+            'pov_legacy': [(f'F2:U{max(len(df_report_pov_legacy) + 1, 2)}', red_fill, red_font),
+                           (f'V2:V{max(len(df_report_pov_legacy) + 1, 2)}', orange_fill, orange_font),
+                           (f'X2:X{max(len(df_report_pov_legacy) + 1, 2)}', red_fill, red_font)],
+            'pov_toestel': [(f'E2:S{max(len(df_report_pov_toestel)+1, 2)}', red_fill, red_font)],
+            'pov_ac': [(f'E2:H{max(len(df_report_pov_armatuur_controller) + 1, 2)}', red_fill, red_font),
+                        (f'K2:N{max(len(df_report_pov_armatuur_controller) + 1, 2)}', red_fill, red_font)],
+            'pov_segm_c': [(f'E2:K{max(len(df_report_pov_segment_controller) + 1, 2)}', red_fill, red_font)],
+            'pov_drager': [(f'E2:H{max(len(df_report_pov_drager) + 1, 2)}', red_fill, red_font),
+                           (f'I2:J{max(len(df_report_pov_drager) + 1, 2)}', orange_fill, orange_font),
+                           (f'K2:K{max(len(df_report_pov_drager) + 1, 2)}', red_fill, red_font)],
+            'pov_montagekast': [(f'E2:H{max(len(df_report_pov_montagekast) + 1, 2)}', red_fill, red_font)],
+            'pov_driver': [(f'E2:I{max(len(df_report_pov_leddriver) + 1, 2)}', red_fill, red_font)],
+            'Overzicht': [(f'A2:F2', red_fill, red_font)]
+        }
+
+
         workbook = load_workbook(f'Reports/{excel_name}.xlsx')
         for sheet_name, ranges in sheet_dict.items():
             sheet = workbook[sheet_name]
-            for range_str in ranges:
-                sheet.conditional_formatting.add(range_string=range_str, cfRule=CellIsRule(
-                    operator='equal', formula=[0], stopIfTrue=True, fill=red_fill, font=red_font))
-                sheet.conditional_formatting.add(range_string=range_str, cfRule=CellIsRule(
-                    operator='equal', formula=['FALSE'], stopIfTrue=True, fill=red_fill, font=red_font))
+            for range_tuple in ranges:
+                sheet.conditional_formatting.add(range_string=range_tuple[0], cfRule=CellIsRule(
+                    operator='equal', formula=[0], stopIfTrue=True, fill=range_tuple[1], font=range_tuple[2]))
+                sheet.conditional_formatting.add(range_string=range_tuple[0], cfRule=CellIsRule(
+                    operator='equal', formula=['FALSE'], stopIfTrue=True, fill=range_tuple[1], font=range_tuple[2]))
 
         # move summary sheet to the front
         sheets = workbook._sheets
@@ -658,7 +664,7 @@ class ReportCreator:
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'drager_uuid', 'drager_naam', 'alles_ok',
             'drager_naam_conform_conventie', 'relatie_naar_toestel', 'relatie_naar_legacy_drager',
-            'kleur_van_toepassing', 'kleur_ingevuld']
+            'kleur_van_toepassing', 'kleur_ingevuld', 'kleur_ok']
 
         for missing_column_name in all_column_names:
             df[missing_column_name] = None
@@ -797,6 +803,7 @@ class ReportCreator:
                 kleur_ok = record_dict['kleur_ingevuld'][0]
             else:
                 kleur_ok = True
+            record_dict['kleur_ok'] = [kleur_ok]
 
             alles_ok = kleur_ok and alles_ok
 
@@ -923,7 +930,7 @@ class ReportCreator:
         leddrivers = list(self.collection.traverse_graph(
             start_uuid=ac_uuid, relation_types=['VoedtAangestuurd'], allowed_directions=[Direction.WITH],
             return_type='info_object', filtered_node_types=['onderdeel#LEDDriver']))
-        record_dict['relatie_naar_leddriver'] = [(len(leddrivers) == 1)]
+        record_dict['relatie_naar_leddriver'] = [(len(leddrivers) > 0)]
         # not included in check alles_ok
 
         serienummer = armatuur_controller.attr_dict.get('Armatuurcontroller.serienummer', None)
@@ -1725,7 +1732,7 @@ class ReportCreator:
         parts = leddriver_naam.split('.')
         if len(parts) != 4:
             return False
-        if parts[3] != 'LD1':
+        if parts[3][0:2] != 'LD':
             return False
         if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
             return False
@@ -1736,7 +1743,7 @@ class ReportCreator:
         parts = leddriver_naam.split('.')
         if not re.match('^(A|C|G|WO|WW)[0-9]{4}$', parts[0]):
             return False
-        return leddriver_naam == f'{toestel_naam}.LD1'
+        return leddriver_naam.startswith(f'{toestel_naam}.LD')
 
     @staticmethod
     def is_conform_name_convention_montagekast_no_reference(montagekast_naam: str) -> bool:
