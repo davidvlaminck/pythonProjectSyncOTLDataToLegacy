@@ -29,7 +29,7 @@ class EMsonImporter:
             otl_zoekparameter = ZoekParameterOTL(size=size, from_cursor=cursor, filter_dict={'uuid': list(uuids)})
             json_data = otl_zoekparameter.to_dict_emson()
 
-            response = self.requester.post(url=url, data=json_data)
+            response = self.requester.post(url=url, json=json_data)
             decoded_string = response.content.decode()
 
             if response.status_code != 200:
