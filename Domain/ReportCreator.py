@@ -754,7 +754,7 @@ class ReportCreator:
         armatuur_controllers = list(self.collection.traverse_graph(
             start_uuid=montagekast_uuid, relation_types=['VoedtAangestuurd'], allowed_directions=[Direction.WITH],
             return_type='info_object', filtered_node_types=['onderdeel#Armatuurcontroller']))
-        record_dict['relatie_naar_armatuur_controller'] = [(len(armatuur_controllers) == 1)]
+        record_dict['relatie_naar_armatuur_controller'] = [(len(armatuur_controllers) > 0)]
         alles_ok = record_dict['relatie_naar_armatuur_controller'][0] and alles_ok
 
         if len(dragers) == 1:
@@ -1397,7 +1397,7 @@ class ReportCreator:
         if drager_puntgeometrie is None:
             return None, None
         # use regex to get coordinates out of wkt string in drager_puntgeometrie
-        drager_coords = re.match(r'POINT Z \((\d+.\d+) (\d+.\d+) (\d+)\)', drager_puntgeometrie)
+        drager_coords = re.match(r'POINT Z \(([\d.-]+) ([\d.]+) ([\d.-]+)\)', drager_puntgeometrie)
         if len(drager_coords.groups()) != 3:
             return None, None
         return float(drager_coords[1]), float(drager_coords[2])
@@ -1829,7 +1829,7 @@ class ReportCreator:
         arm_controllers = list(self.collection.traverse_graph(
             start_uuid=segmc_uuid, relation_types=['Sturing'], allowed_directions=[Direction.NONE],
             return_type='info_object', filtered_node_types=['onderdeel#Armatuurcontroller']))
-        record_dict['relatie_naar_armatuur_controller'] = [(len(arm_controllers) > 1)]
+        record_dict['relatie_naar_armatuur_controller'] = [(len(arm_controllers) > 0)]
         alles_ok = record_dict['relatie_naar_armatuur_controller'][0] and alles_ok
 
         serienummer = segment_controller.attr_dict.get('Controller.serienummer', None)
