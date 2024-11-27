@@ -532,11 +532,15 @@ class ReportCreator:
             masttype = drager.attr_dict.get('Lichtmast.masttype', None)
             if masttype is not None:
                 masttype = masttype[73:]
-            masthoogte = drager.attr_dict.get('Lichtmast.masthoogte', None)
-            if masthoogte is not None:
-                masthoogte = masthoogte.get('DtuLichtmastMasthoogte.standaardHoogte', None)
+            masthoogte_attr = drager.attr_dict.get('Lichtmast.masthoogte', None)
+            if masthoogte_attr is not None:
+                masthoogte = masthoogte_attr.get('DtuLichtmastMasthoogte.standaardHoogte', None)
             if masthoogte is not None:
                 masthoogte = masthoogte[75:]
+            else:
+                masthoogte = masthoogte_attr.get('DtuLichtmastMasthoogte.afwijkendeHoogte', None)
+                if masthoogte is not None:
+                    masthoogte = str(masthoogte)
             beschermlaag = drager.attr_dict.get('Lichtmast.beschermlaag', None)
             if beschermlaag is not None:
                 beschermlaag = beschermlaag[79:]
@@ -1539,9 +1543,11 @@ class ReportCreator:
             if paalhoogte is not None:
                 standaard_hoogte = paalhoogte.get('DtuLichtmastMasthoogte.standaardHoogte')
                 if standaard_hoogte is None:
-                    raise NotImplementedError(f'{drager.attr_dict.get('AIMNaamObject.naam', '')} '
-                                              f'heeft geen standaardhoogte')
-                standaard_hoogte = standaard_hoogte[75:].replace('.', ',')
+                    standaard_hoogte = paalhoogte.get('DtuLichtmastMasthoogte.afwijkendeHoogte')
+                    if standaard_hoogte is not None:
+                        standaard_hoogte = str(standaard_hoogte).replace('.', ',')
+                else:
+                    standaard_hoogte = standaard_hoogte[75:].replace('.', ',')
                 d['paalhoogte'] = standaard_hoogte
             else:
                 d['paalhoogte'] = None
