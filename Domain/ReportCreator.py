@@ -1497,6 +1497,8 @@ class ReportCreator:
         verlichtingsniveau = toestel.attr_dict.get('VerlichtingstoestelLED.verlichtingsNiveau')
         if verlichtingsniveau is not None:
             verlichtingsniveau = verlichtingsniveau[71:].upper()
+        if verlichtingsniveau == 'M3-0':
+            verlichtingsniveau = 'M3'
 
         merk = toestel.attr_dict.get('Verlichtingstoestel.merk')
         modelnaam = toestel.attr_dict.get('Verlichtingstoestel.modelnaam')
