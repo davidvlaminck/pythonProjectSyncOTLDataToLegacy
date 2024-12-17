@@ -139,27 +139,27 @@ class DeliveryFinder:
 
     def find_asset_ids_by_delivery(self, context_string: str) -> set:
         context_list = self.em_infra_client.get_delivery_from_context_string(context_string=context_string)
-        context_uuid = context_list.data[0].uuid
-        events = list(self.em_infra_client.get_feed_events_by_eventcontext_id(context_uuid))
+        context_uuids = [c.uuid for c in context_list.data]
+        events = []
+        for context_uuid in context_uuids:
+            events.extend(self.em_infra_client.get_feed_events_by_eventcontext_id(context_uuid))
 
-        event_dict = {}
-        for event in events:
-            aggregate_id = event.data['aggregateId']
-            if aggregate_id['_type'] in ('installatie', 'onderdeel'):
-                event_dict[event.data['aggregateId']['uuid']] = event.createdOn
+            event_dict = {}
+            for event in events:
+                aggregate_id = event.data['aggregateId']
+                if aggregate_id['_type'] in ('installatie', 'onderdeel'):
+                    event_dict[event.data['aggregateId']['uuid']] = event.createdOn
 
-        if self.db_manager.get_a_delivery_by_em_infra_uuid(em_infra_uuid=context_uuid) is not None:
-            logging.info(f'No need to add delivery {context_uuid} to the database.')
-        else:
-            self.db_manager.add_delivery(context_uuid)
+            if self.db_manager.get_a_delivery_by_em_infra_uuid(em_infra_uuid=context_uuid) is not None:
+                logging.info(f'No need to add delivery {context_uuid} to the database.')
+            else:
+                self.db_manager.add_delivery(context_uuid)
 
-        self.get_additional_attributes_of_deliveries()
-        if self.db_manager.get_a_delivery_by_em_infra_uuid(em_infra_uuid=context_uuid) is not None:
-            # only insert assets if the delivery is a correct one
-            self.db_manager.upsert_assets_delivery(delivery_em_infra_uuid=context_uuid, asset_timestamp_dict=event_dict)
+            self.get_additional_attributes_of_deliveries()
+            if self.db_manager.get_a_delivery_by_em_infra_uuid(em_infra_uuid=context_uuid) is not None:
+                # only insert assets if the delivery is a correct one
+                self.db_manager.upsert_assets_delivery(delivery_em_infra_uuid=context_uuid, asset_timestamp_dict=event_dict)
 
-        # get em-infra uuid by delivery context string
-        # get events from
 
     def find_events_with_context(self, current_feedproxy_event: str, current_feedproxy_page: str, 
                                  proxy_feed_page: FeedProxyPage, batch_page_size: int = 5
@@ -225,3 +225,8 @@ class DeliveryFinder:
 
         self.db_manager.set_state_variable('feedproxy_page', feed_page_number)
         self.db_manager.set_state_variable('feedproxy_event_id', event_id)
+
+    def clear_specific_deliveries(self, context_strings):
+        for context_string in context_strings:
+            self.db_manager.clear_delivery(context_string)
+
