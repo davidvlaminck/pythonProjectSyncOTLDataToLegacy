@@ -227,3 +227,9 @@ class DataLegacySyncer:
         report_creator = ReportCreator(collection=None, db_manager=self.db_manager)
         report_creator.process_report(report_path=report_path, em_infra_client=self.em_infra_client,
                                       installatie_nummer=installatie_nummer)
+
+    def clear_specific_deliveries(self, context_strings: [str]):
+        delivery_finder = DeliveryFinder(em_infra_client=self.em_infra_client, davie_client=self.davie_client,
+                                         db_manager=self.db_manager)
+
+        delivery_finder.clear_specific_deliveries(context_strings=context_strings)

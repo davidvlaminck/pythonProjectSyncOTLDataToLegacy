@@ -113,3 +113,17 @@ class DbManager:
         with self.session_maker.begin() as session:
             query = session.query(DeliveryAsset).filter(DeliveryAsset.uuid_asset == UUID(asset_uuid))
             return [a.delivery for a in query.all()]
+
+    def clear_delivery(self, context_string):
+        with self.session_maker.begin() as session:
+            delivery = session.query(Delivery).filter(Delivery.referentie.startswith(context_string)).first()
+            if delivery is None:
+                return
+            delivery_assets = delivery.deliveries_assets
+            for delivery_asset in delivery_assets:
+                asset = session.query(Asset).filter(Asset.uuid == delivery_asset.uuid_asset).first()
+                if asset is not None:
+                    session.delete(asset)
+                session.delete(delivery_asset)
+            session.delete(delivery)
+            session.commit()
