@@ -21,7 +21,8 @@ class ReportCreator:
         self.collection = collection
         self.db_manager = db_manager
 
-    def create_all_reports(self, installatie_nummer: str = None):
+    def create_all_reports(self, installatie_nummer: str = None, only_use_delivery: bool = False,
+                           delivery_reference: str = None):
         df_report_pov_legacy = self.start_creating_report_pov_legacy(installatie_nummer=installatie_nummer)
         try:
             excel_name = df_report_pov_legacy['legacy_drager_naampad'].iloc[0]
@@ -667,7 +668,7 @@ class ReportCreator:
         df = DataFrame()
         all_column_names = [
             'aanlevering_id', 'aanlevering_naam', 'drager_uuid', 'drager_naam', 'alles_ok',
-            'drager_naam_conform_conventie', 'relatie_naar_toestel', 'relatie_naar_legacy_drager',
+            'drager_naam_conform_conventie', 'relatie_naar_toestel_unieke_naam', 'relatie_naar_legacy_drager',
             'kleur_van_toepassing', 'kleur_ingevuld', 'kleur_ok']
 
         for missing_column_name in all_column_names:
@@ -786,8 +787,9 @@ class ReportCreator:
         toestellen = list(self.collection.traverse_graph(
             start_uuid=drager_uuid, relation_types=['Bevestiging'], allowed_directions=[Direction.NONE],
             return_type='info_object', filtered_node_types=['onderdeel#VerlichtingstoestelLED']))
-        record_dict['relatie_naar_toestel'] = [(len(toestellen) > 0)]
-        alles_ok = record_dict['relatie_naar_toestel'][0] and alles_ok
+        toestel_namen = {t.attr_dict.get('AIMNaamObject.naam', '') for t in toestellen}
+        record_dict['relatie_naar_toestel_unieke_naam'] = [(len(toestellen) > 0) and len(toestellen) == len(toestel_namen)]
+        alles_ok = record_dict['relatie_naar_toestel_unieke_naam'][0] and alles_ok
 
         legacy_dragers = list(self.collection.traverse_graph(
             start_uuid=drager_uuid, relation_types=['HoortBij'], allowed_directions=[Direction.WITH],
